@@ -1,0 +1,23 @@
+:root {
+  --navy:#061933; --navy-mid:#0B2545; --steel:#153E6F;
+  --gold:#D6B35A; --accent:#F2B544; --accent2:#B83232;
+  --green:#157347; --green-lt:#DCEFE6;
+  --red-lt:#F8D7DA; --amber-lt:#FFF3CD;
+  --ink:#071B34; --body:#263B52; --muted:#5B728A;
+  --surface:#EEF3F8; --white:#FFFFFF; --border:#C7D4E2;
+  --cs:#D8F1DD; --co:#FFF3C4; --pl:#FFFFFF;
+  --sh:0 2px 10px rgba(6,25,51,.12);
+}
+
+body{background:linear-gradient(180deg,#E8EFF7 0%,#F6F8FB 260px)}
+.hdr{background:linear-gradient(90deg,#061933 0%,#102F55 58%,#153E6F 100%);border-bottom-color:#D6B35A}
+.fbar{background:#0B2545;border-bottom-color:#284B72}
+.card,.twrap,.jun-sec,.upload-card,.upload-log,.tchart-wrap{border:1px solid #C7D4E2}
+.card{border-top-width:4px}
+thead tr,thead th{background:#071B34}
+thead th.sub{background:#153E6F;border-bottom-color:#D6B35A}
+.tab.active{color:#102F55;border-bottom-color:#D6B35A}
+.fy-badge,.dl-btn,.jun-badge{background:#D6B35A;color:#061933}
+.rg-note{background:#2C2309;border-color:#D6B35A;color:#F1D483}
+.theme-picker{display:inline-flex;align-items:center;gap:4px;background:#071B34;border:1px solid #365B82;border-radius:6px;padding:2px 6px}
+.theme-picker label{color:#B9C9DA;font-size:10px}

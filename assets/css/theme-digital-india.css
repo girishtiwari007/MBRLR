@@ -1,0 +1,60 @@
+:root {
+  --navy:#0F2E5F; --navy-mid:#173F73; --steel:#245A8D;
+  --gold:#FFB347; --accent:#FF9933; --accent2:#D94A38;
+  --green:#118A50; --green-lt:#DDF3E6;
+  --red-lt:#FFE1DF; --amber-lt:#FFF3CD;
+  --ink:#10243E; --body:#2C4054; --muted:#657A8E;
+  --surface:#F5F8FB; --white:#FFFFFF; --border:#CEDAE6;
+  --cs:#E2F6EA; --co:#FFF0D8; --pl:#FFFFFF;
+  --sh:0 2px 9px rgba(15,46,95,.10);
+}
+
+body{background:linear-gradient(180deg,#F7FAFD 0%,#F1F6FA 260px,#F8FAFC 100%)}
+.hdr{background:linear-gradient(90deg,#0F2E5F 0%,#245A8D 62%,#118A50 100%);border-bottom-color:#FF9933}
+.emblem circle:first-child,.emblem g{stroke:#FFB347}
+.emblem circle:last-child{fill:#FF9933}
+.fbar{background:#FFFFFF;border-bottom:1px solid #D8E2EC;box-shadow:0 1px 0 rgba(15,46,95,.08)}
+.fbar-lbl,.live-clock{color:#245A8D}
+select.fsel,.util-input{background:#F9FBFD;color:#12315F;border-color:#B9C8D8}
+.util-filter,.theme-picker,.block-style-picker{display:inline-flex;align-items:center;gap:4px;background:#FFFFFF;border:1px solid #B9C8D8;border-radius:6px;padding:2px 6px}
+.util-filter label,.theme-picker label,.block-style-picker label{color:#245A8D;font-size:10px}
+.rg-note{background:#FFF6E8;border-color:#FF9933;color:#9A4B00}
+.card,.twrap,.jun-sec,.note-box,.upload-card,.upload-log,.tchart-wrap{border:1px solid #D8E2EC;box-shadow:0 2px 8px rgba(15,46,95,.07)}
+.card{
+  overflow:hidden;
+  border-top-width:0;
+  border-left:4px solid #245A8D;
+}
+.card.g{border-left-color:#118A50}
+.card.gold{border-left-color:#FF9933}
+.card.a{border-left-color:#245A8D}
+.card.r{border-left-color:#D94A38}
+.card .cl{color:#48657F}
+.card .cv{color:#0F2E5F}
+.card::before{
+  content:"";
+  display:block;
+  height:3px;
+  margin:-12px -14px 10px;
+  background:linear-gradient(90deg,#FF9933 0%,#FFFFFF 48%,#118A50 100%);
+}
+thead tr,thead th{background:#12315F}
+thead th.sub{background:#245A8D;border-bottom-color:#FF9933}
+.fy-badge,.dl-btn,.jun-badge{background:#FF9933;color:#10243E}
+.tab.active{color:#138A4B;border-bottom-color:#FF9933}
+
+html[data-theme="digital-india"][data-block-style="raised"] .card{
+  border:1px solid rgba(185,200,216,.9);
+  border-left:0;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.98),rgba(245,249,253,.94)),
+    radial-gradient(circle at 14% 0%,rgba(255,153,51,.16),transparent 36%),
+    radial-gradient(circle at 100% 100%,rgba(17,138,80,.16),transparent 32%);
+  box-shadow:0 18px 28px rgba(15,46,95,.18),0 3px 0 rgba(255,153,51,.85) inset,0 -2px 0 rgba(17,138,80,.18) inset;
+}
+html[data-theme="digital-india"][data-block-style="raised"] .card .cv{
+  text-shadow:0 1px 0 #fff;
+}
+html[data-theme="digital-india"][data-block-style="raised"] .card::after{
+  background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,0) 42%,rgba(15,46,95,.08));
+}
