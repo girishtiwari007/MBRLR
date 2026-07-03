@@ -81,6 +81,10 @@
     <option value="Committed">Committed</option>
     <option value="Planned">Planned</option>
   </select>
+  <select class="fsel" id="activityFilter" onchange="renderAll(); if(typeof renderSMHDetail==='function') renderSMHDetail();">
+    <option value="all">All Activity</option>
+    <option value="budget-no-exp">Budget Available, No Expenses</option>
+  </select>
   <span class="util-filter">
     <label for="utilPctFilter">Util %</label>
     <select class="fsel" id="utilCompare" onchange="renderAll()">
@@ -226,6 +230,7 @@
           <th>Committed<br>Till Date</th>
           <th>Balance<br>Budget</th>
           <th>%<br>Used</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody id="mw-tbody"></tbody>
@@ -244,6 +249,7 @@
         <th class="la">Type of PU</th><th class="la">Type of Liability</th>
         <th>Remaining Budget</th>
         <th>Budget BG_ISL (₹'000s)</th><th>Budget (₹ Cr)</th><th>Actuals Till Date (₹'000s)</th>
+        <th>Status</th>
       </tr></thead>
       <tbody id="pu-tbody"></tbody>
     </table>

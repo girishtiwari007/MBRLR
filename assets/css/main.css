@@ -113,6 +113,8 @@ tbody tr.cs-row{background:var(--cs)}
 tbody tr.co-row{background:var(--co)}
 tbody tr.pl-row{background:var(--pl)}
 tbody tr.neg-row{background:#FFE0DF}
+tbody tr.no-exp-row{background:#FFF4C2!important;box-shadow:inset 4px 0 0 #B88700}
+.no-exp-status{color:#8A5A00;font-weight:800;white-space:nowrap}
 tbody tr:hover{filter:brightness(.97)}
 td{padding:6px 9px;font-size:12px;}
 td.n{text-align:right;font-variant-numeric:tabular-nums}
@@ -355,6 +357,7 @@ thead th.la { min-width:80px; }
 .smh-table .pu-row:nth-child(even) td{background:#F3F8FE}
 .smh-table .subtot td{background:#E4F2D8;color:#005B2A;font-weight:800}
 .smh-table .dept-total td{background:#D2E2F4;color:#002B5D;font-weight:900;border-top:2px solid #1A3A6A;border-bottom:2px solid #1A3A6A}
+.smh-table tr.no-exp-row td{background:#FFF4C2!important;box-shadow:inset 4px 0 0 #B88700;color:#4F3500}
 .smh-table .bal-ok{background:#C8F0D4;font-weight:800;color:#004B22}
 .smh-table .bal-low{background:#FFF0BC;font-weight:800;color:#6C4700}
 .smh-table .bal-neg{background:#FFC4D0;font-weight:800;color:#8A001A}

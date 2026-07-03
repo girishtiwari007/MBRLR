@@ -526,8 +526,13 @@ function miniProg(val, color) {
   return `<div class="mp"><div class="mb"><div class="mf" style="width:${v}%;background:${color}"></div></div><span class="mpct ${val>90?'over':''}" style="color:${color}">${val.toFixed(1)}%</span></div>`;
 }
 function utilColor(p) { if(p===null||p===undefined||isNaN(p)) return '#CC0000'; p=Math.abs(p); return p < 30 ? '#1A7A4A' : p < 60 ? '#C07000' : p < 85 ? '#E85D04' : '#CC0000'; }
+function isBudgetNoExpense(code) {
+  const c = compute(code);
+  return !PU_META.find(p => p.code === code)?.isNeg && c.budget > 0 && Math.abs(c.totalCommitted || 0) === 0;
+}
 function getRowClass(pu) {
   if (pu.isNeg) return 'neg-row';
+  if (isBudgetNoExpense(pu.code)) return 'no-exp-row';
   if (pu.puType==='Staff PU' && pu.liab==='Committed') return 'cs-row';
   if (pu.liab==='Committed') return 'co-row';
   return 'pl-row';
@@ -549,6 +554,7 @@ function liabBadge(l) {
 function getFiltered() {
   const tf = document.getElementById('typeFilter').value;
   const lf = document.getElementById('liabFilter').value;
+  const af = document.getElementById('activityFilter') ? document.getElementById('activityFilter').value : 'all';
   const uc = document.getElementById('utilCompare') ? document.getElementById('utilCompare').value : 'all';
   const uvRaw = document.getElementById('utilPctFilter') ? document.getElementById('utilPctFilter').value : '';
   const uv = uvRaw === '' ? null : Number(uvRaw);
@@ -559,6 +565,7 @@ function getFiltered() {
       if (tf === 'Non Staff' && pu.puType !== 'Non Staff PU') return false;
     }
     if (lf !== 'all' && pu.liab !== lf) return false;
+    if (af === 'budget-no-exp' && !isBudgetNoExpense(pu.code)) return false;
     if (uc !== 'all' && uv !== null && !isNaN(uv)) {
       const c = compute(pu.code);
       const util = c.utilisedPct != null ? Math.abs(c.utilisedPct) : 0;
@@ -701,7 +708,8 @@ function renderLiability() {
     const balCls = c.balanceBudget < 0 ? 'neg' : c.balanceBudget < c.budget*0.1 ? 'low' : 'ok';
     let statusHtml = '';
     const _pct = c.utilisedPct || 0;
-    if (c.utilisedFlag==='no-budget') statusHtml='<span style="color:#CC0000;font-weight:700">ðŸš¨ No Budget</span>';
+    if (isBudgetNoExpense(pu.code)) statusHtml='<span style="color:#8A5A00;font-weight:800">Budget Available, No Expenses</span>';
+    else if (c.utilisedFlag==='no-budget') statusHtml='<span style="color:#CC0000;font-weight:700">ðŸš¨ No Budget</span>';
     else if (c.utilisedFlag==='over') statusHtml=`<span style="color:#CC0000;font-weight:700">ðŸ”´ Over ${Math.abs(_pct).toFixed(0)}%</span>`;
     else if (c.utilisedFlag==='none') statusHtml='<span style="color:#aaa">â€” Nil</span>';
     else if (_pct > 85) statusHtml = '<span style="color:#CC0000;font-weight:700">âš  Near Limit</span>';
@@ -881,6 +889,7 @@ function renderPUMaster() {
     const b = BUDGET[pu.code]||{};
     const c = compute(pu.code);
     const remCls = c.balanceBudget < 0 ? 'neg-val' : '';
+    const noExp = isBudgetNoExpense(pu.code);
     rows += `<tr class="${getRowClass(pu)}" data-pu="${pu.code}" style="cursor:pointer">
       <td class="puc puc-link" title="ðŸ“„ Open Full Details: PU-${pu.code}" onclick="event.stopPropagation();openPUDetail('${pu.code}')">${pu.code} ðŸ”</td>
       <td class="desc pu-desc" title="${pu.desc}">${pu.desc}</td>
@@ -890,6 +899,7 @@ function renderPUMaster() {
       <td class="n">${fmtT(b.bg_isl||0)}</td>
       <td class="n">${fmtCr(b.bg_isl||0)}</td>
       <td class="n">${fmtT(b.actuals_till||0)}</td>
+      <td class="no-exp-status">${htmlSafe(noExpenseStatus(noExp))}</td>
     </tr>`;
   });
   document.getElementById('pu-tbody').innerHTML = rows;
@@ -1041,6 +1051,13 @@ function detailBalanceClass(balance, budget) {
   if (budget && balance < budget * 0.1) return 'bal-low';
   return 'bal-ok';
 }
+function isSMHBudgetNoExpense(rowOrTotal) {
+  return (Number(rowOrTotal.budget) || 0) > 0 && Math.abs(Number(rowOrTotal.actualTill) || 0) === 0;
+}
+
+function noExpenseStatus(flag) {
+  return flag ? 'Budget Available, No Expenses' : '';
+}
 
 function initSMHDetailFilters() {
   const data = window.DETAIL_SMH_DATA;
@@ -1110,15 +1127,17 @@ function renderSMHReportRows(rows, monthKeys) {
   depts.forEach(dept => {
     const deptRows = rows.filter(r => r.deptCode === dept.deptCode);
     const deptTotal = makeDetailTotal(deptRows);
-    html += `<tr class="dept-row"><td>${htmlSafe(dept.deptCode)} - ${htmlSafe(dept.deptName)}</td><td></td><td></td>${'<td></td>'.repeat(7)}</tr>`;
+    const blankDetailCells = monthKeys.length + 4;
+    html += `<tr class="dept-row"><td>${htmlSafe(dept.deptCode)} - ${htmlSafe(dept.deptName)}</td><td></td><td></td>${'<td></td>'.repeat(blankDetailCells)}</tr>`;
     const smhs = [...new Set(deptRows.map(r => r.smh))].sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
     smhs.forEach(smh => {
       const smhRows = deptRows.filter(r => r.smh === smh)
         .sort((a,b) => String(a.puCode).localeCompare(String(b.puCode), undefined, {numeric:true}));
-      html += `<tr class="smh-row"><td></td><td>${htmlSafe(smh)}</td><td></td>${'<td></td>'.repeat(7)}</tr>`;
+      html += `<tr class="smh-row"><td></td><td>${htmlSafe(smh)}</td><td></td>${'<td></td>'.repeat(blankDetailCells)}</tr>`;
       smhRows.forEach(r => {
         const bal = r.budget - r.actualTill;
-        html += `<tr class="pu-row">
+        const noExpCls = isSMHBudgetNoExpense(r) ? ' no-exp-row' : '';
+        html += `<tr class="pu-row${noExpCls}">
           <td></td>
           <td></td>
           <td>PU - ${htmlSafe(r.puCode)} - ${htmlSafe(r.puName)}</td>
@@ -1126,11 +1145,13 @@ function renderSMHReportRows(rows, monthKeys) {
           ${monthKeys.map(m => `<td>${detailNum((r.months || {})[m] || 0)}</td>`).join('')}
           <td><strong>${detailNum(r.actualTill)}</strong></td>
           <td class="${detailBalanceClass(bal, r.budget)}">${detailNum(bal)}</td>
+          <td class="no-exp-status">${htmlSafe(noExpenseStatus(isSMHBudgetNoExpense(r)))}</td>
         </tr>`;
       });
       const smhTotal = makeDetailTotal(smhRows);
       const smhBal = smhTotal.budget - smhTotal.actualTill;
-      html += `<tr class="subtot">
+      const smhNoExpCls = isSMHBudgetNoExpense(smhTotal) ? ' no-exp-row' : '';
+      html += `<tr class="subtot${smhNoExpCls}">
         <td></td>
         <td></td>
         <td>Sub-Total: ${htmlSafe(smh)}</td>
@@ -1138,10 +1159,12 @@ function renderSMHReportRows(rows, monthKeys) {
         ${monthKeys.map(m => `<td>${detailNum(smhTotal.months[m] || 0)}</td>`).join('')}
         <td><strong>${detailNum(smhTotal.actualTill)}</strong></td>
         <td class="${detailBalanceClass(smhBal, smhTotal.budget)}">${detailNum(smhBal)}</td>
+        <td class="no-exp-status">${htmlSafe(noExpenseStatus(isSMHBudgetNoExpense(smhTotal)))}</td>
       </tr>`;
     });
     const deptBal = deptTotal.budget - deptTotal.actualTill;
-    html += `<tr class="dept-total">
+    const deptNoExpCls = isSMHBudgetNoExpense(deptTotal) ? ' no-exp-row' : '';
+    html += `<tr class="dept-total${deptNoExpCls}">
       <td></td>
       <td></td>
       <td>Total: ${htmlSafe(dept.deptCode)} - ${htmlSafe(dept.deptName)}</td>
@@ -1149,6 +1172,7 @@ function renderSMHReportRows(rows, monthKeys) {
       ${monthKeys.map(m => `<td>${detailNum(deptTotal.months[m] || 0)}</td>`).join('')}
       <td><strong>${detailNum(deptTotal.actualTill)}</strong></td>
       <td class="${detailBalanceClass(deptBal, deptTotal.budget)}">${detailNum(deptBal)}</td>
+      <td class="no-exp-status">${htmlSafe(noExpenseStatus(isSMHBudgetNoExpense(deptTotal)))}</td>
     </tr>`;
   });
   return html;
@@ -1168,6 +1192,7 @@ function renderSMHDetail() {
   const dept = (document.getElementById('smhDeptFilter') || {}).value || 'all';
   const smh = (document.getElementById('smhCodeFilter') || {}).value || 'all';
   const puFilter = (document.getElementById('smhPUFilter') || {}).value || 'all';
+  const activityFilter = (document.getElementById('activityFilter') || {}).value || 'all';
   const mode = (document.getElementById('smhViewMode') || {}).value || 'report';
   const monthKeys = data.monthKeys || [];
   const monthLabels = data.monthLabels || [];
@@ -1178,7 +1203,8 @@ function renderSMHDetail() {
   const rows = data.rows.filter(r =>
     (dept === 'all' || r.deptCode === dept) &&
     (smh === 'all' || r.smh === smh) &&
-    (puFilter === 'all' || r.puCode === puFilter)
+    (puFilter === 'all' || r.puCode === puFilter) &&
+    (activityFilter !== 'budget-no-exp' || isSMHBudgetNoExpense(r))
   );
   const grouped = aggregateDetailRows(rows, mode === 'report' ? 'pu' : mode);
   const totals = makeDetailTotal(rows);
@@ -1207,7 +1233,7 @@ function renderSMHDetail() {
   const leftHeaders = '<th>Department</th><th>Demand</th><th>Primary Unit (PU)</th>';
   head.innerHTML = `<tr>${leftHeaders}<th>Budget<br>2026-27</th>` +
     monthLabels.slice(0,visibleMonthKeys.length).map(l => `<th>${htmlSafe(l.replace(' 2026',''))}<br>Actual</th>`).join('') +
-    '<th>Exp. Total</th><th>Balance<br>(Budget-Exp)</th>' + (mode === 'report' ? '' : '<th>Util%</th>') + '</tr>';
+    '<th>Exp. Total</th><th>Balance<br>(Budget-Exp)</th>' + (mode === 'report' ? '<th>Status</th>' : '<th>Util%</th><th>Status</th>') + '</tr>';
   if (!rows.length) {
     body.innerHTML = '<tr><td colspan="10">No rows found for selected filters.</td></tr>';
     return;
@@ -1218,7 +1244,8 @@ function renderSMHDetail() {
   }
   body.innerHTML = grouped.map(r => {
     const bal = r.budget - r.actualTill;
-    const rowClass = mode === 'dept' ? 'dept-row' : mode === 'smh' ? 'smh-row' : 'pu-row';
+    const noExp = isSMHBudgetNoExpense(r);
+    const rowClass = (mode === 'dept' ? 'dept-row' : mode === 'smh' ? 'smh-row' : 'pu-row') + (noExp ? ' no-exp-row' : '');
     const first = `${htmlSafe(r.deptCode)} - ${htmlSafe(r.deptName)}`;
     const second = mode === 'dept' ? 'All Demand' : htmlSafe(r.smh);
     const third = mode === 'pu' ? `PU - ${htmlSafe(r.puCode)} - ${htmlSafe(r.puName)}` : (mode === 'smh' ? 'Sub-total' : 'Department Total');
@@ -1231,6 +1258,7 @@ function renderSMHDetail() {
       <td><strong>${detailNum(r.actualTill)}</strong></td>
       <td class="${detailBalanceClass(bal, r.budget)}">${detailNum(bal)}</td>
       <td>${r.budget ? ((r.actualTill / r.budget) * 100).toFixed(1) : '0.0'}%</td>
+      <td class="no-exp-status">${htmlSafe(noExpenseStatus(noExp))}</td>
     </tr>`;
   }).join('');
   } catch (err) {
@@ -1294,6 +1322,7 @@ function downloadExcel() {
             if (rowData) {
               const label = String(rowData[0]||'');
               if (label==='98') bg='FFE8E8';
+              else if (rowData._noexp) bg='FFF4C2';
               else if (rowData._cs) bg='E8FAF0';
               else if (rowData._co) bg='FFF8E8';
               else if (rowData._tot) bg='E8EFF8';
@@ -1329,7 +1358,8 @@ function downloadExcel() {
     const pctStr=cv.utilisedFlag==='no-budget'?'No Budget â€” Excess Spend':
                  cv.utilisedFlag==='none'?'Nil (no activity)':
                  cv.utilisedPct!=null?cv.utilisedPct.toFixed(1)+'%':'â€“';
-    const status=cv.utilisedFlag==='over'?'OVER BUDGET':
+    const status=isBudgetNoExpense(pu.code)?'BUDGET AVAILABLE, NO EXPENSES':
+                 cv.utilisedFlag==='over'?'OVER BUDGET':
                  cv.utilisedFlag==='no-budget'?'NO BUDGET ALLOCATED':
                  cv.utilisedPct>85?'Near Exhausted':cv.utilisedPct>60?'Watch':'On Track';
     const row=[pu.code,pu.desc,pu.puType,pu.liab,
@@ -1340,6 +1370,7 @@ function downloadExcel() {
       cv.curDonePct!=null?parseFloat(cv.curDonePct.toFixed(1)):0,
       cv.totalCommitted,cv.balanceBudget,Math.round(cv.projPerMonth),
       pctStr, status];
+    row._noexp = isBudgetNoExpense(pu.code);
     row._cs = (pu.puType==='Staff PU' && pu.liab==='Committed');
     row._co = (!row._cs && pu.liab==='Committed');
     liabRows.push(row);
@@ -1362,17 +1393,19 @@ function downloadExcel() {
     'APR Actual','MAY Actual',
     cur.label+' till date exp',cur.label+' Remaining',cur.label+' Total',
     'JUL Proj','AUG Proj','SEP Proj','OCT Proj','NOV Proj','DEC Proj','JAN Proj','FEB Proj','MAR Proj',
-    'Budget (â‚¹\'000s)','Total Committed','Balance','% Used'];
+    'Budget (â‚¹\'000s)','Total Committed','Balance','% Used','Status'];
   const mwRows=[];
   PU_META.filter(p=>!p.isNeg).forEach(pu=>{
     const cv=compute(pu.code); const md=MONTH[pu.code]||{};
     const proj=Math.round(cv.projPerMonth);
     const pct=cv.utilisedFlag==='no-budget'?'No Budget':
                cv.utilisedPct!=null?parseFloat(cv.utilisedPct.toFixed(1))+'%':'Nil';
+    const status=isBudgetNoExpense(pu.code)?'BUDGET AVAILABLE, NO EXPENSES':'';
     const row=[pu.code,pu.desc,md.apr||0,md.may||0,
       cv.curCommitted,cv.curRemaining,cv.curMonthTotal,
       proj,proj,proj,proj,proj,proj,proj,proj,proj,
-      cv.budget,cv.totalCommitted,cv.balanceBudget,pct];
+      cv.budget,cv.totalCommitted,cv.balanceBudget,pct,status];
+    row._noexp=isBudgetNoExpense(pu.code);
     row._cs=(pu.puType==='Staff PU'&&pu.liab==='Committed');
     row._co=(!row._cs&&pu.liab==='Committed');
     mwRows.push(row);
@@ -1381,10 +1414,10 @@ function downloadExcel() {
   const mt={};
   mwRows.forEach(r=>{ [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].forEach(i=>mt[i]=(mt[i]||0)+(+r[i]||0)); });
   const mwTot=['','GRAND TOTAL',...[2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(i=>mt[i]),mt[16],mt[17],mt[18],
-    mt[16]?parseFloat((mt[17]/mt[16]*100).toFixed(1))+'%':'â€“'];
+    mt[16]?parseFloat((mt[17]/mt[16]*100).toFixed(1))+'%':'â€“',''];
   mwTot._tot=true; mwRows.push(mwTot);
   addSheet(wb,'Month Wise',HDR_TITLE,HDR_SUB,mwHdrs,mwRows,
-    [6,24,12,12,14,14,12,10,10,10,10,10,10,10,10,10,14,14,12,10]);
+    [6,24,12,12,14,14,12,10,10,10,10,10,10,10,10,10,14,14,12,10,28]);
 
   // â”€â”€ Sheet 3: RECOVERIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const r98=compute('98'); const m98=MONTH['98']||{};
@@ -1403,23 +1436,25 @@ function downloadExcel() {
 
   // â”€â”€ Sheet 4: PU MASTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const pmHdrs=['PU Code','Description','Type of PU','Type of Liability',
-    'BG_ISL Budget (â‚¹\'000s)','Budget (â‚¹ Cr)','Actuals Till Date (â‚¹\'000s)','Remaining Budget (â‚¹\'000s)','Remaining Budget (â‚¹ Cr)','% Utilised'];
+    'BG_ISL Budget (â‚¹\'000s)','Budget (â‚¹ Cr)','Actuals Till Date (â‚¹\'000s)','Remaining Budget (â‚¹\'000s)','Remaining Budget (â‚¹ Cr)','% Utilised','Status'];
   const pmRows=[];
   PU_META.forEach(pu=>{
     const bud=BUDGET[pu.code]||{}; const cv=compute(pu.code);
     const pct=cv.utilisedFlag==='no-budget'?'No Budget':
                cv.utilisedFlag==='none'?'Nil':
                cv.utilisedPct!=null?parseFloat(cv.utilisedPct.toFixed(1))+'%':'â€“';
+    const status=isBudgetNoExpense(pu.code)?'BUDGET AVAILABLE, NO EXPENSES':'';
     const row=[pu.code,pu.desc,pu.puType,pu.liab,
       bud.bg_isl||0,parseFloat(((bud.bg_isl||0)*1000/10000000).toFixed(2)),
-      bud.actuals_till||0,cv.balanceBudget,parseFloat((cv.balanceBudget*1000/10000000).toFixed(2)),pct];
+      bud.actuals_till||0,cv.balanceBudget,parseFloat((cv.balanceBudget*1000/10000000).toFixed(2)),pct,status];
+    row._noexp=isBudgetNoExpense(pu.code);
     row._cs=(pu.puType==='Staff PU'&&pu.liab==='Committed');
     row._co=(!row._cs&&pu.liab==='Committed');
     row._neg=pu.isNeg;
     pmRows.push(row);
   });
   addSheet(wb,'PU Master',HDR_TITLE,HDR_SUB,pmHdrs,pmRows,
-    [8,24,16,14,18,12,20,20,16,12]);
+    [8,24,16,14,18,12,20,20,16,12,28]);
 
   // Sheet 5: Dept SMH Analysis - visible report style, no internal raw JSON
   if (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) {
@@ -1431,7 +1466,7 @@ function downloadExcel() {
     const smhVisibleMonths = smhMonthKeys.slice(0, lastIdx + 1);
     const smhHeaders = ['Department','Demand','Primary Unit (PU)','Budget 2026-27 (₹000s)']
       .concat(smhVisibleMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)] + ' Actual (₹000s)'))
-      .concat(['Exp. Total (₹000s)','Balance Budget-Exp (₹000s)']);
+      .concat(['Exp. Total (₹000s)','Balance Budget-Exp (₹000s)','Status']);
     const smhRows = [];
     const depts = [...new Map(smhData.rows.map(r => [r.deptCode + '|' + r.deptName, r])).values()]
       .sort((a,b) => String(a.deptCode).localeCompare(String(b.deptCode), undefined, {numeric:true}));
@@ -1451,13 +1486,15 @@ function downloadExcel() {
           .sort((a,b) => String(a.puCode).localeCompare(String(b.puCode), undefined, {numeric:true}));
         demandRows.forEach(r => {
           const balance = (Number(r.budget) || 0) - (Number(r.actualTill) || 0);
-          smhRows.push([
+          const smhPuRow = [
             '',
             '',
             `PU - ${r.puCode} - ${r.puName}`,
             Number(r.budget) || 0
           ].concat(smhVisibleMonths.map(m => Number((r.months || {})[m]) || 0))
-           .concat([Number(r.actualTill) || 0, balance]));
+           .concat([Number(r.actualTill) || 0, balance, isSMHBudgetNoExpense(r) ? 'BUDGET AVAILABLE, NO EXPENSES' : '']);
+          smhPuRow._noexp = isSMHBudgetNoExpense(r);
+          smhRows.push(smhPuRow);
         });
         const demandTotal = makeDetailTotal(demandRows);
         const demandBalance = demandTotal.budget - demandTotal.actualTill;
@@ -1467,7 +1504,8 @@ function downloadExcel() {
           `Sub-Total: ${smh}`,
           demandTotal.budget
         ].concat(smhVisibleMonths.map(m => demandTotal.months[m] || 0))
-         .concat([demandTotal.actualTill, demandBalance]);
+         .concat([demandTotal.actualTill, demandBalance, isSMHBudgetNoExpense(demandTotal) ? 'BUDGET AVAILABLE, NO EXPENSES' : '']);
+        demandTotalRow._noexp = isSMHBudgetNoExpense(demandTotal);
         demandTotalRow._cs = true;
         smhRows.push(demandTotalRow);
       });
@@ -1478,12 +1516,13 @@ function downloadExcel() {
         `Total: ${dept.deptCode} - ${dept.deptName}`,
         deptTotal.budget
       ].concat(smhVisibleMonths.map(m => deptTotal.months[m] || 0))
-       .concat([deptTotal.actualTill, deptBalance]);
+       .concat([deptTotal.actualTill, deptBalance, isSMHBudgetNoExpense(deptTotal) ? 'BUDGET AVAILABLE, NO EXPENSES' : '']);
+      deptTotalRow._noexp = isSMHBudgetNoExpense(deptTotal);
       deptTotalRow._tot = true;
       smhRows.push(deptTotalRow);
     });
     addSheet(wb,'Dept SMH Analysis',HDR_TITLE,'Department > Demand > Primary Unit - Budget vs Expenditure',smhHeaders,smhRows,
-      [18,14,32,16].concat(smhVisibleMonths.map(()=>14)).concat([16,18]));
+      [18,14,32,16].concat(smhVisibleMonths.map(()=>14)).concat([16,18,28]));
   }
 
   XLSX.writeFile(wb, `Revenue_Liability_MBD_FY2026-27_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -2350,7 +2389,7 @@ function renderTrend(){
   // â”€â”€ Analytics Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const thead=document.getElementById('trendTHead'),tbody=document.getElementById('trendTBody');
   if(thead&&tbody){
-    thead.innerHTML='<tr><th style="text-align:left">PU</th><th style="text-align:left">Description</th><th>Type</th><th>Budget</th><th>Actuals CY</th><th>Util%</th><th>PY Actuals</th><th>YoY</th>'+MK.map((mk,i)=>'<th>'+ML[i]+'</th>').join('')+'<th>Total</th></tr>';
+    thead.innerHTML='<tr><th style="text-align:left">PU</th><th style="text-align:left">Description</th><th>Type</th><th>Budget</th><th>Actuals CY</th><th>Util%</th><th>Status</th><th>PY Actuals</th><th>YoY</th>'+MK.map((mk,i)=>'<th>'+ML[i]+'</th>').join('')+'<th>Total</th></tr>';
     tbody.innerHTML=activePUs.map(pu=>{
       const b=BUDGET[pu.code]||{},mo=MONTH[pu.code]||{},bpy=BUDGET_PY[pu.code]||{};
       const util=b.bg_isl?Math.round((b.actuals_till||0)/b.bg_isl*100):0;
@@ -2359,13 +2398,15 @@ function renderTrend(){
       const yoy=pyAct?((b.actuals_till||0)-pyAct)/Math.abs(pyAct)*100:null;
       const total=MK.reduce((s,mk)=>s+(mo[mk]||0),0);
       const isFocus=FOCUS_PUS.includes(pu.code);
-      return '<tr style="'+(isFocus?'background:#FFFBF0;':'')+(isFocus?'font-weight:600':'')+'">'+
+      const noExp = isBudgetNoExpense(pu.code);
+      return '<tr style="'+(noExp?'background:#FFF4C2;box-shadow:inset 4px 0 0 #B88700;':isFocus?'background:#FFFBF0;':'')+(isFocus?'font-weight:600':'')+'">'+
         '<td style="font-weight:700;color:#1C3A5E;cursor:pointer" onclick="openPUDetail(\''+pu.code+'\')">PU-'+pu.code+(isFocus?' â­':'')+'</td>'+
         '<td>'+pu.desc+'</td>'+
         '<td style="font-size:9px">'+(pu.puType==='Staff PU'?'<span style="color:#1A7A4A">Staff</span>':'<span style="color:#1A4E9A">Non-Staff</span>')+'</td>'+
         '<td>'+fN(b.bg_isl||0)+'</td>'+
         '<td>'+fN(b.actuals_till||0)+'</td>'+
         '<td style="color:'+uC+';font-weight:700">'+util+'%</td>'+
+        '<td class="no-exp-status">'+htmlSafe(noExpenseStatus(noExp))+'</td>'+
         '<td>'+fN(pyAct)+'</td>'+
         '<td style="color:'+(yoy===null?'#888':yoy>=0?'#CC0000':'#1A7A4A')+';font-weight:700">'+(yoy===null?'â€”':(yoy>=0?'+':'')+yoy.toFixed(1)+'%')+'</td>'+
         MK.map((mk,i)=>{const v=mo[mk]||0;const isCur=i===CUR_IDX,isFut=i>CUR_IDX;return '<td style="'+(v>0&&isCur?'background:#FFF8E0;font-weight:700;':'')+(isFut?'color:#B0C0D8;':'')+'font-size:9px">'+(v>0?v.toLocaleString('en-IN'):'<span style="color:#ddd">â€”</span>')+'</td>';}).join('')+
@@ -2402,6 +2443,7 @@ function renderMonthwise() {
         <th>Committed<br>Till Date</th>
         <th>Balance<br>Budget</th>
         <th>%<br>Used</th>
+        <th>Status</th>
       </tr>`;
   }
 
@@ -2429,6 +2471,7 @@ function renderMonthwise() {
 
     const util = Math.min(100, c.utilisedPct);
     const col = utilColor(util);
+    const noExp = isBudgetNoExpense(pu.code);
     let futureCells = futureMonths.map(() => `<td class="n" style="color:#1A4A8A;background:#F0F6FF">${fmtT(proj)}</td>`).join('');
     if (futurePadCount) futureCells += '<td class="n" style="color:#aaa">-</td>'.repeat(futurePadCount);
     const balCls = c.balanceBudget < 0 ? 'neg' : c.balanceBudget < c.budget * 0.1 ? 'low' : 'ok';
@@ -2444,6 +2487,7 @@ function renderMonthwise() {
       <td class="n" style="font-weight:700">${fmtT(c.totalCommitted)}</td>
       <td class="n rem ${balCls}">${fmtT(c.balanceBudget)}</td>
       <td>${miniProg(util, col)}</td>
+      <td class="no-exp-status">${htmlSafe(noExpenseStatus(noExp))}</td>
     </tr>`;
   });
 
@@ -2464,6 +2508,7 @@ function renderMonthwise() {
     <td class="n">${fmtT(tots.tC)}</td>
     <td class="n rem ${tots.tBal < 0 ? 'neg' : 'ok'}">${fmtT(tots.tBal)}</td>
     <td>${miniProg(Math.min(100, tUtil), utilColor(tUtil))}</td>
+    <td>-</td>
   </tr>`;
   document.getElementById('mw-tbody').innerHTML = rows;
 }
