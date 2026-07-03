@@ -148,6 +148,7 @@
   <div class="tab" onclick="switchTab('pumaster')">📋 PU Master</div>
   <div class="tab" onclick="switchTab('trend')">📈 Trend Analysis Graphs</div>
   <div class="tab" onclick="switchTab('aitrend')">🧠 AI Trend Analysis Summary</div>
+  <div class="tab" onclick="switchTab('smhdetail')">🏛 Dept SMH Analysis</div>
   <div class="tab" id="uploadTab" onclick="switchTab('upload')" style="display:none">📤 Data Upload</div>
 </div>
 
@@ -290,6 +291,35 @@
       </div>
     </div>
 
+    <div style="margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #1A7A4A;display:flex;align-items:center;gap:8px">
+      <span style="background:#0E5A3A;color:#DFF2EA;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">DEPARTMENT / SMH DETAIL - CURRENT YEAR</span>
+      <span style="font-size:9px;color:#1A7A4A;font-weight:700">Used for Dept SMH Analysis tab</span>
+    </div>
+    <div class="upload-cards" style="margin-top:10px">
+      <div class="upload-card" style="border-top:3px solid #1A7A4A">
+        <h3>Department SMH Budget - CY 2026-27</h3>
+        <p>Upload <strong>Department - SMH - PU wise Budget</strong> for FY 2026-27.<br>Skips Department 00 and PU-98 automatically.</p>
+        <div class="drop-zone" id="dz-smhbudget-cy" ondragover="dzDrag(event,'smhbudget-cy')" ondragleave="dzLeave('smhbudget-cy')" ondrop="dzDrop(event,'smhbudget-cy')">
+          <input type="file" id="inp-smhbudget-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'smhbudget','cy')">
+          <span class="dz-icon" id="dz-smhbudget-cy-icon">ðŸ“‚</span>
+          <div class="dz-text">Click or Drag &amp; Drop</div>
+          <div class="dz-sub">.xls or .xlsx</div>
+          <div class="dz-status" id="dz-smhbudget-cy-status"></div>
+        </div>
+      </div>
+      <div class="upload-card" style="border-top:3px solid #1A7A4A">
+        <h3>Department SMH Month-wise Actuals - CY 2026-27</h3>
+        <p>Upload <strong>Department - SMH - PU wise Month Wise</strong> actuals.<br>Refreshes Department, Demand and PU-wise report.</p>
+        <div class="drop-zone" id="dz-smhmonth-cy" ondragover="dzDrag(event,'smhmonth-cy')" ondragleave="dzLeave('smhmonth-cy')" ondrop="dzDrop(event,'smhmonth-cy')">
+          <input type="file" id="inp-smhmonth-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'smhmonth','cy')">
+          <span class="dz-icon" id="dz-smhmonth-cy-icon">ðŸ“‚</span>
+          <div class="dz-text">Click or Drag &amp; Drop</div>
+          <div class="dz-sub">.xls or .xlsx</div>
+          <div class="dz-status" id="dz-smhmonth-cy-status"></div>
+        </div>
+      </div>
+    </div>
+
     <div style="margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid #607080;display:flex;align-items:center;gap:8px">
       <span style="background:#394A5E;color:#A8C0D8;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">📅 FY 2025-26 — PREVIOUS YEAR (for Trend Comparison)</span>
       <span style="font-size:9px;color:#1A7A4A;font-weight:700">✅ Pre-loaded from static file</span>
@@ -416,10 +446,49 @@
   </div>
 </div>
 
+<div class="tab-content" id="tab-smhdetail">
+  <div class="smh-wrap">
+    <div class="smh-head">
+      <div>
+        <div class="smh-title">Department > SMH > Primary Unit Analysis</div>
+        <div class="smh-sub">Current year detailed budget vs actual expenditure, excluding Department 00 and PU-98 recoveries</div>
+      </div>
+      <div class="smh-controls">
+        <select class="trend-sel" id="smhDeptFilter" onchange="renderSMHDetail()">
+          <option value="all">All Departments</option>
+        </select>
+        <select class="trend-sel" id="smhCodeFilter" onchange="renderSMHDetail()">
+          <option value="all">All Demand</option>
+        </select>
+        <select class="trend-sel" id="smhPUFilter" onchange="renderSMHDetail()">
+          <option value="all">All PU</option>
+        </select>
+        <select class="trend-sel" id="smhViewMode" onchange="renderSMHDetail()">
+          <option value="report">Report Format</option>
+          <option value="dept">Department Summary</option>
+          <option value="smh">SMH Summary</option>
+          <option value="pu">PU Detail</option>
+        </select>
+      </div>
+    </div>
+    <div class="smh-kpis" id="smhKpis"></div>
+    <div class="smh-table-wrap">
+      <div class="smh-table-title" id="smhTableTitle">Budget vs Expenditure Report</div>
+      <div class="smh-scroll">
+        <table class="smh-table">
+          <thead id="smhDetailHead"></thead>
+          <tbody id="smhDetailBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div style="text-align:center;padding:10px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
   Revenue Liability Portal &nbsp;•&nbsp; Moradabad Division / Northern Railway &nbsp;•&nbsp; FY 2026-27 &nbsp;•&nbsp; For Official Use Only
 </div>
 
+<script src="assets/js/detail-data.js"></script>
 <script src="assets/js/app.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
