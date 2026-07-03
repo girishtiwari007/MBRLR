@@ -901,7 +901,6 @@ function renderPUMaster() {
 function switchTab(name) {
   if(name==='trend'){setTimeout(renderTrend,80);}
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
-  if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
   const ids = ['liability','monthwise','pumaster','trend','aitrend','smhdetail','upload'];
   document.querySelectorAll('.tab').forEach((t,i) => {
     t.classList.toggle('active', ids[i]===name);
@@ -911,6 +910,7 @@ function switchTab(name) {
   });
   if(_pp){ _pp.style.opacity='0'; _pp.style.transform='translateY(6px)'; }
   if(name==='upload') renderCurDataGrid();
+  if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
 }
 
 function textCr(n) {
@@ -1155,10 +1155,11 @@ function renderSMHReportRows(rows, monthKeys) {
 }
 
 function renderSMHDetail() {
-  const data = window.DETAIL_SMH_DATA;
   const head = document.getElementById('smhDetailHead');
   const body = document.getElementById('smhDetailBody');
   if (!head || !body) return;
+  try {
+  const data = window.DETAIL_SMH_DATA;
   if (!data || !Array.isArray(data.rows)) {
     body.innerHTML = '<tr><td colspan="10">Detailed SMH data file not loaded.</td></tr>';
     return;
@@ -1232,6 +1233,11 @@ function renderSMHDetail() {
       <td>${r.budget ? ((r.actualTill / r.budget) * 100).toFixed(1) : '0.0'}%</td>
     </tr>`;
   }).join('');
+  } catch (err) {
+    console.error('SMH detail render failed', err);
+    head.innerHTML = '<tr><th>Department</th><th>Demand</th><th>Primary Unit (PU)</th><th>Status</th></tr>';
+    body.innerHTML = `<tr><td colspan="4" style="color:#9B0000;font-weight:700;padding:14px">Could not render Dept SMH Analysis: ${htmlSafe(err.message || err)}</td></tr>`;
+  }
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -2483,6 +2489,7 @@ initBlockStyle();
 loadCYUploadState();
 initSMHDetailFilters();
 renderAll();
+setTimeout(renderSMHDetail, 120);
 (function(){
   const sel=document.getElementById('trendPUSelect'); if(!sel) return;
   PU_META.filter(p=>!p.isNeg).forEach(pu=>{
