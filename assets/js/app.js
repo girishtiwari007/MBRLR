@@ -8,11 +8,15 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
+const ASSET_VERSION = '20260706-compactbar';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
   const link = document.getElementById('themeStylesheet');
-  if (link) link.setAttribute('href', PORTAL_THEMES[theme]);
+  if (link) {
+    const href = PORTAL_THEMES[theme];
+    link.setAttribute('href', href ? `${href}?v=${ASSET_VERSION}` : '');
+  }
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('rlp_theme', theme);
   const sel = document.getElementById('themeSelect');
@@ -20,8 +24,7 @@ function setPortalTheme(themeName) {
 }
 
 function initPortalTheme() {
-  const savedTheme = localStorage.getItem('rlp_theme');
-  setPortalTheme(savedTheme && savedTheme !== 'default' ? savedTheme : 'digital-india');
+  setPortalTheme('digital-india');
 }
 
 function setBlockStyle(styleName) {
@@ -33,7 +36,7 @@ function setBlockStyle(styleName) {
 }
 
 function initBlockStyle() {
-  setBlockStyle(localStorage.getItem('rlp_block_style') || 'flat');
+  setBlockStyle('raised');
 }
 
 function initPopup() {
@@ -75,6 +78,7 @@ async function doLogin() {
     setTimeout(()=>err.textContent='', 3000);
     return;
   }
+  sessionStorage.setItem('rlp_auth', user);
   document.getElementById('loginOverlay').classList.add('hidden');
   if (user === 'ADMIN') {
     document.getElementById('uploadTab').style.display = '';
@@ -83,9 +87,16 @@ async function doLogin() {
   setTimeout(()=>{addDualScroll();attachPUPopup();},100);
 }
 
-// Always require sign-in on page open. This prevents a previous browser session
-// from opening the dashboard directly.
-sessionStorage.removeItem('rlp_auth');
+function restoreLoginSession() {
+  const user = sessionStorage.getItem('rlp_auth');
+  if (!user || !AUTH_DIGESTS[user]) return;
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) overlay.classList.add('hidden');
+  if (user === 'ADMIN') {
+    const uploadTab = document.getElementById('uploadTab');
+    if (uploadTab) uploadTab.style.display = '';
+  }
+}
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MASTER DATA - from uploaded files (figures in Rs '000s)
@@ -155,6 +166,29 @@ const PU_META = [
   // PU-98: Recoveries - kept in data for Recovery tab reference only
   {code:'98',desc:'Credit or Recoveries',puType:'Staff PU',liab:'Recovery',isNeg:true},
 ];
+
+const SKIPPED_DISPLAY_PUS = new Set(['72','73','74','75']);
+function normPUCode(code) {
+  return String(code == null ? '' : code).trim().padStart(2, '0');
+}
+function isSkippedDisplayPU(code) {
+  return SKIPPED_DISPLAY_PUS.has(normPUCode(code));
+}
+function isActiveDisplayPU(pu) {
+  return !!pu && !pu.isNeg && !isSkippedDisplayPU(pu.code);
+}
+function activePUMeta() {
+  return PU_META.filter(isActiveDisplayPU);
+}
+
+const SOURCE_REGISTER = {
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'Pre-loaded Budget Available file (CY static portal data)', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'Pre-loaded Month-wise Actuals file (CY static portal data)', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis'},
+  budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
+  monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
+  smhBudgetCY: {label:'Department / SMH Budget Available', fy:'2026-2027', source:'BudgetReport - 03-07-2026 15-17-44-SMH wise Budget.xls', used:'Dept SMH Analysis'},
+  smhMonthCY: {label:'Department / SMH Month-wise Actuals', fy:'2026-2027', source:'BudgetReport - 03-07-2026 15-45-38 SMH Month Wise.xls', used:'Dept SMH Analysis'}
+};
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
 let BUDGET = {
@@ -527,8 +561,10 @@ function miniProg(val, color) {
 }
 function utilColor(p) { if(p===null||p===undefined||isNaN(p)) return '#CC0000'; p=Math.abs(p); return p < 30 ? '#1A7A4A' : p < 60 ? '#C07000' : p < 85 ? '#E85D04' : '#CC0000'; }
 function isBudgetNoExpense(code) {
+  const meta = PU_META.find(p => p.code === code);
+  if (!isActiveDisplayPU(meta)) return false;
   const c = compute(code);
-  return !PU_META.find(p => p.code === code)?.isNeg && c.budget > 0 && Math.abs(c.totalCommitted || 0) === 0;
+  return c.budget > 0 && Math.abs(c.totalCommitted || 0) === 0;
 }
 function getRowClass(pu) {
   if (pu.isNeg) return 'neg-row';
@@ -558,8 +594,7 @@ function getFiltered() {
   const uc = document.getElementById('utilCompare') ? document.getElementById('utilCompare').value : 'all';
   const uvRaw = document.getElementById('utilPctFilter') ? document.getElementById('utilPctFilter').value : '';
   const uv = uvRaw === '' ? null : Number(uvRaw);
-  return PU_META.filter(pu => {
-    if (pu.isNeg) return false; // PU-98 shown only in Recoveries tab
+  return activePUMeta().filter(pu => {
     if (tf !== 'all') {
       if (tf === 'Staff'     && pu.puType !== 'Staff PU')     return false;
       if (tf === 'Non Staff' && pu.puType !== 'Non Staff PU') return false;
@@ -580,7 +615,7 @@ function getFiltered() {
 // SUMMARY CARDS
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function renderCards() {
-  const pus = PU_META.filter(p=>!p.isNeg);
+  const pus = activePUMeta();
   let totB=0, totC=0, totBal=0;
   pus.forEach(pu => {
     const c = compute(pu.code);
@@ -662,8 +697,7 @@ function renderJuneBars() {
   if (el) el.textContent = `${cur.label} ${cur.year} - till date exp`;
 
   let html = '';
-  const showPUs = PU_META
-    .filter(p => !p.isNeg)
+  const showPUs = activePUMeta()
     .map(p => ({p, c:compute(p.code)}))
     .filter(({c}) => c.budget !== 0 || c.totalCommitted !== 0)
     .sort((a,b) => {
@@ -908,8 +942,7 @@ function renderPUMaster() {
 function initBPFilter() {
   const list = document.getElementById('bpPUFilter');
   if (!list || list.dataset.ready === '1') return;
-  list.innerHTML = PU_META
-    .filter(p => !p.isNeg)
+  list.innerHTML = activePUMeta()
     .map(p => `<label class="bp-check-item">
       <input type="checkbox" class="bp-pu-check" value="${p.code}" onchange="onBPPUChange()">
       <span><strong>PU-${p.code}</strong> ${htmlSafe(p.desc)}</span>
@@ -968,7 +1001,7 @@ function bpSelectedCodes() {
 function buildBPRows() {
   const {actualMonths} = getMonthStatus();
   const actualMonthCount = actualMonths.length;
-  return PU_META.filter(p => !p.isNeg).map(pu => {
+  return activePUMeta().map(pu => {
     const budget = getBudget(pu.code);
     const source = BUDGET[pu.code] || {};
     const actual = Number(source.actuals_till);
@@ -1078,14 +1111,107 @@ function renderBPAnalysis() {
   </tr>`;
 }
 
+function activeTabName() {
+  const active = document.querySelector('.tab-content.active');
+  return active ? active.id.replace('tab-', '') : 'liability';
+}
+
+function showFilterAlert(message) {
+  let box = document.getElementById('filterAlert');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'filterAlert';
+    box.className = 'filter-alert';
+    document.body.appendChild(box);
+  }
+  box.textContent = message;
+  box.classList.add('show');
+  clearTimeout(showFilterAlert._timer);
+  showFilterAlert._timer = setTimeout(() => box.classList.remove('show'), 3200);
+}
+
+function resetTopFilters() {
+  const defaults = {
+    typeFilter: 'all',
+    liabFilter: 'all',
+    activityFilter: 'all',
+    utilCompare: 'all',
+    utilPctFilter: ''
+  };
+  Object.entries(defaults).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
+}
+
+function resetTrendFilters() {
+  const pu = document.getElementById('trendPUSelect');
+  const chart = document.getElementById('trendChartType');
+  const top = document.getElementById('trendTopN');
+  const py = document.getElementById('trendShowPY');
+  const useBP = document.getElementById('trendUseBPPU');
+  if (pu) pu.value = 'ALL';
+  if (chart) chart.value = 'monthly';
+  if (top) top.value = '10';
+  if (py) py.checked = true;
+  if (useBP) useBP.checked = false;
+}
+
+function resetAITrendFilters() {
+  const scope = document.getElementById('aiTrendScope');
+  if (scope) scope.value = 'priority';
+}
+
+function resetSMHFilters() {
+  ['smhDeptFilter','smhCodeFilter','smhPUFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = 'all';
+  });
+  const mode = document.getElementById('smhViewMode');
+  if (mode) mode.value = 'report';
+}
+
+function resetBPFilters() {
+  const all = document.getElementById('bpPUAll');
+  if (all) all.checked = true;
+  document.querySelectorAll('#bpPUFilter .bp-pu-check').forEach(ch => { ch.checked = false; });
+  ['bpStatusFilter','bpTypeFilter','bpLiabilityFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = 'all';
+  });
+  updateBPSelectionCount();
+}
+
+function resetFiltersForNavigation() {
+  resetTopFilters();
+  resetTrendFilters();
+  resetAITrendFilters();
+  resetSMHFilters();
+  resetBPFilters();
+}
+
+function handleTopFilterChange(sourceLabel) {
+  const tab = activeTabName();
+  const supported = ['liability','monthwise','pumaster','smhdetail'];
+  if (!supported.includes(tab)) {
+    resetTopFilters();
+    showFilterAlert(`${sourceLabel || 'This filter'} is not used on the current tab. Please use this page's own filters.`);
+    return;
+  }
+  renderAll();
+  if (tab === 'smhdetail' && typeof renderSMHDetail === 'function') renderSMHDetail();
+}
+
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // TABS
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function switchTab(name) {
+  if (name !== activeTabName()) resetFiltersForNavigation();
   if(name==='trend'){setTimeout(renderTrend,80);}
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
   if(name==='bpanalysis'){setTimeout(renderBPAnalysis,80);}
-  const ids = ['liability','monthwise','pumaster','trend','aitrend','bpanalysis','smhdetail','upload'];
+  if(name==='remarks'){setTimeout(renderRemarks,80);}
+  const ids = ['liability','monthwise','pumaster','trend','aitrend','bpanalysis','smhdetail','remarks','upload'];
   document.querySelectorAll('.tab').forEach((t,i) => {
     t.classList.toggle('active', ids[i]===name);
   });
@@ -1093,6 +1219,7 @@ function switchTab(name) {
     tc.classList.toggle('active', tc.id==='tab-'+name);
   });
   if(_pp){ _pp.style.opacity='0'; _pp.style.transform='translateY(6px)'; }
+  if(['liability','monthwise','pumaster'].includes(name)){setTimeout(renderAll,50);}
   if(name==='upload') renderCurDataGrid();
   if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
 }
@@ -1128,7 +1255,7 @@ function trendRiskClass(item) {
 
 function includeInAITrendSummary(pu) {
   const isCommittedStaff = pu.puType === 'Staff PU' && String(pu.liab).includes('Committed');
-  return !pu.isNeg && !isCommittedStaff;
+  return isActiveDisplayPU(pu) && !isCommittedStaff;
 }
 
 function buildAITrendItems() {
@@ -1331,14 +1458,15 @@ function initSMHDetailFilters() {
   const smhSel = document.getElementById('smhCodeFilter');
   const puSel = document.getElementById('smhPUFilter');
   if (!data || !deptSel || !smhSel || !puSel || deptSel.dataset.ready === 'yes') return;
-  const depts = [...new Map(data.rows.map(r => [r.deptCode + '|' + r.deptName, r])).values()]
+  const detailRows = data.rows.filter(r => !isSkippedDisplayPU(r.puCode));
+  const depts = [...new Map(detailRows.map(r => [r.deptCode + '|' + r.deptName, r])).values()]
     .sort((a,b) => String(a.deptCode).localeCompare(String(b.deptCode), undefined, {numeric:true}));
   deptSel.innerHTML = '<option value="all">All Departments</option>' +
     depts.map(r => `<option value="${htmlSafe(r.deptCode)}">${htmlSafe(r.deptCode)} - ${htmlSafe(r.deptName)}</option>`).join('');
-  const smhs = [...new Set(data.rows.map(r => r.smh))].sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
+  const smhs = [...new Set(detailRows.map(r => r.smh))].sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
   smhSel.innerHTML = '<option value="all">All Demand</option>' +
     smhs.map(s => `<option value="${htmlSafe(s)}">${htmlSafe(s)}</option>`).join('');
-  const pus = [...new Map(data.rows.map(r => [r.puCode + '|' + r.puName, r])).values()]
+  const pus = [...new Map(detailRows.map(r => [r.puCode + '|' + r.puName, r])).values()]
     .sort((a,b) => String(a.puCode).localeCompare(String(b.puCode), undefined, {numeric:true}));
   puSel.innerHTML = '<option value="all">All PU</option>' +
     pus.map(r => `<option value="${htmlSafe(r.puCode)}">PU-${htmlSafe(r.puCode)} - ${htmlSafe(r.puName)}</option>`).join('');
@@ -1476,6 +1604,7 @@ function renderSMHDetail() {
   lastActualIdx = Math.max(2, lastActualIdx);
   const visibleMonthKeys = monthKeys.slice(0, Math.min(4, lastActualIdx + 1));
   const rows = data.rows.filter(r =>
+    !isSkippedDisplayPU(r.puCode) &&
     (dept === 'all' || r.deptCode === dept) &&
     (smh === 'all' || r.smh === smh) &&
     (puFilter === 'all' || r.puCode === puFilter) &&
@@ -1633,7 +1762,7 @@ function downloadExcel() {
     'Total Committed (Rs\'000s)','Balance Budget (Rs\'000s)','Proj/Month (Rs\'000s)',
     '% Utilised','Status'];
   const liabRows=[];
-  PU_META.filter(p=>!p.isNeg).forEach(pu=>{
+  activePUMeta().forEach(pu=>{
     const cv=compute(pu.code); const md=MONTH[pu.code]||{};
     const apr=md.apr||0, may=md.may||0;
     const pctStr=cv.utilisedFlag==='no-budget'?'No Budget - Excess Spend':
@@ -1676,7 +1805,7 @@ function downloadExcel() {
     'JUL Proj','AUG Proj','SEP Proj','OCT Proj','NOV Proj','DEC Proj','JAN Proj','FEB Proj','MAR Proj',
     'Budget (Rs\'000s)','Total Committed','Balance','% Used','Status'];
   const mwRows=[];
-  PU_META.filter(p=>!p.isNeg).forEach(pu=>{
+  activePUMeta().forEach(pu=>{
     const cv=compute(pu.code); const md=MONTH[pu.code]||{};
     const proj=Math.round(cv.projPerMonth);
     const pct=cv.utilisedFlag==='no-budget'?'No Budget':
@@ -1719,7 +1848,7 @@ function downloadExcel() {
   const pmHdrs=['PU Code','Description','Type of PU','Type of Liability',
     'BG_ISL Budget (Rs\'000s)','Budget (Rs Cr)','Actuals Till Date (Rs\'000s)','Remaining Budget (Rs\'000s)','Remaining Budget (Rs Cr)','% Utilised','Status'];
   const pmRows=[];
-  PU_META.forEach(pu=>{
+  PU_META.filter(pu => !isSkippedDisplayPU(pu.code)).forEach(pu=>{
     const bud=BUDGET[pu.code]||{}; const cv=compute(pu.code);
     const pct=cv.utilisedFlag==='no-budget'?'No Budget':
                cv.utilisedFlag==='none'?'Nil':
@@ -1766,6 +1895,7 @@ function downloadExcel() {
   // Sheet 6: Dept SMH Analysis - visible report style, no internal raw JSON
   if (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) {
     const smhData = window.DETAIL_SMH_DATA;
+    const smhExportRows = smhData.rows.filter(r => !isSkippedDisplayPU(r.puCode));
     const smhMonthKeys = smhData.monthKeys || FY_MONTHS;
     let lastIdx = 2;
     smhMonthKeys.forEach((m, idx) => { if (((smhData.totals || {}).months || {})[m]) lastIdx = idx; });
@@ -1775,10 +1905,10 @@ function downloadExcel() {
       .concat(smhVisibleMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)] + " Actual (Rs'000s)"))
       .concat(["Exp. Total (Rs'000s)","Balance Budget-Exp (Rs'000s)",'Status','BP Status','BP Remark']);
     const smhRows = [];
-    const depts = [...new Map(smhData.rows.map(r => [r.deptCode + '|' + r.deptName, r])).values()]
+    const depts = [...new Map(smhExportRows.map(r => [r.deptCode + '|' + r.deptName, r])).values()]
       .sort((a,b) => String(a.deptCode).localeCompare(String(b.deptCode), undefined, {numeric:true}));
     depts.forEach(dept => {
-      const deptRows = smhData.rows.filter(r => r.deptCode === dept.deptCode);
+      const deptRows = smhExportRows.filter(r => r.deptCode === dept.deptCode);
       const deptTotal = makeDetailTotal(deptRows);
       const deptHeader = [`${dept.deptCode} - ${dept.deptName}`,'',''].concat(Array(smhHeaders.length - 3).fill(''));
       deptHeader._tot = true;
@@ -2266,7 +2396,7 @@ function parseSMHDetailUpload(rows, kind) {
     const dept = smhDeptParts(row[deptC]);
     const pu = smhPUParts(row[puC]);
     const smh = smhNorm(row[smhC]);
-    if (!dept.code || dept.code === '00' || !pu || pu.code === '98' || !smh) continue;
+    if (!dept.code || dept.code === '00' || !pu || pu.code === '98' || isSkippedDisplayPU(pu.code) || !smh) continue;
     const key = smhKeyFromParts(dept, smh, pu);
     if (!map[key]) {
       map[key] = {deptCode:dept.code, deptName:dept.name, smh, puCode:pu.code, puName:pu.name, budget:0, actualTill:0, months:smhEmptyMonths()};
@@ -2412,7 +2542,25 @@ function addLog(fileType, filename, puCount, monthDetected) {
     fileType, filename, puCount, monthDetected,
     at: new Date().toLocaleString('en-IN')
   });
+  updateSourceRegisterFromUpload(fileType, filename, puCount, monthDetected);
   renderUploadLog();
+}
+
+function updateSourceRegisterFromUpload(fileType, filename, puCount, monthDetected) {
+  const key = fileType.includes('SMH Budget') ? 'smhBudgetCY'
+    : fileType.includes('SMH Month') ? 'smhMonthCY'
+    : fileType.includes('Budget CY') ? 'budgetCY'
+    : fileType.includes('Month Wise CY') ? 'monthCY'
+    : fileType.includes('Budget PY') ? 'budgetPY'
+    : fileType.includes('Month Wise PY') ? 'monthPY'
+    : '';
+  if (!key || !SOURCE_REGISTER[key]) return;
+  SOURCE_REGISTER[key].source = filename || SOURCE_REGISTER[key].source;
+  SOURCE_REGISTER[key].remarks = [
+    'Uploaded from IPAS download in this browser session',
+    puCount ? `${puCount} rows/PUs parsed` : '',
+    monthDetected ? `latest month detected: ${monthDetected}` : ''
+  ].filter(Boolean).join('; ');
 }
 
 function renderUploadLog() {
@@ -2499,6 +2647,7 @@ function applyUploads() {
   if(hadCYUpdate) saveCYUploadState();
   renderAll();
   renderCurDataGrid();
+  renderRemarks();
   renderUploadLog();
   if(typeof renderTrend==='function') renderTrend();
   if(hadSMHUpdate && typeof renderSMHDetail==='function') renderSMHDetail();
@@ -2526,7 +2675,7 @@ function applyUploads() {
 
 function renderCurDataGrid() {
   const {cur,futureMonths} = getMonthStatus();
-  const pus = PU_META.filter(p=>!p.isNeg);
+  const pus = activePUMeta();
   let totB=0,totC=0;
   pus.forEach(p=>{const cv=compute(p.code);totB+=cv.budget;totC+=cv.totalCommitted;});
   const grid=document.getElementById('curDataGrid');
@@ -2542,6 +2691,75 @@ function renderCurDataGrid() {
     <div class="cdb-item"><div class="cdb-lbl">Remaining Months</div><div class="cdb-val">${futureMonths.length}</div></div>
     <div class="cdb-item"><div class="cdb-lbl">Budget Mode</div><div class="cdb-val" style="font-size:10px">${isRGActive()?'OK RG Active':'BG_ISL'}</div></div>
   `;
+}
+
+function renderRemarks() {
+  const kpiWrap = document.getElementById('remarksKpis');
+  const sourceBody = document.getElementById('remarksSourceBody');
+  const ruleBody = document.getElementById('remarksRuleBody');
+  const puBody = document.getElementById('remarksPUBody');
+  if (!kpiWrap || !sourceBody || !ruleBody || !puBody) return;
+
+  const activePus = activePUMeta();
+  const gstExcluded = PU_META.filter(pu => isSkippedDisplayPU(pu.code));
+  const recoveryPU = PU_META.find(pu => pu.code === '98');
+  const staffCommitted = PU_META.filter(pu => pu.puType === 'Staff PU' && String(pu.liab).includes('Committed') && !pu.isNeg);
+  const smhRows = (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) ? window.DETAIL_SMH_DATA.rows : [];
+  const smhVisibleRows = smhRows.filter(r => !isSkippedDisplayPU(r.puCode) && normPUCode(r.puCode) !== '98');
+  const {cur, actualMonths} = getMonthStatus();
+
+  kpiWrap.innerHTML = [
+    ['Current Year Used', '2026-2027', 'CY budget and actual files'],
+    ['Previous Year Used', '2025-2026', 'PY comparison base'],
+    ['Visible PU Count', activePus.length, 'after display exclusions'],
+    ['Actual Months', actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ') || 'None', `current running month: ${cur.label} ${cur.year}`],
+    ['SMH Rows Used', smhVisibleRows.length, 'after Dept 00, PU-98 and GST display rules'],
+    ['Excluded PU Codes', '72, 73, 74, 75, 98', 'GST and recoveries display rules']
+  ].map(([label, value, note]) => `
+    <div class="remarks-kpi">
+      <span>${htmlSafe(label)}</span>
+      <strong>${htmlSafe(value)}</strong>
+      <em>${htmlSafe(note)}</em>
+    </div>`).join('');
+
+  sourceBody.innerHTML = Object.values(SOURCE_REGISTER).map(row => `
+    <tr>
+      <td><strong>${htmlSafe(row.label)}</strong></td>
+      <td>${htmlSafe(row.fy)}</td>
+      <td class="remarks-source-file">${htmlSafe(row.source)}</td>
+      <td>${htmlSafe(row.used)}</td>
+      <td>${htmlSafe(row.remarks || 'Static/pre-loaded portal data unless replaced through Data Upload.')}</td>
+    </tr>`).join('');
+
+  const aiSkipCodes = staffCommitted.map(pu => `PU-${pu.code}`).join(', ');
+  ruleBody.innerHTML = [
+    ['Department skip from IPAS detail file', 'DEPARTMENTCODE = 00', 'Dept SMH Analysis import/parsing', 'Department 00 rows are treated as non-operational/control rows and are not included in detail display.'],
+    ['Credit / recovery skip', 'PU-98 Credit or Recoveries', 'All normal budget/expense display; kept separately for recovery reference/export', 'Recoveries are negative/credit nature and are not mixed with expenditure analysis.'],
+    ['GST PU display skip', 'PU-72 CGST, PU-73 SGST, PU-74 UTGST, PU-75 IGST', 'All visible tabs/tables and analysis pages', 'These are tax adjustment heads and are excluded from operational expenditure view.'],
+    ['AI Trend committed staff skip', aiSkipCodes, 'AI Trend Analysis Summary only', 'Staff committed liability is regular payroll type spending, so AI Trend focuses on controllable/non-committed pressure.'],
+    ['Budget source rule', isRGActive() ? 'RG active' : 'RG not active - BG_ISL used', 'Budget values across portal', isRGActive() ? 'Revised Grant is being used because RG values are active.' : 'Budget calculations are currently based on BG_ISL.']
+  ].map(([rule, codes, where, clarification]) => `
+    <tr>
+      <td><strong>${htmlSafe(rule)}</strong></td>
+      <td>${htmlSafe(codes)}</td>
+      <td>${htmlSafe(where)}</td>
+      <td>${htmlSafe(clarification)}</td>
+    </tr>`).join('');
+
+  const excludedPus = [...gstExcluded, recoveryPU].filter(Boolean);
+  puBody.innerHTML = excludedPus.map(pu => {
+    const bud = BUDGET[pu.code] || {};
+    const reason = pu.code === '98'
+      ? 'Credit or Recoveries - shown separately, excluded from normal expense view'
+      : 'GST tax head - excluded from operational display';
+    return `<tr>
+      <td><strong>PU-${htmlSafe(pu.code)}</strong></td>
+      <td>${htmlSafe(pu.desc)}</td>
+      <td class="n">${fmtT(Number(bud.bg_isl) || 0)}</td>
+      <td class="n">${fmtT(Number(bud.actuals_till) || 0)}</td>
+      <td>${htmlSafe(reason)}</td>
+    </tr>`;
+  }).join('');
 }
 
 
@@ -2567,7 +2785,7 @@ function renderTrend(){
   const actualDoneIdxs = monthStatus.actualMonths.map(m => MK.indexOf(m)).filter(i => i >= 0);
   if (!actualDoneIdxs.includes(CUR_IDX)) actualDoneIdxs.push(CUR_IDX);
   const ML_S=['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
-  const activePUs=PU_META.filter(p=>!p.isNeg);
+  const activePUs=activePUMeta();
   const trendSelectedCodes = useBPSelection ? bpSelectedCodes() : (puSel === 'ALL' ? ['all'] : [puSel]);
   const puList=trendSelectedCodes.includes('all')
     ? activePUs
@@ -2832,6 +3050,7 @@ function renderAll() {
   renderMonthwise();
   renderPUMaster();
   renderBPAnalysis();
+  renderRemarks();
   document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'RG not active - using BG_ISL';
   const {cur:_cur}=getMonthStatus();
   const _cmb=document.getElementById('curMonBadge'); if(_cmb) _cmb.textContent=_cur.label+' '+_cur.year;
@@ -2845,11 +3064,12 @@ initPortalTheme();
 initBlockStyle();
 loadCYUploadState();
 initSMHDetailFilters();
+restoreLoginSession();
 renderAll();
 setTimeout(renderSMHDetail, 120);
 (function(){
   const sel=document.getElementById('trendPUSelect'); if(!sel) return;
-  PU_META.filter(p=>!p.isNeg).forEach(pu=>{
+  activePUMeta().forEach(pu=>{
     const o=document.createElement('option'); o.value=pu.code;
     o.textContent='PU-'+pu.code+' - '+pu.desc; sel.appendChild(o);
   });

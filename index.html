@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="portal-build" content="rlp-mbd-2026-07-03-v2.1.1">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/main.css?v=20260706-compactbar">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -70,51 +70,38 @@
 
 <!-- FILTER BAR -->
 <div class="fbar">
-  <span class="fbar-lbl">Filter:</span>
-  <select class="fsel" id="typeFilter" onchange="renderAll()">
-    <option value="all">All PU Types</option>
-    <option value="Staff">Staff PU</option>
-    <option value="Non Staff">Non Staff PU</option>
-  </select>
-  <select class="fsel" id="liabFilter" onchange="renderAll()">
-    <option value="all">All Liabilities</option>
-    <option value="Committed">Committed</option>
-    <option value="Planned">Planned</option>
-  </select>
-  <select class="fsel" id="activityFilter" onchange="renderAll(); if(typeof renderSMHDetail==='function') renderSMHDetail();">
-    <option value="all">All Activity</option>
-    <option value="budget-no-exp">Budget Available, No Expenses</option>
-  </select>
-  <span class="util-filter">
-    <label for="utilPctFilter">Util %</label>
-    <select class="fsel" id="utilCompare" onchange="renderAll()">
-      <option value="all">All</option>
-      <option value="above">Above</option>
-      <option value="below">Below</option>
+  <div class="fbar-group filter-main">
+    <span class="fbar-lbl">Report Filters</span>
+    <select class="fsel" id="typeFilter" onchange="handleTopFilterChange('PU Type filter')">
+      <option value="all">All PU Types</option>
+      <option value="Staff">Staff PU</option>
+      <option value="Non Staff">Non Staff PU</option>
     </select>
-    <input class="util-input" id="utilPctFilter" type="number" min="0" max="999" step="1" placeholder="%" oninput="renderAll()">
-  </span>
-  <span class="rg-note" id="rgNote">RG not active - using BG_ISL</span>
-  <span style="background:#1A7A4A;color:#fff;font-size:9px;padding:2px 8px;border-radius:4px;font-weight:700">Current Month: <span id="curMonBadge">JUN 2026</span></span>
-  <span class="live-clock" id="liveClock"></span>
-  <span class="theme-picker">
-    <label for="themeSelect">Theme</label>
-    <select class="fsel" id="themeSelect" onchange="setPortalTheme(this.value)">
-      <option value="default">Classic NR</option>
-      <option value="gov-command">Gov Command Blue</option>
-      <option value="digital-india">Digital India GovTech</option>
-      <option value="control-room">Rail Control Room</option>
-      <option value="executive-light">Executive High-Tech</option>
+    <select class="fsel" id="liabFilter" onchange="handleTopFilterChange('Liability filter')">
+      <option value="all">All Liabilities</option>
+      <option value="Committed">Committed</option>
+      <option value="Planned">Planned</option>
     </select>
-  </span>
-  <span class="block-style-picker">
-    <label for="blockStyleSelect">Blocks</label>
-    <select class="fsel" id="blockStyleSelect" onchange="setBlockStyle(this.value)">
-      <option value="flat">2D</option>
-      <option value="raised">3D</option>
+    <select class="fsel wide" id="activityFilter" onchange="handleTopFilterChange('Activity filter')">
+      <option value="all">All Activity</option>
+      <option value="budget-no-exp">Budget Available, No Expenses</option>
     </select>
-  </span>
-  <button class="dl-btn" onclick="downloadExcel()">Download Excel</button>
+    <span class="util-filter">
+      <label for="utilPctFilter">Util %</label>
+      <select class="fsel compact" id="utilCompare" onchange="handleTopFilterChange('Utilisation filter')">
+        <option value="all">All</option>
+        <option value="above">Above</option>
+        <option value="below">Below</option>
+      </select>
+      <input class="util-input" id="utilPctFilter" type="number" min="0" max="999" step="1" placeholder="%" oninput="handleTopFilterChange('Utilisation percent filter')">
+    </span>
+    <button class="dl-btn filter-download" onclick="downloadExcel()">Download Excel</button>
+  </div>
+  <div class="fbar-group status-main">
+    <span class="rg-note" id="rgNote">RG not active - using BG_ISL</span>
+    <span class="cur-month-pill">Current Month: <span id="curMonBadge">JUN 2026</span></span>
+    <span class="live-clock" id="liveClock"></span>
+  </div>
 </div>
 
 
@@ -154,6 +141,7 @@
   <div class="tab" onclick="switchTab('aitrend')">AI Trend Analysis Summary</div>
   <div class="tab tab-feature" onclick="switchTab('bpanalysis')">Budget Proportionate Analysis</div>
   <div class="tab" onclick="switchTab('smhdetail')">Dept SMH Analysis</div>
+  <div class="tab" onclick="switchTab('remarks')">Remarks / Clarification</div>
   <div class="tab" id="uploadTab" onclick="switchTab('upload')" style="display:none">Data Upload</div>
 </div>
 <!-- TAB: LIABILITY -->
@@ -575,12 +563,52 @@
   </div>
 </div>
 
+<div class="tab-content" id="tab-remarks">
+  <div class="remarks-wrap">
+    <div class="remarks-head">
+      <div>
+        <div class="remarks-title">Remarks / Clarification Register</div>
+        <div class="remarks-sub">Source files, financial years and exclusions currently followed by the portal.</div>
+      </div>
+      <div class="remarks-badge">Official Data Use Note</div>
+    </div>
+    <div class="remarks-grid" id="remarksKpis"></div>
+    <div class="remarks-section">
+      <div class="remarks-section-title">Data Source Being Used</div>
+      <div class="remarks-table-wrap">
+        <table class="remarks-table">
+          <thead><tr><th>Data Area</th><th>Financial Year</th><th>Source / File</th><th>Used In Portal</th><th>Remarks</th></tr></thead>
+          <tbody id="remarksSourceBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="remarks-section">
+      <div class="remarks-section-title">Exclusions and Display Rules</div>
+      <div class="remarks-table-wrap">
+        <table class="remarks-table">
+          <thead><tr><th>Rule</th><th>Codes / Items</th><th>Where Applied</th><th>Clarification</th></tr></thead>
+          <tbody id="remarksRuleBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="remarks-section">
+      <div class="remarks-section-title">Excluded PU Details</div>
+      <div class="remarks-table-wrap">
+        <table class="remarks-table">
+          <thead><tr><th>PU</th><th>Description</th><th>Budget CY</th><th>Actual CY</th><th>Reason</th></tr></thead>
+          <tbody id="remarksPUBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div style="text-align:center;padding:10px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
   Revenue Liability Portal &nbsp;-&nbsp; Moradabad Division / Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
 </div>
 
 <script src="assets/js/detail-data.js"></script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/app.js?v=20260706-compactbar"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>
