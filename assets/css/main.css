@@ -334,6 +334,19 @@ thead th.la { min-width:80px; }
 .ai-risk.ok{background:#DFF2EA;color:#0B6A3D}
 .ai-bullets{margin-left:15px;color:var(--body);font-size:10px;line-height:1.55}
 .ai-bullets li{margin:3px 0}
+.ai-kpi-row{display:grid;grid-template-columns:repeat(4,minmax(92px,1fr));gap:6px;margin:8px 0 10px}
+.ai-kpi-row div{background:#F5F8FC;border:1px solid #DDE8F4;border-radius:6px;padding:7px 8px}
+.ai-kpi-row span{display:block;color:#607080;font-size:8px;font-weight:800;text-transform:uppercase;margin-bottom:2px}
+.ai-kpi-row strong{display:block;color:#0A1628;font-size:11px;font-weight:800}
+.ai-month-table-wrap{overflow-x:auto;border:1px solid #DDE8F4;border-radius:6px;margin:8px 0 10px}
+.ai-month-table{width:100%;border-collapse:collapse;font-size:9px;background:#fff}
+.ai-month-table th{background:#1A3A6A;color:#fff;padding:5px 6px;text-align:right;white-space:nowrap}
+.ai-month-table th:first-child,.ai-month-table td:first-child{text-align:left}
+.ai-month-table td{padding:5px 6px;border-bottom:1px solid #EEF3F8;text-align:right;white-space:nowrap}
+.ai-month-table tbody tr:last-child td{border-bottom:0}
+.ai-month-table .up{color:#B00020;font-weight:800}
+.ai-month-table .down{color:#1A7A4A;font-weight:800}
+@media(max-width:720px){.ai-kpi-row{grid-template-columns:repeat(2,minmax(120px,1fr))}}
 .smh-wrap{padding:14px 18px 22px}
 .smh-head{background:#0A1628;border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .smh-title{color:#C9A84C;font-size:13px;font-weight:800}

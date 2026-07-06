@@ -64,13 +64,13 @@ async function doLogin() {
   const pwd  = document.getElementById('loginPwd').value;
   const err  = document.getElementById('loginErr');
   if (!AUTH_DIGESTS[user]) {
-    err.textContent = 'âŒ User ID not found. Contact administrator.';
+    err.textContent = 'User ID not found. Contact administrator.';
     setTimeout(()=>err.textContent='', 3000);
     return;
   }
   const digest = await sha256Hex(`${user}:${pwd}`);
   if (AUTH_DIGESTS[user] !== digest) {
-    err.textContent = 'âŒ Incorrect password. Please try again.';
+    err.textContent = 'Incorrect password. Please try again.';
     document.getElementById('loginPwd').value = '';
     setTimeout(()=>err.textContent='', 3000);
     return;
@@ -88,7 +88,7 @@ async function doLogin() {
 sessionStorage.removeItem('rlp_auth');
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// MASTER DATA â€” from uploaded files (figures in â‚¹ '000s)
+// MASTER DATA - from uploaded files (figures in Rs '000s)
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const PU_META = [
@@ -152,11 +152,11 @@ const PU_META = [
   {code:'74',desc:'Union Territory GST (UTGST)',puType:'Non Staff PU',liab:'Planned',isNeg:false},
   {code:'75',desc:'Integrated GST (IGST)',puType:'Non Staff PU',liab:'Planned',isNeg:false},
   {code:'99',desc:'Other Expenses/Misc',puType:'Non Staff PU',liab:'Planned',isNeg:false},
-  // PU-98: Recoveries â€” kept in data for Recovery tab reference only
+  // PU-98: Recoveries - kept in data for Recovery tab reference only
   {code:'98',desc:'Credit or Recoveries',puType:'Staff PU',liab:'Recovery',isNeg:true},
 ];
 
-// Budget data from BudgetReport (BG_ISL col, RG col) â€” â‚¹'000s
+// Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
 let BUDGET = {
   '10':{bg_isl:680197,rg:0,actuals_till:218804},
   '11':{bg_isl:77300,rg:0,actuals_till:43958},
@@ -206,7 +206,7 @@ let BUDGET = {
   '08':{bg_isl:1285187,rg:0,actuals_till:318409}
 };
 
-// Month-wise actuals from MONTH WISE report â€” â‚¹'000s
+// Month-wise actuals from MONTH WISE report - Rs'000s
 let MONTH = {
   '10':{apr:63531,may:71427,jun:83846,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
   '11':{apr:13824,may:17030,jun:13104,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
@@ -247,7 +247,7 @@ let MONTH = {
   '08':{apr:108760,may:104872,jun:104778,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0}
 };
 
-// FY Month order APRâ†’MAR and their keys
+// FY Month order APRtoMAR and their keys
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
 let BUDGET_PY = {
@@ -443,15 +443,15 @@ function compute(code) {
   const isNeg  = (PU_META.find(p=>p.code===code)||{}).isNeg || false;
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // VERIFIED FORMULA â€” Budget balances exactly across 12 months
+  // VERIFIED FORMULA - Budget balances exactly across 12 months
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Budget = APR_actual + MAY_actual + JUN_total + JUL_projÃ—9
+  // Budget = APR_actual + MAY_actual + JUN_total + JUL_projx9
   // where:
   //   JUN_total      = proj_per_month  (one equal share of remaining)
-  //   JUN_remaining  = proj_per_month âˆ’ JUN_committed
-  //   proj_per_month = (Budget âˆ’ pastActuals) Ã· (1 + futureMonths.length)
+  //   JUN_remaining  = proj_per_month - JUN_committed
+  //   proj_per_month = (Budget - pastActuals) / (1 + futureMonths.length)
   //
-  // CHECK: APR + MAY + projÃ—10 = Budget âœ…
+  // CHECK: APR + MAY + projx10 = Budget OK
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   // Past months actuals (completed months before current)
@@ -466,24 +466,24 @@ function compute(code) {
   const residualTillDate = Math.max(0, actualsTill - pastActuals);
   const curCommitted = Math.max(curColumnVal, residualTillDate);
 
-  // proj_per_month = remaining after past actuals Ã· 10 equal months
+  // proj_per_month = remaining after past actuals / 10 equal months
   // (current month remainder counts as 1 full projected month)
   const totalRemainingMonths = 1 + futureMonths.length;  // e.g. 10 for JUN
   const projPerMonth = totalRemainingMonths > 0
     ? (budget - pastActuals) / totalRemainingMonths
     : 0;
 
-  // JUN_remaining = proj_per_month âˆ’ committed (what's left of this month's share)
+  // JUN_remaining = proj_per_month - committed (what's left of this month's share)
   // JUN_total     = proj_per_month  (always equal to one projected month)
   const curRemaining  = Math.max(0, projPerMonth - curCommitted);
-  const curMonthTotal = projPerMonth;  // = committed + remaining = proj_per_month âœ…
+  const curMonthTotal = projPerMonth;  // = committed + remaining = proj_per_month OK
 
   // % of this month's allocation already committed
   const curDonePct = projPerMonth > 0
     ? Math.min(100, (curCommitted / projPerMonth) * 100)
     : 0;
 
-  // Balance shown = budget âˆ’ all committed spend (past + current month)
+  // Balance shown = budget - all committed spend (past + current month)
   const totalCommitted = pastActuals + curCommitted;
   const balanceBudget  = budget - totalCommitted;
 
@@ -508,14 +508,14 @@ function compute(code) {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // FORMATTING HELPERS
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function fmtT(n) { // â‚¹'000s display with commas
-  if (n===null||n===undefined||isNaN(n)||n===0) return '<span style="color:#aaa">â€“</span>';
+function fmtT(n) { // Rs'000s display with commas
+  if (n===null||n===undefined||isNaN(n)||n===0) return '<span style="color:#aaa">-</span>';
   const abs = Math.abs(Math.round(n));
   const s = abs.toLocaleString('en-IN');
   return n < 0 ? `<span class="neg-val">(${s})</span>` : s;
 }
-function fmtCr(n) { // Convert â‚¹'000s â†’ Crore
-  if (!n || n===0) return '<span style="color:#aaa">â€“</span>';
+function fmtCr(n) { // Convert Rs'000s to Crore
+  if (!n || n===0) return '<span style="color:#aaa">-</span>';
   const cr = (n * 1000 / 10000000);
   const s = Math.abs(cr).toFixed(2);
   return n < 0 ? `<span class="neg-val">(${s} Cr)</span>` : `${s} Cr`;
@@ -591,9 +591,9 @@ function renderCards() {
   const util = pct(totC, totB);
   document.getElementById('summaryCards').innerHTML = `
     <div class="card g"><div class="cl">Gross Budget (BG_ISL)</div>
-      <div class="cv">${fmtCr(totB)}</div><div class="cs2">${Math.round(totB).toLocaleString('en-IN')} â‚¹'000s</div></div>
+      <div class="cv">${fmtCr(totB)}</div><div class="cs2">${Math.round(totB).toLocaleString('en-IN')} Rs'000s</div></div>
     <div class="card gold"><div class="cl">Net Budget (excl. Recoveries)</div>
-      <div class="cv">${fmtCr(netBudget)}</div><div class="cs2">${Math.round(netBudget).toLocaleString('en-IN')} â‚¹'000s</div></div>
+      <div class="cv">${fmtCr(netBudget)}</div><div class="cs2">${Math.round(netBudget).toLocaleString('en-IN')} Rs'000s</div></div>
     <div class="card a"><div class="cl">Total Committed (Till ${cur.label})</div>
       <div class="cv">${fmtCr(totC)}</div><div class="cs2">${util}% of gross budget</div></div>
     <div class="card"><div class="cl">Balance Available</div>
@@ -602,7 +602,7 @@ function renderCards() {
       <div class="cv" style="font-size:14px">${isRGActive()?'RG':'BG_ISL'}</div>
       <div class="cs2">${isRGActive()?'Revised Grant':'Awaiting RG (Jan 2027)'}</div></div>
   `;
-  document.getElementById('rgNote').textContent = isRGActive() ? 'âœ… RG Active' : 'âš  RG not active â€” using BG_ISL';
+  document.getElementById('rgNote').textContent = isRGActive() ? 'RG Active' : 'RG not active - using BG_ISL';
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -616,7 +616,7 @@ function renderLiabilityHeader() {
   }).join('');
   const subPast = pastMonths.map(m => {
     const idx = FY_MONTHS.indexOf(m), lbl = FY_MONTH_LABELS[idx];
-    return `<th class="sub" style="min-width:90px">${lbl} Actual<br>(â‚¹'000s)</th>`;
+    return `<th class="sub" style="min-width:90px">${lbl} Actual<br>(Rs'000s)</th>`;
   }).join('');
   const firstFuture = futureMonths.length ? FY_MONTH_LABELS[FY_MONTHS.indexOf(futureMonths[0])] : cur.label;
   document.getElementById('liab-thead').innerHTML = `
@@ -625,20 +625,20 @@ function renderLiabilityHeader() {
       <th class="la" rowspan="2" style="min-width:160px">Description</th>
       <th class="la" rowspan="2">PU Type</th>
       <th class="la" rowspan="2">Liability</th>
-      <th rowspan="2">Budget<br>(â‚¹'000s)</th>
+      <th rowspan="2">Budget<br>(Rs'000s)</th>
       ${topPast}
-      <th class="sub" colspan="4" id="curMonHdr" style="background:rgba(244,169,50,.15)">${cur.label} ${cur.year} â€” Till Date Exp + Remaining</th>
-      <th rowspan="2">Total Committed<br>(â‚¹'000s)</th>
-      <th rowspan="2">Balance Budget<br>(â‚¹'000s)</th>
-      <th rowspan="2">Proj./Month<br>${futureMonths.length ? firstFuture + 'â€“MAR' : 'Completed'} (â‚¹'000s)</th>
+      <th class="sub" colspan="4" id="curMonHdr" style="background:rgba(244,169,50,.15)">${cur.label} ${cur.year} - Till Date Exp + Remaining</th>
+      <th rowspan="2">Total Committed<br>(Rs'000s)</th>
+      <th rowspan="2">Balance Budget<br>(Rs'000s)</th>
+      <th rowspan="2">Proj./Month<br>${futureMonths.length ? firstFuture + '-MAR' : 'Completed'} (Rs'000s)</th>
       <th rowspan="2">% Utilised</th>
       <th rowspan="2">Status</th>
     </tr>
     <tr>
       ${subPast}
-      <th class="sub" style="min-width:100px">${cur.label} till date exp<br>(â‚¹'000s)</th>
+      <th class="sub" style="min-width:100px">${cur.label} till date exp<br>(Rs'000s)</th>
       <th class="sub" style="min-width:90px">${cur.label}<br>Remaining</th>
-      <th class="sub" style="min-width:90px">${cur.label} Total<br>(â‚¹'000s)</th>
+      <th class="sub" style="min-width:90px">${cur.label} Total<br>(Rs'000s)</th>
       <th class="sub">% Done</th>
     </tr>`;
 }
@@ -654,12 +654,12 @@ function renderJuneBars() {
   if (noteFormula) {
     const actualText = pastMonths.map(m => `${FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]} Actual`).join(' + ');
     const nextText = futureMonths.length
-      ? `Balance after ${cur.label} Total Ã· ${futureMonths.length} remaining months (${FY_MONTH_LABELS[FY_MONTHS.indexOf(futureMonths[0])]}-MAR) = Projected per month`
+      ? `Balance after ${cur.label} Total / ${futureMonths.length} remaining months (${FY_MONTH_LABELS[FY_MONTHS.indexOf(futureMonths[0])]}-MAR) = Projected per month`
       : `FY completed after ${cur.label}`;
     noteFormula.textContent = `${actualText} + ${cur.label} ${cur.year} Till-Date Exp + ${cur.label} ${cur.year} Remaining = ${cur.label} ${cur.year} Total Liability | ${nextText}.`;
   }
   const el = document.getElementById('curMonHdr');
-  if (el) el.textContent = `${cur.label} ${cur.year} â€” till date exp`;
+  if (el) el.textContent = `${cur.label} ${cur.year} - till date exp`;
 
   let html = '';
   const showPUs = PU_META
@@ -677,7 +677,7 @@ function renderJuneBars() {
     const pctVal = c.utilisedPct !== null ? Math.abs(c.utilisedPct) : 0;
     const col    = c.utilisedFlag==='over'||c.utilisedFlag==='no-budget' ? '#CC0000'
                  : pctVal>85 ? '#E85D04' : pctVal>60 ? '#C07000' : '#1A7A4A';
-    const flag   = c.utilisedFlag==='over' ? ' ðŸ”´' : c.utilisedFlag==='no-budget' ? ' ðŸš¨' : '';
+    const flag   = '';
     const lbl    = c.utilisedFlag==='no-budget' ? 'No Budget' : pctVal.toFixed(1)+'%';
     html += `<div class="prog-item" data-pu="${pu.code}" style="cursor:pointer">
       <div class="prog-lbl">PU-${pu.code}: ${pu.desc.substring(0,22)}${flag}</div>
@@ -709,16 +709,16 @@ function renderLiability() {
     let statusHtml = '';
     const _pct = c.utilisedPct || 0;
     if (isBudgetNoExpense(pu.code)) statusHtml='<span style="color:#8A5A00;font-weight:800">Budget Available, No Expenses</span>';
-    else if (c.utilisedFlag==='no-budget') statusHtml='<span style="color:#CC0000;font-weight:700">ðŸš¨ No Budget</span>';
-    else if (c.utilisedFlag==='over') statusHtml=`<span style="color:#CC0000;font-weight:700">ðŸ”´ Over ${Math.abs(_pct).toFixed(0)}%</span>`;
-    else if (c.utilisedFlag==='none') statusHtml='<span style="color:#aaa">â€” Nil</span>';
-    else if (_pct > 85) statusHtml = '<span style="color:#CC0000;font-weight:700">âš  Near Limit</span>';
-    else if (_pct > 60) statusHtml = '<span style="color:#C07000">ðŸ”¶ Watch</span>';
-    else if (pu.liab==='Committed'||pu.liab==='Committed Liability') statusHtml = '<span style="color:var(--green)">âœ” On Track</span>';
-    else statusHtml = '<span style="color:var(--muted)">â€” Planned</span>';
+    else if (c.utilisedFlag==='no-budget') statusHtml='<span style="color:#CC0000;font-weight:700">No Budget</span>';
+    else if (c.utilisedFlag==='over') statusHtml=`<span style="color:#CC0000;font-weight:700">Over ${Math.abs(_pct).toFixed(0)}%</span>`;
+    else if (c.utilisedFlag==='none') statusHtml='<span style="color:#aaa">Nil</span>';
+    else if (_pct > 85) statusHtml = '<span style="color:#CC0000;font-weight:700">Near Limit</span>';
+    else if (_pct > 60) statusHtml = '<span style="color:#C07000">Watch</span>';
+    else if (pu.liab==='Committed'||pu.liab==='Committed Liability') statusHtml = '<span style="color:var(--green)">On Track</span>';
+    else statusHtml = '<span style="color:var(--muted)">Planned</span>';
 
     rows += `<tr class="${getRowClass(pu)}" data-pu="${pu.code}" style="cursor:pointer">
-      <td class="puc puc-link" title="ðŸ“„ Open Full Details: PU-${pu.code}" onclick="event.stopPropagation();openPUDetail('${pu.code}')">${pu.code} ðŸ”</td>
+      <td class="puc puc-link" title="Open Full Details: PU-${pu.code}" onclick="event.stopPropagation();openPUDetail('${pu.code}')">${pu.code}</td>
       <td class="desc" title="${pu.desc}">${pu.desc}</td>
       <td>${puBadge(pu.puType)}</td>
       <td>${liabBadge(pu.liab)}</td>
@@ -744,9 +744,9 @@ function renderLiability() {
     <td class="n">${fmtT(tB)}</td>
     ${totalPastCells}
     <td class="n">${fmtT(tJunC)}</td><td class="n">${fmtT(tJunR)}</td>
-    <td class="n">${fmtT(tJunT)}</td><td>â€“</td>
+    <td class="n">${fmtT(tJunT)}</td><td>-</td>
     <td class="n">${fmtT(tC)}</td><td class="n rem ${tBal<0?'neg':'ok'}">${fmtT(tBal)}</td>
-    <td class="n">â€“</td><td>${miniProg(Math.min(100,tUtil),tc2)}</td><td>â€“</td>
+    <td class="n">-</td><td>${miniProg(Math.min(100,tUtil),tc2)}</td><td>-</td>
   </tr>`;
   document.getElementById('liab-tbody').innerHTML = rows;
 }
@@ -775,11 +775,11 @@ function renderMonthwise() {
     const col = utilColor(util);
 
     let futureCells = futureMonths.map(() => `<td class="n" style="color:#1A4A8A;background:#F0F6FF">${fmtT(proj)}</td>`).join('');
-    if (futureMonths.length < 9) futureCells += '<td class="n" style="color:#aaa">â€“</td>'.repeat(9 - futureMonths.length);
+    if (futureMonths.length < 9) futureCells += '<td class="n" style="color:#aaa">-</td>'.repeat(9 - futureMonths.length);
 
     const balCls = c.balanceBudget<0?'neg':c.balanceBudget<c.budget*0.1?'low':'ok';
     rows += `<tr class="${getRowClass(pu)}" data-pu="${pu.code}" style="cursor:pointer">
-      <td class="puc puc-link" title="ðŸ“„ Open Full Details: PU-${pu.code}" onclick="event.stopPropagation();openPUDetail('${pu.code}')">${pu.code} ðŸ”</td>
+      <td class="puc puc-link" title="Open Full Details: PU-${pu.code}" onclick="event.stopPropagation();openPUDetail('${pu.code}')">${pu.code}</td>
       <td class="desc" title="${pu.desc}" style="font-weight:700">${pu.desc}</td>
       <td class="n">${fmtT(apr)}</td>
       <td class="n">${fmtT(may)}</td>
@@ -799,7 +799,7 @@ function renderMonthwise() {
     `<td class="n" style="color:#1A4A8A;background:#E8F0FF;font-weight:700">${fmtT(tots[m]||0)}</td>`).join('');
   const padNeeded2 = 9 - futureMonths.length;
   let ftPad = futTotCells;
-  for(let i=0;i<padNeeded2;i++) ftPad += '<td class="n" style="color:#aaa">â€“</td>';
+  for(let i=0;i<padNeeded2;i++) ftPad += '<td class="n" style="color:#aaa">-</td>';
   const tUtil = pct(tots.tC, tots.tB);
   rows += `<tr class="tot">
     <td colspan="2" style="text-align:left">GRAND TOTAL</td>
@@ -830,22 +830,22 @@ function renderRecovery() {
   document.getElementById('rec-cards').innerHTML = `
     <div class="rec-card"><div class="cl">Recovery Budget (BG_ISL)</div>
       <div class="cv" style="color:#CC0000;font-size:16px">${fmtCr(c.budget)}</div>
-      <div class="cs2">${Math.round(c.budget).toLocaleString('en-IN')} â‚¹'000s</div></div>
+      <div class="cs2">${Math.round(c.budget).toLocaleString('en-IN')} Rs'000s</div></div>
     <div class="rec-card"><div class="cl">APR Recoveries</div>
       <div class="cv" style="color:#CC0000;font-size:16px">${fmtCr(apr)}</div>
-      <div class="cs2">${apr.toLocaleString('en-IN')} â‚¹'000s</div></div>
+      <div class="cs2">${apr.toLocaleString('en-IN')} Rs'000s</div></div>
     <div class="rec-card"><div class="cl">MAY Recoveries</div>
       <div class="cv" style="color:#CC0000;font-size:16px">${fmtCr(may)}</div>
-      <div class="cs2">${may.toLocaleString('en-IN')} â‚¹'000s</div></div>
+      <div class="cs2">${may.toLocaleString('en-IN')} Rs'000s</div></div>
     <div class="rec-card"><div class="cl">${cur.label} Committed</div>
       <div class="cv" style="color:#CC0000;font-size:16px">${fmtCr(c.curCommitted)}</div>
-      <div class="cs2">${c.curCommitted.toLocaleString('en-IN')} â‚¹'000s</div></div>
+      <div class="cs2">${c.curCommitted.toLocaleString('en-IN')} Rs'000s</div></div>
     <div class="rec-card"><div class="cl">Total Committed</div>
       <div class="cv" style="color:#CC0000;font-size:16px">${fmtCr(c.totalCommitted)}</div>
       <div class="cs2">${c.utilisedPct.toFixed(1)}% of recovery budget</div></div>
     <div class="rec-card"><div class="cl">Proj./Month (${futureMonths.length} months)</div>
       <div class="cv" style="color:#CC0000;font-size:16px">${fmtCr(c.projPerMonth)}</div>
-      <div class="cs2">${Math.round(c.projPerMonth).toLocaleString('en-IN')} â‚¹'000s</div></div>
+      <div class="cs2">${Math.round(c.projPerMonth).toLocaleString('en-IN')} Rs'000s</div></div>
   `;
 
   // Main liability row
@@ -868,7 +868,7 @@ function renderRecovery() {
 
   // Month wise for PU-98
   const allMonths = FY_MONTHS;
-  let cells = allMonths.map(m => `<td class="n neg-val">${md[m]?fmtT(md[m]):'<span style="color:#aaa">â€“</span>'}</td>`).join('');
+  let cells = allMonths.map(m => `<td class="n neg-val">${md[m]?fmtT(md[m]):'<span style="color:#aaa">-</span>'}</td>`).join('');
   const total = allMonths.reduce((s,m)=>s+(md[m]||0),0);
   document.getElementById('rec-mw-tbody').innerHTML = `
     <tr class="neg-row" data-pu="98" style="cursor:pointer">
@@ -891,7 +891,7 @@ function renderPUMaster() {
     const remCls = c.balanceBudget < 0 ? 'neg-val' : '';
     const noExp = isBudgetNoExpense(pu.code);
     rows += `<tr class="${getRowClass(pu)}" data-pu="${pu.code}" style="cursor:pointer">
-      <td class="puc puc-link" title="ðŸ“„ Open Full Details: PU-${pu.code}" onclick="event.stopPropagation();openPUDetail('${pu.code}')">${pu.code} ðŸ”</td>
+      <td class="puc puc-link" title="Open Full Details: PU-${pu.code}" onclick="event.stopPropagation();openPUDetail('${pu.code}')">${pu.code}</td>
       <td class="desc pu-desc" title="${pu.desc}">${pu.desc}</td>
       <td>${puBadge(pu.puType)}</td>
       <td>${liabBadge(pu.liab)}</td>
@@ -934,6 +934,12 @@ function pctChangeText(curVal, baseVal) {
   return (pctVal >= 0 ? '+' : '') + pctVal.toFixed(1) + '%';
 }
 
+function signedCr(n) {
+  const value = Number(n) || 0;
+  if (!value) return '0.00 Cr';
+  return (value > 0 ? '+' : '-') + textCr(Math.abs(value));
+}
+
 function htmlSafe(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -946,6 +952,11 @@ function trendRiskClass(item) {
   return 'ok';
 }
 
+function includeInAITrendSummary(pu) {
+  const isCommittedStaff = pu.puType === 'Staff PU' && String(pu.liab).includes('Committed');
+  return !pu.isNeg && !isCommittedStaff;
+}
+
 function buildAITrendItems() {
   const {cur} = getMonthStatus();
   const prevIdx = Math.max(0, cur.idx - 1);
@@ -953,8 +964,10 @@ function buildAITrendItems() {
   const curKey = cur.key;
   const prevLabel = FY_MONTH_LABELS[prevIdx];
   const curLabel = cur.label;
+  const compareMonthKeys = FY_MONTHS.slice(0, cur.idx + 1);
+  const compareMonthLabels = FY_MONTH_LABELS.slice(0, cur.idx + 1);
 
-  return PU_META.filter(p => !p.isNeg).map(pu => {
+  return PU_META.filter(includeInAITrendSummary).map(pu => {
     const md = MONTH[pu.code] || {};
     const py = MONTH_PY[pu.code] || {};
     const cv = compute(pu.code);
@@ -964,16 +977,36 @@ function buildAITrendItems() {
     const cyCur = Math.max(cyCurRaw, cv.curCommitted || 0);
     const pyPrev = Number(py[prevKey]) || 0;
     const pyCur = Number(py[curKey]) || 0;
+    const monthRows = compareMonthKeys.map((key, idx) => {
+      const cyMonth = idx === cur.idx ? cyCur : (Number(md[key]) || 0);
+      const pyMonth = Number(py[key]) || 0;
+      return {
+        key,
+        label: compareMonthLabels[idx],
+        cy: cyMonth,
+        py: pyMonth,
+        diff: cyMonth - pyMonth,
+        pct: pyMonth ? ((cyMonth - pyMonth) / Math.abs(pyMonth)) * 100 : null
+      };
+    });
+    const cySamePeriod = monthRows.reduce((s,r) => s + r.cy, 0);
+    const pySamePeriod = monthRows.reduce((s,r) => s + r.py, 0);
+    const cyTotalAsOn = cv.totalCommitted || cySamePeriod;
+    const pyTotalAsOn = pySamePeriod;
+    const ytdDiff = cyTotalAsOn - pyTotalAsOn;
+    const avgCyMonth = monthRows.length ? cySamePeriod / monthRows.length : 0;
     const utilPct = budget ? Math.abs((cv.totalCommitted / budget) * 100) : (cv.totalCommitted ? 999 : 0);
     const balanceRatio = budget ? cv.balanceBudget / Math.abs(budget) : 0;
     const overSpent = cv.balanceBudget < 0;
     const noBudgetSpend = budget === 0 && cv.totalCommitted !== 0;
-    const projRise = cyPrev > 0 && cv.projPerMonth > cyPrev * 1.15;
-    const risk = trendRiskClass({overSpent, noBudgetSpend, utilPct, balanceRatio, projRise});
+    const projRise = avgCyMonth > 0 && cv.projPerMonth > avgCyMonth * 1.15;
+    const budgetNoExpense = budget > 0 && Math.abs(cyTotalAsOn) === 0;
+    const risk = budgetNoExpense ? 'watch' : trendRiskClass({overSpent, noBudgetSpend, utilPct, balanceRatio, projRise});
 
     return {
       pu, cv, budget, cyPrev, cyCur, pyPrev, pyCur, utilPct, balanceRatio,
-      overSpent, noBudgetSpend, projRise, risk, prevLabel, curLabel
+      overSpent, noBudgetSpend, projRise, risk, prevLabel, curLabel,
+      monthRows, cyTotalAsOn, pyTotalAsOn, ytdDiff, budgetNoExpense, avgCyMonth
     };
   }).sort((a,b) => {
     const riskScore = {high:3, watch:2, ok:1};
@@ -997,7 +1030,7 @@ function renderAITrendSummary() {
   if (meta) {
     const sample = allItems[0];
     meta.textContent = sample
-      ? `${sample.prevLabel} vs ${sample.curLabel} CY, PY comparison and remaining projection risk`
+      ? `PU-wise ${sample.curLabel} as-on review: CY vs PY month trend, actuals, utilisation, overspend and liability projection`
       : 'PU-wise current year, previous year and projection risk summary';
   }
   if (!items.length) {
@@ -1010,27 +1043,64 @@ function renderAITrendSummary() {
     const cyMove = item.cyCur - item.cyPrev;
     const pyMove = item.pyCur - item.pyPrev;
     const yoyMove = item.cyCur - item.pyCur;
-    const projectionImpact = item.overSpent
-      ? `Overspent by ${textCr(Math.abs(item.cv.balanceBudget))}; future projection needs budget support or expenditure control.`
-      : `Remaining projection is ${textCr(item.cv.projPerMonth)} per month with balance ${textCr(item.cv.balanceBudget)}.`;
+    const ytdPct = pctChangeText(item.cyTotalAsOn, item.pyTotalAsOn);
+    const monthTable = item.monthRows.map(r => {
+      const pctText = r.pct === null ? (r.cy ? 'new' : '-') : (r.pct >= 0 ? '+' : '') + r.pct.toFixed(1) + '%';
+      const cls = r.diff > 0 ? 'up' : r.diff < 0 ? 'down' : '';
+      return `<tr>
+        <td>${htmlSafe(r.label)}</td>
+        <td>${textCr(r.cy)}</td>
+        <td>${textCr(r.py)}</td>
+        <td class="${cls}">${signedCr(r.diff)}</td>
+        <td class="${cls}">${htmlSafe(pctText)}</td>
+      </tr>`;
+    }).join('');
+    const projectionImpact = item.noBudgetSpend
+      ? 'Expense is booked without budget provision; budget allocation review is needed.'
+      : item.budgetNoExpense
+        ? 'Budget is available but no expense is booked yet; review whether work/order booking is pending.'
+        : item.overSpent
+          ? `Overspent by ${textCr(Math.abs(item.cv.balanceBudget))}; control further booking or arrange budget support.`
+          : `Balance is ${textCr(item.cv.balanceBudget)} and remaining projection is ${textCr(item.cv.projPerMonth)} per month.`;
     const spendStatus = item.noBudgetSpend
       ? 'Spend booked without available budget.'
+      : item.budgetNoExpense
+        ? 'Budget exists but no CY actual expense is booked.'
       : item.utilPct >= 100
         ? 'Budget already fully consumed or exceeded.'
         : item.utilPct >= 85
           ? 'High utilisation; monitor before next booking cycle.'
           : 'Within current utilisation range.';
+    const liabilityLine = item.overSpent
+      ? 'Liability pressure is already above budget.'
+      : item.utilPct >= 85
+        ? 'Liability pressure is high; remaining balance may become tight.'
+        : item.budgetNoExpense
+          ? 'No liability trend yet; projection depends on future booking.'
+          : 'Liability trend is manageable at current run rate.';
     return `<div class="ai-pu-card risk-${riskClass}">
       <div class="ai-pu-head">
-        <div class="ai-pu-title">PU-${htmlSafe(item.pu.code)} Â· ${htmlSafe(item.pu.desc)}</div>
+        <div class="ai-pu-title">PU-${htmlSafe(item.pu.code)} - ${htmlSafe(item.pu.desc)}</div>
         <span class="ai-risk ${riskClass}">${riskLabel}</span>
       </div>
+      <div class="ai-kpi-row">
+        <div><span>CY Actual as on</span><strong>${textCr(item.cyTotalAsOn)}</strong></div>
+        <div><span>PY Same Period</span><strong>${textCr(item.pyTotalAsOn)}</strong></div>
+        <div><span>Utilisation</span><strong>${item.utilPct.toFixed(1)}%</strong></div>
+        <div><span>Balance</span><strong>${textCr(item.cv.balanceBudget)}</strong></div>
+      </div>
+      <div class="ai-month-table-wrap">
+        <table class="ai-month-table">
+          <thead><tr><th>Month</th><th>CY</th><th>PY</th><th>Diff</th><th>YoY</th></tr></thead>
+          <tbody>${monthTable}</tbody>
+        </table>
+      </div>
       <ul class="ai-bullets">
-        <li>CY ${item.prevLabel} vs ${item.curLabel}: ${textCr(item.cyPrev)} to ${textCr(item.cyCur)} (${pctChangeText(item.cyCur, item.cyPrev)}; movement ${textCr(cyMove)}).</li>
-        <li>PY ${item.prevLabel} vs ${item.curLabel}: ${textCr(item.pyPrev)} to ${textCr(item.pyCur)} (${pctChangeText(item.pyCur, item.pyPrev)}; movement ${textCr(pyMove)}).</li>
-        <li>CY ${item.curLabel} vs PY ${item.curLabel}: ${textCr(item.cyCur)} against ${textCr(item.pyCur)} (${pctChangeText(item.cyCur, item.pyCur)}; difference ${textCr(yoyMove)}).</li>
-        <li>${projectionImpact}</li>
-        <li>Utilisation ${item.utilPct.toFixed(1)}%: ${spendStatus}</li>
+        <li><strong>Current month movement:</strong> CY ${item.prevLabel} to ${item.curLabel} moved from ${textCr(item.cyPrev)} to ${textCr(item.cyCur)} (${signedCr(cyMove)}); PY moved ${signedCr(pyMove)} for the same month pair.</li>
+        <li><strong>CY vs PY as-on:</strong> CY total is ${textCr(item.cyTotalAsOn)} against PY same-period ${textCr(item.pyTotalAsOn)} (${ytdPct}; difference ${signedCr(item.ytdDiff)}).</li>
+        <li><strong>Current month vs PY:</strong> ${item.curLabel} CY is ${textCr(item.cyCur)} against ${textCr(item.pyCur)} in PY (${pctChangeText(item.cyCur, item.pyCur)}; difference ${signedCr(yoyMove)}).</li>
+        <li><strong>Budget and overspend:</strong> Budget ${textCr(item.budget)}, utilisation ${item.utilPct.toFixed(1)}%, balance ${textCr(item.cv.balanceBudget)}. ${spendStatus}</li>
+        <li><strong>Liability AI analysis:</strong> ${projectionImpact} ${liabilityLine}</li>
       </ul>
     </div>`;
   }).join('');
@@ -1213,7 +1283,7 @@ function renderSMHDetail() {
   const kpis = document.getElementById('smhKpis');
   if (kpis) {
     kpis.innerHTML = [
-      ['BG_ISL Budget', detailCr(totals.budget), detailNum(totals.budget) + " in â‚¹'000s"],
+      ['BG_ISL Budget', detailCr(totals.budget), detailNum(totals.budget) + " in Rs'000s"],
       ['Actual Till Date', detailCr(totals.actualTill), util.toFixed(1) + '% utilised'],
       ['Balance', detailCr(balance), balance < 0 ? 'Over spent' : 'Budget minus actual'],
       ['Month Actuals', detailCr(visibleMonthKeys.reduce((s,m)=>s+(totals.months[m]||0),0)), `${monthLabels[0]} to ${monthLabels[visibleMonthKeys.length - 1]}`],
@@ -1276,8 +1346,8 @@ function renderSMHDetail() {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function downloadExcel() {
   const wb = XLSX.utils.book_new();
-  const HDR_TITLE = 'REVENUE LIABILITY PORTAL â€” MORADABAD DIVISION';
-  const HDR_SUB   = "Northern Railway  |  Financial Authority Dashboard  |  All figures in â‚¹ Thousands ('000s) â€” multiply by 1,000 for actual rupees";
+  const HDR_TITLE = 'REVENUE LIABILITY PORTAL - MORADABAD DIVISION';
+  const HDR_SUB   = "Northern Railway  |  Financial Authority Dashboard  |  All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees";
   const {cur} = getMonthStatus();
 
   // â”€â”€ Style helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1305,7 +1375,7 @@ function downloadExcel() {
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = colWidths.map(w => ({wch:w}));
 
-    // Apply styles if XLSX supports it (xlsx-style or sheetjs pro â€” graceful fallback)
+    // Apply styles if XLSX supports it (xlsx-style or sheetjs pro - graceful fallback)
     try {
       const range = XLSX.utils.decode_range(ws['!ref']);
       for (let R=range.s.r; R<=range.e.r; R++) {
@@ -1316,7 +1386,7 @@ function downloadExcel() {
           else if (R===1) ws[addr].s = mkStyle({bold:true,sz:9,bg:'1C3A5E',fc:'B8D0F0',h:'center',wrap:true});
           else if (R===3) ws[addr].s = mkStyle({bold:true,sz:9,bg:'1A3A6A',fc:'FFFFFF',h:'center'});
           else {
-            // Data rows â€” color by row type
+            // Data rows - color by row type
             const rowData = dataRows[R-4];
             let bg = 'FFFFFF';
             if (rowData) {
@@ -1338,26 +1408,26 @@ function downloadExcel() {
         {s:{r:1,c:0},e:{r:1,c:maxC}},
       ];
       ws['!rows'] = [{hpt:22},{hpt:16},{hpt:6},{hpt:18}];
-    } catch(e) { /* style not supported â€” data still exports fine */ }
+    } catch(e) { /* style not supported - data still exports fine */ }
 
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
   }
 
   // â”€â”€ Sheet 1: LIABILITY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const liabHdrs = ['PU','Description','PU Type','Liability Type',
-    'Budget (â‚¹\'000s)','Budget (â‚¹ Cr)',
-    'APR Actual (â‚¹\'000s)','APR (â‚¹ Cr)',
-    'MAY Actual (â‚¹\'000s)','MAY (â‚¹ Cr)',
+    'Budget (Rs\'000s)','Budget (Rs Cr)',
+    'APR Actual (Rs\'000s)','APR (Rs Cr)',
+    'MAY Actual (Rs\'000s)','MAY (Rs Cr)',
     cur.label+' till date exp',''+cur.label+' Remaining',''+cur.label+' Total',''+cur.label+' % Done',
-    'Total Committed (â‚¹\'000s)','Balance Budget (â‚¹\'000s)','Proj/Month (â‚¹\'000s)',
+    'Total Committed (Rs\'000s)','Balance Budget (Rs\'000s)','Proj/Month (Rs\'000s)',
     '% Utilised','Status'];
   const liabRows=[];
   PU_META.filter(p=>!p.isNeg).forEach(pu=>{
     const cv=compute(pu.code); const md=MONTH[pu.code]||{};
     const apr=md.apr||0, may=md.may||0;
-    const pctStr=cv.utilisedFlag==='no-budget'?'No Budget â€” Excess Spend':
+    const pctStr=cv.utilisedFlag==='no-budget'?'No Budget - Excess Spend':
                  cv.utilisedFlag==='none'?'Nil (no activity)':
-                 cv.utilisedPct!=null?cv.utilisedPct.toFixed(1)+'%':'â€“';
+                 cv.utilisedPct!=null?cv.utilisedPct.toFixed(1)+'%':'-';
     const status=isBudgetNoExpense(pu.code)?'BUDGET AVAILABLE, NO EXPENSES':
                  cv.utilisedFlag==='over'?'OVER BUDGET':
                  cv.utilisedFlag==='no-budget'?'NO BUDGET ALLOCATED':
@@ -1383,7 +1453,7 @@ function downloadExcel() {
     lt[6],parseFloat((lt[6]*1000/10000000).toFixed(2)),
     lt[8],parseFloat((lt[8]*1000/10000000).toFixed(2)),
     lt[10],lt[11],lt[12],'',lt[14],lt[15],lt[16],
-    lt[4]?parseFloat((lt[14]/lt[4]*100).toFixed(1))+'%':'â€“',''];
+    lt[4]?parseFloat((lt[14]/lt[4]*100).toFixed(1))+'%':'-',''];
   totRow._tot=true; liabRows.push(totRow);
   addSheet(wb,'Revenue Liability',HDR_TITLE,HDR_SUB,liabHdrs,liabRows,
     [6,24,14,12,14,10,14,10,14,10,14,14,14,10,15,14,14,10,16]);
@@ -1393,7 +1463,7 @@ function downloadExcel() {
     'APR Actual','MAY Actual',
     cur.label+' till date exp',cur.label+' Remaining',cur.label+' Total',
     'JUL Proj','AUG Proj','SEP Proj','OCT Proj','NOV Proj','DEC Proj','JAN Proj','FEB Proj','MAR Proj',
-    'Budget (â‚¹\'000s)','Total Committed','Balance','% Used','Status'];
+    'Budget (Rs\'000s)','Total Committed','Balance','% Used','Status'];
   const mwRows=[];
   PU_META.filter(p=>!p.isNeg).forEach(pu=>{
     const cv=compute(pu.code); const md=MONTH[pu.code]||{};
@@ -1414,21 +1484,21 @@ function downloadExcel() {
   const mt={};
   mwRows.forEach(r=>{ [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].forEach(i=>mt[i]=(mt[i]||0)+(+r[i]||0)); });
   const mwTot=['','GRAND TOTAL',...[2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(i=>mt[i]),mt[16],mt[17],mt[18],
-    mt[16]?parseFloat((mt[17]/mt[16]*100).toFixed(1))+'%':'â€“',''];
+    mt[16]?parseFloat((mt[17]/mt[16]*100).toFixed(1))+'%':'-',''];
   mwTot._tot=true; mwRows.push(mwTot);
   addSheet(wb,'Month Wise',HDR_TITLE,HDR_SUB,mwHdrs,mwRows,
     [6,24,12,12,14,14,12,10,10,10,10,10,10,10,10,10,14,14,12,10,28]);
 
   // â”€â”€ Sheet 3: RECOVERIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const r98=compute('98'); const m98=MONTH['98']||{};
-  const recHdrs=['PU','Description','Budget (â‚¹\'000s)','Budget (â‚¹ Cr)',
+  const recHdrs=['PU','Description','Budget (Rs\'000s)','Budget (Rs Cr)',
     'APR Actual','MAY Actual',cur.label+' till date exp',cur.label+' Remaining',
     'Total Committed','Balance','Proj/Month','% Used'];
   const recRows=[[
     '98','Credit or Recoveries',r98.budget,parseFloat((r98.budget*1000/10000000).toFixed(2)),
     m98.apr||0,m98.may||0,r98.curCommitted,r98.curRemaining,
     r98.totalCommitted,r98.balanceBudget,Math.round(r98.projPerMonth),
-    r98.utilisedPct!=null?parseFloat(r98.utilisedPct.toFixed(1))+'%':'â€“'
+    r98.utilisedPct!=null?parseFloat(r98.utilisedPct.toFixed(1))+'%':'-'
   ]];
   recRows[0]._neg=true;
   addSheet(wb,'Recoveries PU-98',HDR_TITLE,HDR_SUB,recHdrs,recRows,
@@ -1436,13 +1506,13 @@ function downloadExcel() {
 
   // â”€â”€ Sheet 4: PU MASTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const pmHdrs=['PU Code','Description','Type of PU','Type of Liability',
-    'BG_ISL Budget (â‚¹\'000s)','Budget (â‚¹ Cr)','Actuals Till Date (â‚¹\'000s)','Remaining Budget (â‚¹\'000s)','Remaining Budget (â‚¹ Cr)','% Utilised','Status'];
+    'BG_ISL Budget (Rs\'000s)','Budget (Rs Cr)','Actuals Till Date (Rs\'000s)','Remaining Budget (Rs\'000s)','Remaining Budget (Rs Cr)','% Utilised','Status'];
   const pmRows=[];
   PU_META.forEach(pu=>{
     const bud=BUDGET[pu.code]||{}; const cv=compute(pu.code);
     const pct=cv.utilisedFlag==='no-budget'?'No Budget':
                cv.utilisedFlag==='none'?'Nil':
-               cv.utilisedPct!=null?parseFloat(cv.utilisedPct.toFixed(1))+'%':'â€“';
+               cv.utilisedPct!=null?parseFloat(cv.utilisedPct.toFixed(1))+'%':'-';
     const status=isBudgetNoExpense(pu.code)?'BUDGET AVAILABLE, NO EXPENSES':'';
     const row=[pu.code,pu.desc,pu.puType,pu.liab,
       bud.bg_isl||0,parseFloat(((bud.bg_isl||0)*1000/10000000).toFixed(2)),
@@ -1539,12 +1609,12 @@ function openPUDetail(code) {
   const {futureMonths, cur} = getMonthStatus();
 
   // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function fCr(n)  { if(!n||n===0) return 'â€“'; return (Math.abs(n)*1000/10000000).toFixed(2)+' Cr'; }
-  function fT(n)   { if(!n||n===0) return 'â€“'; return (n<0?'('+Math.abs(Math.round(n)).toLocaleString('en-IN')+')':Math.round(n).toLocaleString('en-IN'))+' â‚¹\'000s'; }
+  function fCr(n)  { if(!n||n===0) return '-'; return (Math.abs(n)*1000/10000000).toFixed(2)+' Cr'; }
+  function fT(n)   { if(!n||n===0) return '-'; return (n<0?'('+Math.abs(Math.round(n)).toLocaleString('en-IN')+')':Math.round(n).toLocaleString('en-IN'))+' Rs\'000s'; }
   function pctStr(cv) {
-    if (cv.utilisedFlag==='no-budget') return '<span style="color:#CC0000;font-weight:700">âš  No Budget Allocated â€” Excess Spend</span>';
-    if (cv.utilisedFlag==='none')      return '<span style="color:#aaa">â€” Nil (no activity)</span>';
-    if (cv.utilisedFlag==='over')      return `<span style="color:#CC0000;font-weight:700">ðŸ”´ ${Math.abs(cv.utilisedPct).toFixed(1)}% (OVER BUDGET)</span>`;
+    if (cv.utilisedFlag==='no-budget') return '<span style="color:#CC0000;font-weight:700">Warning No Budget Allocated - Excess Spend</span>';
+    if (cv.utilisedFlag==='none')      return '<span style="color:#aaa">- Nil (no activity)</span>';
+    if (cv.utilisedFlag==='over')      return `<span style="color:#CC0000;font-weight:700">${Math.abs(cv.utilisedPct).toFixed(1)}% (OVER BUDGET)</span>`;
     const p = cv.utilisedPct;
     const col = p>85?'#CC0000':p>60?'#E85D04':p>30?'#C07000':'#1A7A4A';
     return `<span style="color:${col};font-weight:700">${p.toFixed(1)}%</span>`;
@@ -1595,7 +1665,7 @@ function openPUDetail(code) {
     ['Actuals Till Date (Budget Report)', b.actuals_till||0, '#607080'],
   ].map(([lbl,val,col]) => `<tr>
     <td style="padding:7px 14px;color:#4A6A90;border-bottom:1px solid #EEF2F8;width:55%">${lbl}</td>
-    <td style="padding:7px 14px;text-align:right;font-family:monospace;border-bottom:1px solid #EEF2F8;font-weight:600;color:${col}">${val?(val<0?'('+Math.abs(Math.round(val)).toLocaleString('en-IN')+')':Math.round(val).toLocaleString('en-IN')):'â€“'}</td>
+    <td style="padding:7px 14px;text-align:right;font-family:monospace;border-bottom:1px solid #EEF2F8;font-weight:600;color:${col}">${val?(val<0?'('+Math.abs(Math.round(val)).toLocaleString('en-IN')+')':Math.round(val).toLocaleString('en-IN')):'-'}</td>
     <td style="padding:7px 14px;text-align:right;border-bottom:1px solid #EEF2F8;color:${col};font-weight:700">${fCr(val)}</td>
   </tr>`).join('');
 
@@ -1612,7 +1682,7 @@ function openPUDetail(code) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PU-${pu.code} â€” ${pu.desc} | Revenue Liability Portal</title>
+<title>PU-${pu.code} - ${pu.desc} | Revenue Liability Portal</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#F0F4FA;color:#0A1628;font-size:13px}
@@ -1650,23 +1720,23 @@ function openPUDetail(code) {
   <div class="pu-num">PU-${pu.code}</div>
   <div class="pu-info">
     <h1>${pu.desc}</h1>
-    <p>Moradabad Division / Northern Railway &nbsp;Â·&nbsp; FY 2026-27 &nbsp;Â·&nbsp; All figures in â‚¹ '000s</p>
+    <p>Moradabad Division / Northern Railway  -  FY 2026-27  -  All figures in Rs '000s</p>
     <div class="badges">
       <span class="pbadge" style="background:${typeCol}">${pu.puType}</span>
       <span class="pbadge" style="background:${pu.liab==='Committed'?'#1A7A4A':pu.liab==='Recovery'?'#8B0000':'#4A6A90'}">${pu.liab}</span>
-      <span class="pbadge" style="background:#8A5A00">${cur.label} ${cur.year} â€” Active Month</span>
+      <span class="pbadge" style="background:#8A5A00">${cur.label} ${cur.year} - Active Month</span>
     </div>
   </div>
-  <button class="print-btn" onclick="window.print()">ðŸ–¨ Print / PDF</button>
+  <button class="print-btn" onclick="window.print()">Print / PDF</button>
 </div>
 
 <!-- KPI CARDS -->
 <div class="section">
-  <div class="sec-title">ðŸ“Š Key Performance Indicators</div>
+  <div class="sec-title">Key Performance Indicators</div>
   <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-lbl">BG_ISL Budget</div><div class="kpi-val">${fCr(b.bg_isl||0)}</div><div class="kpi-sub">${(b.bg_isl||0).toLocaleString('en-IN')} â‚¹'000s</div></div>
-    <div class="kpi"><div class="kpi-lbl">Total Committed</div><div class="kpi-val" style="color:${typeCol}">${fCr(cv.totalCommitted)}</div><div class="kpi-sub">${cv.totalCommitted.toLocaleString('en-IN')} â‚¹'000s</div></div>
-    <div class="kpi"><div class="kpi-lbl">Balance Budget</div><div class="kpi-val" style="color:${cv.balanceBudget<0?'#CC0000':'#1A7A4A'}">${fCr(cv.balanceBudget)}</div><div class="kpi-sub">${cv.balanceBudget.toLocaleString('en-IN')} â‚¹'000s</div></div>
+    <div class="kpi"><div class="kpi-lbl">BG_ISL Budget</div><div class="kpi-val">${fCr(b.bg_isl||0)}</div><div class="kpi-sub">${(b.bg_isl||0).toLocaleString('en-IN')} Rs'000s</div></div>
+    <div class="kpi"><div class="kpi-lbl">Total Committed</div><div class="kpi-val" style="color:${typeCol}">${fCr(cv.totalCommitted)}</div><div class="kpi-sub">${cv.totalCommitted.toLocaleString('en-IN')} Rs'000s</div></div>
+    <div class="kpi"><div class="kpi-lbl">Balance Budget</div><div class="kpi-val" style="color:${cv.balanceBudget<0?'#CC0000':'#1A7A4A'}">${fCr(cv.balanceBudget)}</div><div class="kpi-sub">${cv.balanceBudget.toLocaleString('en-IN')} Rs'000s</div></div>
     <div class="kpi"><div class="kpi-lbl">% Budget Used</div><div class="kpi-val" style="color:${ringCol}">${pctLabel}</div><div class="kpi-sub">${pctStr(cv)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Projected / Month</div><div class="kpi-val" style="color:#1A4E9A">${fCr(cv.projPerMonth)}</div><div class="kpi-sub">${futureMonths.length} months remaining</div></div>
     <div class="kpi"><div class="kpi-lbl">${cur.label} Committed</div><div class="kpi-val" style="color:#8A5A00">${fCr(cv.curCommitted)}</div><div class="kpi-sub">Remaining: ${fCr(cv.curRemaining)}</div></div>
@@ -1675,7 +1745,7 @@ function openPUDetail(code) {
 
 <!-- UTILISATION RING -->
 <div class="section">
-  <div class="sec-title">ðŸŽ¯ Budget Utilisation</div>
+  <div class="sec-title">Budget Utilisation</div>
   <div class="ring-wrap">
     <svg width="140" height="140" viewBox="0 0 140 140">
       <circle cx="70" cy="70" r="${r}" fill="none" stroke="#E8EFF8" stroke-width="14"/>
@@ -1698,20 +1768,20 @@ function openPUDetail(code) {
 
 <!-- BUDGET BREAKDOWN TABLE -->
 <div class="section">
-  <div class="sec-title">ðŸ“‹ Budget Breakdown</div>
+  <div class="sec-title">Budget Breakdown</div>
   <table class="data-tbl">
-    <thead><tr><th>Parameter</th><th class="r">â‚¹ '000s</th><th class="r">â‚¹ Crore</th></tr></thead>
+    <thead><tr><th>Parameter</th><th class="r">Rs '000s</th><th class="r">Rs Crore</th></tr></thead>
     <tbody>${summaryRows}</tbody>
   </table>
 </div>
 
 <!-- MONTHLY PROJECTION TABLE -->
 <div class="section">
-  <div class="sec-title">ðŸ“… Month-wise Actuals & Projections â€” FY 2026-27</div>
+  <div class="sec-title">Month-wise Actuals & Projections - FY 2026-27</div>
   <table class="data-tbl">
     <thead><tr>
       <th>Month</th><th>Type</th>
-      <th class="r">Amount (â‚¹ '000s)</th><th class="r">Amount (â‚¹ Cr)</th>
+      <th class="r">Amount (Rs '000s)</th><th class="r">Amount (Rs Cr)</th>
       <th>vs Monthly Allocation</th>
     </tr></thead>
     <tbody>${monthRows}</tbody>
@@ -1719,8 +1789,8 @@ function openPUDetail(code) {
 </div>
 
 <footer>
-  PU-${pu.code}: ${pu.desc} &nbsp;Â·&nbsp; Moradabad Division / Northern Railway &nbsp;Â·&nbsp; FY 2026-27 &nbsp;Â·&nbsp; For Official Use Only<br>
-  Generated: ${new Date().toLocaleString('en-IN')} &nbsp;Â·&nbsp; Revenue Liability Portal v4.0
+  PU-${pu.code}: ${pu.desc}  -  Moradabad Division / Northern Railway  -  FY 2026-27  -  For Official Use Only<br>
+  Generated: ${new Date().toLocaleString('en-IN')}  -  Revenue Liability Portal v4.0
 </footer>
 </body></html>`;
 
@@ -1806,7 +1876,7 @@ function showPUPopup(e,code){
   _pp.innerHTML=`
     <div style="background:${typeCol};padding:8px 14px 7px;display:flex;align-items:center;gap:8px">
       <div style="font-size:15px;font-weight:700;color:#fff;min-width:36px">PU-${pu.code}</div>
-      <div><div style="font-size:11px;font-weight:700;color:#fff">${pu.desc}</div><div style="font-size:8px;color:rgba(255,255,255,.75);margin-top:1px">${pu.puType} Â· ${pu.liab}</div></div>
+      <div><div style="font-size:11px;font-weight:700;color:#fff">${pu.desc}</div><div style="font-size:8px;color:rgba(255,255,255,.75);margin-top:1px">${pu.puType} - ${pu.liab}</div></div>
     </div>
     <div style="padding:12px 14px">
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
@@ -1820,20 +1890,20 @@ function showPUPopup(e,code){
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${col}">${pctStr}</div>
       </div>
       <div style="flex:1;font-size:9px">
-        <div style="margin-bottom:3px">Budget: <strong>${cv.budget?(cv.budget*1000/10000000).toFixed(2)+' Cr':'â€“'}</strong></div>
+        <div style="margin-bottom:3px">Budget: <strong>${cv.budget?(cv.budget*1000/10000000).toFixed(2)+' Cr':'-'}</strong></div>
         <div style="margin-bottom:3px">Committed: <strong>${(cv.totalCommitted*1000/10000000).toFixed(2)} Cr</strong></div>
         <div style="margin-bottom:3px">Balance: <strong style="color:${cv.balanceBudget<0?'#CC0000':'#1A7A4A'}">${(cv.balanceBudget*1000/10000000).toFixed(2)} Cr</strong></div>
-        <div>Proj/Mo: <strong>${cv.projPerMonth>0?(cv.projPerMonth*1000/10000000).toFixed(2)+' Cr':'â€“'}</strong></div>
+        <div>Proj/Mo: <strong>${cv.projPerMonth>0?(cv.projPerMonth*1000/10000000).toFixed(2)+' Cr':'-'}</strong></div>
       </div>
     </div>
     <div style="border-top:1px solid #E0EAF4;padding-top:8px">
-      <div style="font-size:8px;color:#607080;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Monthly Spend (â‚¹'000s)</div>
+      <div style="font-size:8px;color:#607080;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Monthly Spend (Rs'000s)</div>
       ${bars}${projBar}
     </div>
     </div>
     <div style="background:#F5F8FC;border-top:1px solid #E0EAF4;padding:6px 14px;display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:8px;color:#8AAAC8">ðŸ“Š Quick Summary View</span>
-      <span style="font-size:8px;color:#1A7A4A;font-weight:700">ðŸ‘† Click PU Code cell for Full Details</span>
+      <span style="font-size:8px;color:#8AAAC8">Quick Summary View</span>
+      <span style="font-size:8px;color:#1A7A4A;font-weight:700">Click PU Code cell for Full Details</span>
     </div>
     </div>`;
   const vw=window.innerWidth,vh=window.innerHeight;
@@ -1846,12 +1916,12 @@ function showPUPopup(e,code){
 function hidePUPopup(){ _ppTimer=setTimeout(()=>{_pp.style.opacity='0';_pp.style.transform='translateY(6px)';_pp.style.pointerEvents='none';},200); }
 function attachPUPopup(){
   initPopup();
-  // Using event delegation on document â€” works after every re-render, no re-binding needed
+  // Using event delegation on document - works after every re-render, no re-binding needed
   // (listeners are only added once)
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// UPLOAD TAB â€” File parsing, auto-sense, apply
+// UPLOAD TAB - File parsing, auto-sense, apply
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 let _pendingBudget = null;  // parsed budget data waiting to apply
@@ -1882,8 +1952,8 @@ function setDZState(type, state, msg) {
   const stat = document.getElementById('dz-'+type+'-status');
   if(!dz||!stat) return;
   dz.classList.remove('done','error','drag-over');
-  if(state==='done'){ dz.classList.add('done'); icon.textContent='âœ…'; stat.className='dz-status ok'; }
-  else if(state==='error'){ dz.classList.add('error'); icon.textContent='âŒ'; stat.className='dz-status err'; }
+  if(state==='done'){ dz.classList.add('done'); icon.textContent='OK'; stat.className='dz-status ok'; }
+  else if(state==='error'){ dz.classList.add('error'); icon.textContent='Error'; stat.className='dz-status err'; }
   else { icon.textContent='â³'; stat.className='dz-status'; }
   stat.textContent = msg||'';
   // Enable apply button if at least one pending
@@ -2057,7 +2127,7 @@ function parseUpload(file, type, year) {
         if(n===0) throw new Error('No PU rows found. Check PUCODE and BG_ISL columns.');
         if(year==='cy'){ _pendingBudget={data:parsed,filename:file.name,puCount:n,at:new Date()}; }
         else           { _pendingBudgetPY={data:parsed,filename:file.name,puCount:n,at:new Date()}; }
-        setDZState(dzId,'done','âœ… Parsed '+n+' PUs â€” '+(year==='cy'?'CY 2026-27':'PY 2025-26'));
+        setDZState(dzId,'done','OK Parsed '+n+' PUs - '+(year==='cy'?'CY 2026-27':'PY 2025-26'));
         addLog((year==='cy'?'Budget CY 2026-27':'Budget PY 2025-26'),file.name,n,null);
 
       } else {
@@ -2065,7 +2135,7 @@ function parseUpload(file, type, year) {
         const ANY_M=/^(APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC|JAN|FEB|MAR)/;
         let hr=findHdrRow(rows,n=>APR_RE.test(n));
         if(hr<0) hr=findHdrRow(rows,n=>ANY_M.test(n));
-        if(hr<0) throw new Error('Cannot find APRâ€“MAR month headers.');
+        if(hr<0) throw new Error('Cannot find APR-MAR month headers.');
         const hdr=rows[hr].map(c=>norm(c));
         const mCols={};
         FY_MONTHS.forEach((mk,idx2)=>{
@@ -2086,11 +2156,11 @@ function parseUpload(file, type, year) {
         const dml=FY_MONTH_LABELS[latestIdx];
         if(year==='cy'){ _pendingMonth={data:parsed,filename:file.name,puCount:n,detectedMonthIdx:latestIdx,detectedMonthKey:FY_MONTHS[latestIdx],detectedMonthLabel:dml,detectedYear:latestIdx<=8?2026:2027,at:new Date()}; }
         else           { _pendingMonthPY={data:parsed,filename:file.name,puCount:n,detectedMonthIdx:latestIdx,at:new Date()}; }
-        setDZState(dzId,'done','âœ… Parsed '+n+' PUs â€” Latest: '+dml+' | '+(year==='cy'?'CY':'PY'));
+        setDZState(dzId,'done','OK Parsed '+n+' PUs - Latest: '+dml+' | '+(year==='cy'?'CY':'PY'));
         addLog((year==='cy'?'Month Wise CY 2026-27':'Month Wise PY 2025-26'),file.name,n,dml);
       }
     } catch(err) {
-      setDZState(type+'-'+year,'error','âŒ '+err.message);
+      setDZState(type+'-'+year,'error','Error '+err.message);
       console.error(err);
     }
   };
@@ -2108,7 +2178,7 @@ function renderUploadLog() {
   const tbody = document.getElementById('uploadLogTbody');
   if(!tbody) return;
   if(!_uploadHistory.length){
-    tbody.innerHTML='<tr><td colspan="6" style="color:#8AAAC8;text-align:center;padding:16px">No uploads yet â€” using pre-loaded data</td></tr>';
+    tbody.innerHTML='<tr><td colspan="6" style="color:#8AAAC8;text-align:center;padding:16px">No uploads yet - using pre-loaded data</td></tr>';
     return;
   }
   tbody.innerHTML = _uploadHistory.map(e=>`
@@ -2194,20 +2264,20 @@ function applyUploads() {
 
   // Flash the apply button to confirm
   const btn = document.getElementById('applyBtn');
-  btn.textContent = 'âœ… Applied! Tables Updated.';
+  btn.textContent = 'OK Applied! Tables Updated.';
   btn.style.background='#1A7A4A';
   btn.disabled=true;
   setTimeout(()=>{
-    btn.textContent='âœ… Apply Uploaded Data & Refresh All Tables';
+    btn.textContent='OK Apply Uploaded Data & Refresh All Tables';
     btn.style.background='';
-    btn.disabled=true; // reset â€” need new upload to enable again
+    btn.disabled=true; // reset - need new upload to enable again
   },3000);
 
   if(monthChanged){
     // Show confirmation banner at top
     const banner=document.createElement('div');
     banner.style.cssText='position:fixed;top:70px;right:20px;z-index:9998;background:#1A7A4A;color:#fff;padding:10px 18px;border-radius:8px;font-size:11px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.2)';
-    banner.textContent='âœ… Data applied â€” current month auto-updated from uploaded file';
+    banner.textContent='OK Data applied - current month auto-updated from uploaded file';
     document.body.appendChild(banner);
     setTimeout(()=>banner.remove(),4000);
   }
@@ -2229,7 +2299,7 @@ function renderCurDataGrid() {
     <div class="cdb-item"><div class="cdb-lbl">Gross Budget</div><div class="cdb-val">${(totB*1000/10000000).toFixed(0)} Cr</div></div>
     <div class="cdb-item"><div class="cdb-lbl">Committed Till Date</div><div class="cdb-val" style="color:#1A7A4A">${(totC*1000/10000000).toFixed(0)} Cr</div></div>
     <div class="cdb-item"><div class="cdb-lbl">Remaining Months</div><div class="cdb-val">${futureMonths.length}</div></div>
-    <div class="cdb-item"><div class="cdb-lbl">Budget Mode</div><div class="cdb-val" style="font-size:10px">${isRGActive()?'âœ… RG Active':'BG_ISL'}</div></div>
+    <div class="cdb-item"><div class="cdb-lbl">Budget Mode</div><div class="cdb-val" style="font-size:10px">${isRGActive()?'OK RG Active':'BG_ISL'}</div></div>
   `;
 }
 
@@ -2258,8 +2328,8 @@ function renderTrend(){
   const activePUs=PU_META.filter(p=>!p.isNeg);
   const puList=puSel==='ALL'?activePUs:activePUs.filter(p=>p.code===puSel);
 
-  function fCr(v){return v?(Math.abs(v)*1000/10000000).toFixed(1)+' Cr':'â€”';}
-  function fN(v){return v?Math.round(v).toLocaleString('en-IN'):'â€”';}
+  function fCr(v){return v?(Math.abs(v)*1000/10000000).toFixed(1)+' Cr':'-';}
+  function fN(v){return v?Math.round(v).toLocaleString('en-IN'):'-';}
   function sumM(pus,ds){return MK.map((_,mi)=>pus.reduce((s,p2)=>s+(ds[p2.code]?ds[p2.code][MK[mi]]||0:0),0));}
 
   // â”€â”€ KPI Strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2274,10 +2344,10 @@ function renderTrend(){
     strip.innerHTML=[
       ['Budget BG_ISL',fCr(totB),puSel==='ALL'?'All PUs combined':'PU-'+puSel],
       ['Actuals Till Date',fCr(totA),util.toFixed(1)+'% utilised'],
-      ['Balance',fCr(Math.abs(bal)),(bal<0?'âš  Over Budget':'Remaining')],
-      ['Months Active',activeMths+'/12','APR 2026 â†’ MAR 2027'],
+      ['Balance',fCr(Math.abs(bal)),(bal<0?'Warning Over Budget':'Remaining')],
+      ['Months Active',activeMths+'/12','APR 2026 to MAR 2027'],
       yoy!==null?['YoY Change',(yoy>=0?'+':'')+yoy.toFixed(1)+'%','vs full year PY 2025-26']:
-                 ['PY Data','Pre-loaded âœ…','27-Jun-2026 static file'],
+                 ['PY Data','Pre-loaded OK','27-Jun-2026 static file'],
     ].map(([l,v,s])=>`<div class="trend-kpi"><div class="tk-lbl">${l}</div><div class="tk-val">${v}</div><div class="tk-sub">${s}</div></div>`).join('');
   }
   const note=document.getElementById('trendDataNote');
@@ -2316,16 +2386,16 @@ function renderTrend(){
         });
       }
       const rangeLabel = mainLabels.length ? ` (${mainLabels[0]} to ${mainLabels[mainLabels.length - 1]})` : '';
-      if(titleEl) titleEl.textContent='Actual Expenses Done Months'+rangeLabel+' â€” '+(puSel==='ALL'?'All PUs':'PU-'+puSel);
+      if(titleEl) titleEl.textContent='Actual Expenses Done Months'+rangeLabel+' - '+(puSel==='ALL'?'All PUs':'PU-'+puSel);
       mainTooltipCallbacks = {afterLabel:c=>c.dataIndex===doneIdxs.indexOf(CUR_IDX)?'Current month till-date / committed':''};
     } else if(cType==='cumulative'){
       let cc=0,cp=0;
       const cumCY=cyV.map(v=>{cc+=v;return(cc*1000/10000000).toFixed(1);});
-      ds=[{label:'CY 2026-27 Cumulative (â‚¹Cr)',data:cumCY,borderColor:'#1C6FD9',backgroundColor:'rgba(28,111,217,.12)',fill:true,tension:.35,pointRadius:4,type:'line'}];
-      if(pyV){const cumPY=pyV.map(v=>{cp+=v;return(cp*1000/10000000).toFixed(1);}); ds.push({label:'PY 2025-26 Cumulative (â‚¹Cr)',data:cumPY,borderColor:'#C9A84C',fill:false,tension:.35,pointRadius:4,type:'line',borderDash:[5,3]});}
-      if(titleEl) titleEl.textContent='Cumulative Spend â€” APR â†’ MAR';
+      ds=[{label:'CY 2026-27 Cumulative (RsCr)',data:cumCY,borderColor:'#1C6FD9',backgroundColor:'rgba(28,111,217,.12)',fill:true,tension:.35,pointRadius:4,type:'line'}];
+      if(pyV){const cumPY=pyV.map(v=>{cp+=v;return(cp*1000/10000000).toFixed(1);}); ds.push({label:'PY 2025-26 Cumulative (RsCr)',data:cumPY,borderColor:'#C9A84C',fill:false,tension:.35,pointRadius:4,type:'line',borderDash:[5,3]});}
+      if(titleEl) titleEl.textContent='Cumulative Spend - APR to MAR';
     } else if(cType==='yoy'){
-      if(!pyV||!hasPY){if(titleEl) titleEl.textContent='YoY â€” PY data pre-loaded'; return;}
+      if(!pyV||!hasPY){if(titleEl) titleEl.textContent='YoY - PY data pre-loaded'; return;}
       const yoyD=cyV.map((v,i)=>pyV[i]?((v-pyV[i])/Math.abs(pyV[i])*100).toFixed(1):null);
       ds=[{label:'YoY % Change',data:yoyD,backgroundColor:yoyD.map(v=>parseFloat(v)>=0?'rgba(26,122,74,.75)':'rgba(204,0,0,.75)'),borderRadius:4}];
       if(titleEl) titleEl.textContent='Month-wise Year-on-Year % Change (CY vs PY)';
@@ -2333,14 +2403,14 @@ function renderTrend(){
       const barsClr=cyV.map((_,i)=>i<CUR_IDX?'rgba(28,111,217,.75)':i===CUR_IDX?'rgba(244,169,50,.85)':'rgba(28,111,217,.2)');
       ds=[{label:'CY 2026-27 Actuals',data:cyV.map(v=>(v*1000/10000000).toFixed(1)),backgroundColor:barsClr,borderRadius:3}];
       if(pyV) ds.push({label:'PY 2025-26',data:pyV.map(v=>(v*1000/10000000).toFixed(1)),type:'line',borderColor:'#C9A84C',backgroundColor:'transparent',borderWidth:2.5,tension:.3,pointRadius:4,borderDash:[4,2]});
-      if(titleEl) titleEl.textContent='Monthly Actuals â€” '+(puSel==='ALL'?'All PUs':'PU-'+puSel);
+      if(titleEl) titleEl.textContent='Monthly Actuals - '+(puSel==='ALL'?'All PUs':'PU-'+puSel);
     }
-    _mC('trendMainChart',{type:'bar',data:{labels:mainLabels,datasets:ds},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}},tooltip:{callbacks:mainTooltipCallbacks||{}}},scales:{x:{ticks:{font:{size:10}}},y:{title:{display:true,text:'â‚¹ Crore'},ticks:{font:{size:10}}}}}});
+    _mC('trendMainChart',{type:'bar',data:{labels:mainLabels,datasets:ds},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}},tooltip:{callbacks:mainTooltipCallbacks||{}}},scales:{x:{ticks:{font:{size:10}}},y:{title:{display:true,text:'Rs Crore'},ticks:{font:{size:10}}}}}});
   } else {
     const sorted=activePUs.filter(p2=>BUDGET[p2.code]&&BUDGET[p2.code].bg_isl>0).sort((a,b)=>(BUDGET[b.code].actuals_till||0)-(BUDGET[a.code].actuals_till||0)).slice(0,topN);
     if(cType==='pubar'){
-      _mC('trendMainChart',{type:'bar',data:{labels:sorted.map(p2=>'PU-'+p2.code),datasets:[{label:'Budget',data:sorted.map(p2=>(BUDGET[p2.code].bg_isl/10000).toFixed(0)),backgroundColor:'rgba(26,74,138,.45)',borderRadius:3},{label:'Actuals',data:sorted.map(p2=>(BUDGET[p2.code].actuals_till/10000).toFixed(0)),backgroundColor:'rgba(26,122,74,.75)',borderRadius:3}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{title:{display:true,text:'â‚¹ Cr'},ticks:{font:{size:10}}}}}});
-      if(titleEl) titleEl.textContent='Top '+sorted.length+' PUs â€” Budget vs Actuals (â‚¹ Cr)';
+      _mC('trendMainChart',{type:'bar',data:{labels:sorted.map(p2=>'PU-'+p2.code),datasets:[{label:'Budget',data:sorted.map(p2=>(BUDGET[p2.code].bg_isl/10000).toFixed(0)),backgroundColor:'rgba(26,74,138,.45)',borderRadius:3},{label:'Actuals',data:sorted.map(p2=>(BUDGET[p2.code].actuals_till/10000).toFixed(0)),backgroundColor:'rgba(26,122,74,.75)',borderRadius:3}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:10}}}}}});
+      if(titleEl) titleEl.textContent='Top '+sorted.length+' PUs - Budget vs Actuals (Rs Cr)';
     } else {
       const utD=sorted.map(p2=>Math.min(150,Math.round((BUDGET[p2.code].actuals_till||0)/Math.max(BUDGET[p2.code].bg_isl||1,1)*100)));
       _mC('trendMainChart',{type:'bar',data:{labels:sorted.map(p2=>'PU-'+p2.code),datasets:[{label:'Utilisation %',data:utD,backgroundColor:utD.map(u=>u>100?'rgba(204,0,0,.75)':u>85?'rgba(232,93,4,.75)':u>60?'rgba(192,112,0,.65)':'rgba(26,122,74,.75)'),borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{max:155,title:{display:true,text:'%'},ticks:{callback:v=>v+'%',font:{size:10}}}}}});
@@ -2352,16 +2422,9 @@ function renderTrend(){
   const topU=activePUs.filter(p2=>BUDGET[p2.code]&&BUDGET[p2.code].bg_isl>0).sort((a,b)=>{return (BUDGET[b.code].actuals_till||0)/Math.max(BUDGET[b.code].bg_isl||1,1)-(BUDGET[a.code].actuals_till||0)/Math.max(BUDGET[a.code].bg_isl||1,1);}).slice(0,10);
   _mC('trendUtilChart',{type:'bar',data:{labels:topU.map(p2=>'PU-'+p2.code+': '+p2.desc.substring(0,14)),datasets:[{label:'Utilisation %',data:topU.map(p2=>Math.min(150,Math.round((BUDGET[p2.code].actuals_till||0)/Math.max(BUDGET[p2.code].bg_isl||1,1)*100))),backgroundColor:topU.map(p2=>{const u=(BUDGET[p2.code].actuals_till||0)/Math.max(BUDGET[p2.code].bg_isl||1,1)*100;return u>100?'rgba(204,0,0,.75)':u>85?'rgba(232,93,4,.75)':u>60?'rgba(192,112,0,.65)':'rgba(26,122,74,.75)';}),borderRadius:3}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'% utilised'}}},scales:{x:{max:155,title:{display:true,text:'%'},ticks:{callback:v=>v+'%',font:{size:9}}},y:{ticks:{font:{size:8}}}}}});
 
-  // â”€â”€ Staff vs Non-Staff doughnut â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const sA=activePUs.filter(p2=>p2.puType==='Staff PU').reduce((s,p2)=>s+(BUDGET[p2.code]?BUDGET[p2.code].actuals_till||0:0),0);
-  const nA=activePUs.filter(p2=>p2.puType==='Non Staff PU').reduce((s,p2)=>s+(BUDGET[p2.code]?BUDGET[p2.code].actuals_till||0:0),0);
-  const sB=activePUs.filter(p2=>p2.puType==='Staff PU').reduce((s,p2)=>s+(BUDGET[p2.code]?BUDGET[p2.code].bg_isl||0:0),0);
-  const nB=activePUs.filter(p2=>p2.puType==='Non Staff PU').reduce((s,p2)=>s+(BUDGET[p2.code]?BUDGET[p2.code].bg_isl||0:0),0);
-  _mC('trendTypeChart',{type:'doughnut',data:{labels:['Staff â€” Actuals','Non-Staff â€” Actuals','Staff â€” Budget','Non-Staff â€” Budget'],datasets:[{data:[sA,nA,0,0],backgroundColor:['rgba(26,122,74,.85)','rgba(28,111,217,.85)','transparent','transparent'],borderWidth:2},{data:[0,0,sB,nB],backgroundColor:['transparent','transparent','rgba(26,122,74,.25)','rgba(28,111,217,.25)'],borderWidth:1}]},options:{responsive:true,cutout:'55%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:9}}},tooltip:{callbacks:{label:c=>(c.label||'')+': â‚¹'+(c.raw*1000/10000000).toFixed(1)+' Cr'}}}}});
-
   // â”€â”€ Top 15 Budget vs Actuals bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const top15=activePUs.filter(p2=>BUDGET[p2.code]&&(BUDGET[p2.code].actuals_till||0)>0).sort((a,b)=>(BUDGET[b.code].actuals_till||0)-(BUDGET[a.code].actuals_till||0)).slice(0,15);
-  _mC('trendTopPUChart',{type:'bar',data:{labels:top15.map(p2=>'PU-'+p2.code+': '+p2.desc.substring(0,14)),datasets:[{label:'Budget (â‚¹Cr)',data:top15.map(p2=>((BUDGET[p2.code].bg_isl||0)/10000).toFixed(0)),backgroundColor:'rgba(26,74,138,.4)',borderRadius:2},{label:'Actuals (â‚¹Cr)',data:top15.map(p2=>((BUDGET[p2.code].actuals_till||0)/10000).toFixed(0)),backgroundColor:'rgba(26,122,74,.75)',borderRadius:2}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{x:{ticks:{font:{size:8},maxRotation:35}},y:{title:{display:true,text:'â‚¹ Cr'},ticks:{font:{size:10}}}}}});
+  _mC('trendTopPUChart',{type:'bar',data:{labels:top15.map(p2=>'PU-'+p2.code+': '+p2.desc.substring(0,14)),datasets:[{label:'Budget (RsCr)',data:top15.map(p2=>((BUDGET[p2.code].bg_isl||0)/10000).toFixed(0)),backgroundColor:'rgba(26,74,138,.4)',borderRadius:2},{label:'Actuals (RsCr)',data:top15.map(p2=>((BUDGET[p2.code].actuals_till||0)/10000).toFixed(0)),backgroundColor:'rgba(26,122,74,.75)',borderRadius:2}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{x:{ticks:{font:{size:8},maxRotation:35}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:10}}}}}});
 
   // â”€â”€ Heatmap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const hmDiv=document.getElementById('trendHeatmap');
@@ -2371,7 +2434,7 @@ function renderTrend(){
     const maxV=Math.max(...allV,1);
     function hC(v){const r=Math.round(28+(v/maxV)*176),g=Math.round(111*(v/maxV)),b=Math.round(217-(v/maxV)*160);return 'rgb('+r+','+g+','+b+')';}
     const hdr='<tr><th style="text-align:left;background:#0A1628;position:sticky;left:0;z-index:3">PU</th>'+ML.map((m,i)=>'<th>'+m+'<br><span style="font-size:7px">'+(i<=8?'26':'27')+'</span></th>').join('')+'</tr>';
-    const rows=hmPUs.map(pu=>'<tr><td style="text-align:left;font-weight:700;background:#F5F8FC;position:sticky;left:0;z-index:2;white-space:nowrap">PU-'+pu.code+'</td>'+MK.map((mk,i)=>{const v=MONTH[pu.code]?MONTH[pu.code][mk]||0:0;const cr2=(v*1000/10000000).toFixed(1);const bg=v>0?hC(v):'#F8FAFB';const fg=v>maxV*0.4?'#fff':'#0A1628';return '<td style="background:'+bg+';color:'+fg+'">'+(v>0?cr2:'â€”')+'</td>';}).join('')+'</tr>').join('');
+    const rows=hmPUs.map(pu=>'<tr><td style="text-align:left;font-weight:700;background:#F5F8FC;position:sticky;left:0;z-index:2;white-space:nowrap">PU-'+pu.code+'</td>'+MK.map((mk,i)=>{const v=MONTH[pu.code]?MONTH[pu.code][mk]||0:0;const cr2=(v*1000/10000000).toFixed(1);const bg=v>0?hC(v):'#F8FAFB';const fg=v>maxV*0.4?'#fff':'#0A1628';return '<td style="background:'+bg+';color:'+fg+'">'+(v>0?cr2:'-')+'</td>';}).join('')+'</tr>').join('');
     hmDiv.innerHTML='<table><thead>'+hdr+'</thead><tbody>'+rows+'</tbody></table>';
   }
 
@@ -2384,7 +2447,7 @@ function renderTrend(){
     focusDs.push({label:'PU-'+code+' CY',data:cyVf,borderColor:cyColors[fi],backgroundColor:'transparent',borderWidth:2.5,tension:.3,pointRadius:4});
     if(pyVf) focusDs.push({label:'PU-'+code+' PY',data:pyVf,borderColor:cyColors[fi],backgroundColor:'transparent',borderWidth:1.5,tension:.3,pointRadius:2,borderDash:[4,3],opacity:.5});
   });
-  _mC('trendFocusChart',{type:'line',data:{labels:ML_S.map((m,i)=>m+(i<=8?'\'26':'\'27')),datasets:focusDs},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:8},filter:i=>!i.text.includes('PY')||showPY}}},scales:{x:{ticks:{font:{size:9}}},y:{title:{display:true,text:'â‚¹ Cr'},ticks:{font:{size:9}}}}}});
+  _mC('trendFocusChart',{type:'line',data:{labels:ML_S.map((m,i)=>m+(i<=8?'\'26':'\'27')),datasets:focusDs},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:8},filter:i=>!i.text.includes('PY')||showPY}}},scales:{x:{ticks:{font:{size:9}}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:9}}}}}});
 
   // â”€â”€ Analytics Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const thead=document.getElementById('trendTHead'),tbody=document.getElementById('trendTBody');
@@ -2408,8 +2471,8 @@ function renderTrend(){
         '<td style="color:'+uC+';font-weight:700">'+util+'%</td>'+
         '<td class="no-exp-status">'+htmlSafe(noExpenseStatus(noExp))+'</td>'+
         '<td>'+fN(pyAct)+'</td>'+
-        '<td style="color:'+(yoy===null?'#888':yoy>=0?'#CC0000':'#1A7A4A')+';font-weight:700">'+(yoy===null?'â€”':(yoy>=0?'+':'')+yoy.toFixed(1)+'%')+'</td>'+
-        MK.map((mk,i)=>{const v=mo[mk]||0;const isCur=i===CUR_IDX,isFut=i>CUR_IDX;return '<td style="'+(v>0&&isCur?'background:#FFF8E0;font-weight:700;':'')+(isFut?'color:#B0C0D8;':'')+'font-size:9px">'+(v>0?v.toLocaleString('en-IN'):'<span style="color:#ddd">â€”</span>')+'</td>';}).join('')+
+        '<td style="color:'+(yoy===null?'#888':yoy>=0?'#CC0000':'#1A7A4A')+';font-weight:700">'+(yoy===null?'-':(yoy>=0?'+':'')+yoy.toFixed(1)+'%')+'</td>'+
+        MK.map((mk,i)=>{const v=mo[mk]||0;const isCur=i===CUR_IDX,isFut=i>CUR_IDX;return '<td style="'+(v>0&&isCur?'background:#FFF8E0;font-weight:700;':'')+(isFut?'color:#B0C0D8;':'')+'font-size:9px">'+(v>0?v.toLocaleString('en-IN'):'<span style="color:#ddd">-</span>')+'</td>';}).join('')+
         '<td style="font-weight:700;font-size:10px">'+fN(total)+'</td>'+
         '</tr>';
     }).join('');
@@ -2439,7 +2502,7 @@ function renderMonthwise() {
         <th style="background:#7A5A00;color:#FFF9E0">${cur.label}<br>Remaining</th>
         <th style="background:#7A5A00;color:#FFF9E0">${cur.label}<br>Total</th>
         ${futureHdr}
-        <th>Budget<br>(â‚¹'000s)</th>
+        <th>Budget<br>(Rs'000s)</th>
         <th>Committed<br>Till Date</th>
         <th>Balance<br>Budget</th>
         <th>%<br>Used</th>
@@ -2520,7 +2583,7 @@ function renderAll() {
   renderLiability();
   renderMonthwise();
   renderPUMaster();
-  document.getElementById('rgNote').textContent=isRGActive()?'âœ… RG Active':'âš  RG not active â€” using BG_ISL';
+  document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'RG not active - using BG_ISL';
   const {cur:_cur}=getMonthStatus();
   const _cmb=document.getElementById('curMonBadge'); if(_cmb) _cmb.textContent=_cur.label+' '+_cur.year;
   setTimeout(()=>{addDualScroll();attachPUPopup();},80);
@@ -2539,6 +2602,8 @@ setTimeout(renderSMHDetail, 120);
   const sel=document.getElementById('trendPUSelect'); if(!sel) return;
   PU_META.filter(p=>!p.isNeg).forEach(pu=>{
     const o=document.createElement('option'); o.value=pu.code;
-    o.textContent='PU-'+pu.code+' â€” '+pu.desc; sel.appendChild(o);
+    o.textContent='PU-'+pu.code+' - '+pu.desc; sel.appendChild(o);
   });
 })();
+
+

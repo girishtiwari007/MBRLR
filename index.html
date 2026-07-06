@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -8,20 +8,20 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="portal-build" content="rlp-mbd-2026-07-03-v2.1.1">
-<title>Revenue Liability Portal — Moradabad Division | Northern Railway</title>
+<title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
 <link rel="stylesheet" href="assets/css/main.css">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
 <body>
 
-<!-- ══ LOGIN OVERLAY ══════════════════════════════════════════ -->
+<!-- â•â• LOGIN OVERLAY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="loginOverlay">
   <div class="login-box">
-    <div class="login-emblem">🚂</div>
+    <div class="login-emblem">NR</div>
     <div class="login-badge">NORTHERN RAILWAY</div>
     <div class="login-title">REVENUE LIABILITY PORTAL</div>
-    <div class="login-sub">Moradabad Division &nbsp;·&nbsp; Financial Authority Dashboard<br>Please sign in to continue</div>
+    <div class="login-sub">Moradabad Division  -  Financial Authority Dashboard<br>Please sign in to continue</div>
     <div class="login-field">
       <label>User ID</label>
       <div class="login-inp-wrap">
@@ -34,12 +34,12 @@
       <div class="login-inp-wrap">
         <input class="login-inp" type="password" id="loginPwd" placeholder="Enter Password"
           onkeydown="if(event.key==='Enter')doLogin()">
-        <span class="login-eye" onclick="var i=document.getElementById('loginPwd');i.type=i.type==='password'?'text':'password'">👁</span>
+        <span class="login-eye" onclick="var i=document.getElementById('loginPwd');i.type=i.type==='password'?'text':'password'">Show</span>
       </div>
     </div>
-    <button class="login-btn" onclick="doLogin()">SIGN IN &nbsp;→</button>
+    <button class="login-btn" onclick="doLogin()">SIGN IN</button>
     <div class="login-err" id="loginErr"></div>
-    <div style="font-size:9px;color:#A0B8D0;margin-top:16px">For Official Use Only &nbsp;·&nbsp; FY 2026-27</div>
+    <div style="font-size:9px;color:#A0B8D0;margin-top:16px">For Official Use Only  -  FY 2026-27</div>
   </div>
 </div>
 
@@ -58,11 +58,11 @@
     <circle cx="50" cy="50" r="6" fill="#F4A932"/>
   </svg>
   <div class="ht">
-    <h1>REVENUE LIABILITY PORTAL — MORADABAD DIVISION</h1>
-    <p>Northern Railway &nbsp;|&nbsp; Financial Authority Dashboard &nbsp;|&nbsp; All figures in ₹ Thousands ('000s) — multiply by 1,000 for actual rupees</p>
+    <h1>REVENUE LIABILITY PORTAL - MORADABAD DIVISION</h1>
+    <p>Northern Railway &nbsp;|&nbsp; Financial Authority Dashboard &nbsp;|&nbsp; All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees</p>
   </div>
   <div class="hdr-r">
-    <span class="fy-badge">FY 2026–27</span>
+    <span class="fy-badge">FY 2026-27</span>
     <span class="as-on" id="asOnLabel">As on: 29-Jun-2026</span>
   </div>
 </div>
@@ -94,8 +94,8 @@
     </select>
     <input class="util-input" id="utilPctFilter" type="number" min="0" max="999" step="1" placeholder="%" oninput="renderAll()">
   </span>
-  <span class="rg-note" id="rgNote">⚠ RG not active — using BG_ISL</span>
-  <span style="background:#1A7A4A;color:#fff;font-size:9px;padding:2px 8px;border-radius:4px;font-weight:700">📅 Current Month: <span id="curMonBadge">JUN 2026</span></span>
+  <span class="rg-note" id="rgNote">RG not active - using BG_ISL</span>
+  <span style="background:#1A7A4A;color:#fff;font-size:9px;padding:2px 8px;border-radius:4px;font-weight:700">Current Month: <span id="curMonBadge">JUN 2026</span></span>
   <span class="live-clock" id="liveClock"></span>
   <span class="theme-picker">
     <label for="themeSelect">Theme</label>
@@ -114,7 +114,7 @@
       <option value="raised">3D</option>
     </select>
   </span>
-  <button class="dl-btn" onclick="downloadExcel()">⬇ Download Excel</button>
+  <button class="dl-btn" onclick="downloadExcel()">Download Excel</button>
 </div>
 
 
@@ -124,7 +124,7 @@
 <!-- JUNE PROGRESS -->
 <div class="jun-sec">
   <div class="jun-title">
-    🗓 <span id="curMonLabel">JUNE 2026</span> — Highest Utilized PU Progress
+    <span id="curMonLabel">JUNE 2026</span> - Highest Utilized PU Progress
     <span class="jun-badge">TOP UTILIZATION</span>
   </div>
   <div class="prog-grid" id="juneBars"></div>
@@ -132,35 +132,34 @@
 
 <!-- NOTE -->
 <div class="note-box" style="background:#FFFBE6;border:1.5px solid #F4C842;border-radius:6px;padding:10px 14px;margin:0 20px 10px;display:flex;align-items:flex-start;gap:8px">
-  <span style="font-size:16px;flex-shrink:0">⚠️</span>
+  <span style="font-size:16px;flex-shrink:0">!</span>
   <span style="font-size:10px;color:#5A3E00;font-weight:700;line-height:1.7">
-    <span style="background:#F4C842;padding:1px 5px;border-radius:3px;font-weight:800">Figures:</span> Stored in ₹ '000s — e.g. 6,687,224 means ₹ 6,687,224,000 (₹ 668.72 Cr).
+    <span style="background:#F4C842;padding:1px 5px;border-radius:3px;font-weight:800">Figures:</span> Stored in Rs '000s - e.g. 6,687,224 means Rs 6,687,224,000 (Rs 668.72 Cr).
     &nbsp;|&nbsp;
     <span style="background:#F4C842;padding:1px 5px;border-radius:3px;font-weight:800">Budget:</span> BG_ISL active (RG operative from 1st week Jan 2027; once available, RG replaces BG_ISL automatically).
     &nbsp;|&nbsp;
     <span style="background:#F4C842;padding:1px 5px;border-radius:3px;font-weight:800">Liability Formula:</span> <span id="noteFormulaText">Completed month actuals + current month till-date + current month remaining = current month total liability; balance is projected over remaining months.</span>
     &nbsp;|&nbsp;
-    <span style="background:#F4C842;padding:1px 5px;border-radius:3px;font-weight:800">FY runs APR → MAR (12 months).</span>
+    <span style="background:#F4C842;padding:1px 5px;border-radius:3px;font-weight:800">FY runs APR to MAR (12 months).</span>
     Current month auto-detected from system date.
   </span>
 </div>
 
 <!-- TABS -->
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('liability')">📊 Revenue Liability</div>
-  <div class="tab" onclick="switchTab('monthwise')">📅 Month-wise Actuals</div>
-  <div class="tab" onclick="switchTab('pumaster')">📋 PU Master</div>
-  <div class="tab" onclick="switchTab('trend')">📈 Trend Analysis Graphs</div>
-  <div class="tab" onclick="switchTab('aitrend')">🧠 AI Trend Analysis Summary</div>
-  <div class="tab" onclick="switchTab('smhdetail')">🏛 Dept SMH Analysis</div>
-  <div class="tab" id="uploadTab" onclick="switchTab('upload')" style="display:none">📤 Data Upload</div>
+  <div class="tab active" onclick="switchTab('liability')">Revenue Liability</div>
+  <div class="tab" onclick="switchTab('monthwise')">Month-wise Actuals</div>
+  <div class="tab" onclick="switchTab('pumaster')">PU Master</div>
+  <div class="tab" onclick="switchTab('trend')">Trend Analysis Graphs</div>
+  <div class="tab" onclick="switchTab('aitrend')">AI Trend Analysis Summary</div>
+  <div class="tab" onclick="switchTab('smhdetail')">Dept SMH Analysis</div>
+  <div class="tab" id="uploadTab" onclick="switchTab('upload')" style="display:none">Data Upload</div>
 </div>
-
 <!-- TAB: LIABILITY -->
 <div class="tab-content active" id="tab-liability">
   <div class="twrap">
     <div class="thead-bar">
-      <span class="ttitle">PU-wise Revenue Liability Statement — FY 2026-27</span>
+      <span class="ttitle">PU-wise Revenue Liability Statement - FY 2026-27</span>
       <div class="legend">
         <div class="leg-item"><div class="leg-box cs"></div>Staff PU / Committed</div>
         <div class="leg-item"><div class="leg-box co"></div>Other Committed</div>
@@ -174,22 +173,22 @@
           <th class="la" rowspan="2" style="min-width:160px">Description</th>
           <th class="la" rowspan="2">PU Type</th>
           <th class="la" rowspan="2">Liability</th>
-          <th rowspan="2">Budget<br>(₹'000s)</th>
+          <th rowspan="2">Budget<br>(Rs'000s)</th>
           <th class="sub" colspan="1">APR 2026</th>
           <th class="sub" colspan="1">MAY 2026</th>
-          <th class="sub" colspan="4" id="curMonHdr" style="background:rgba(244,169,50,.15)">JUN 2026 — Till Date Exp + Remaining</th>
-          <th rowspan="2">Total Committed<br>(₹'000s)</th>
-          <th rowspan="2">Balance Budget<br>(₹'000s)</th>
-          <th rowspan="2">Proj./Month<br>Jul–Mar (₹'000s)</th>
+          <th class="sub" colspan="4" id="curMonHdr" style="background:rgba(244,169,50,.15)">JUN 2026 - Till Date Exp + Remaining</th>
+          <th rowspan="2">Total Committed<br>(Rs'000s)</th>
+          <th rowspan="2">Balance Budget<br>(Rs'000s)</th>
+          <th rowspan="2">Proj./Month<br>Jul-Mar (Rs'000s)</th>
           <th rowspan="2">% Utilised</th>
           <th rowspan="2">Status</th>
         </tr>
         <tr>
-          <th class="sub" style="min-width:90px">APR Actual<br>(₹'000s)</th>
-          <th class="sub" style="min-width:90px">MAY Actual<br>(₹'000s)</th>
-          <th class="sub" style="min-width:100px">JUN till date exp<br>(₹'000s)</th>
+          <th class="sub" style="min-width:90px">APR Actual<br>(Rs'000s)</th>
+          <th class="sub" style="min-width:90px">MAY Actual<br>(Rs'000s)</th>
+          <th class="sub" style="min-width:100px">JUN till date exp<br>(Rs'000s)</th>
           <th class="sub" style="min-width:90px">JUN<br>Remaining</th>
-          <th class="sub" style="min-width:90px">JUN Total<br>(₹'000s)</th>
+          <th class="sub" style="min-width:90px">JUN Total<br>(Rs'000s)</th>
           <th class="sub">% Done</th>
         </tr>
       </thead>
@@ -202,7 +201,7 @@
 <div class="tab-content" id="tab-monthwise">
   <div class="twrap">
     <div class="thead-bar">
-      <span class="ttitle">Month-wise Actuals + Projected Liability — FY 2026-27</span>
+      <span class="ttitle">Month-wise Actuals + Projected Liability - FY 2026-27</span>
       <div class="legend">
         <div class="leg-item" style="background:#E8F5FF;padding:2px 6px;border-radius:3px">Blue = Projected</div>
         <div class="leg-item" style="background:#FFF9E6;padding:2px 6px;border-radius:3px">Yellow = Current Month</div>
@@ -226,7 +225,7 @@
           <th style="background:#1A3A6A;color:#DDEEFF">JAN<br>Projected</th>
           <th style="background:#1A3A6A;color:#DDEEFF">FEB<br>Projected</th>
           <th style="background:#1A3A6A;color:#DDEEFF">MAR<br>Projected</th>
-          <th>Budget<br>(₹'000s)</th>
+          <th>Budget<br>(Rs'000s)</th>
           <th>Committed<br>Till Date</th>
           <th>Balance<br>Budget</th>
           <th>%<br>Used</th>
@@ -242,13 +241,13 @@
 <!-- TAB: PU MASTER -->
 <div class="tab-content" id="tab-pumaster">
   <div class="twrap">
-    <div class="thead-bar"><span class="ttitle">Revenue PU Master — Code & Classification</span></div>
+    <div class="thead-bar"><span class="ttitle">Revenue PU Master - Code & Classification</span></div>
     <table>
       <thead><tr>
         <th class="la">PU Code</th><th class="la">Description</th>
         <th class="la">Type of PU</th><th class="la">Type of Liability</th>
         <th>Remaining Budget</th>
-        <th>Budget BG_ISL (₹'000s)</th><th>Budget (₹ Cr)</th><th>Actuals Till Date (₹'000s)</th>
+        <th>Budget BG_ISL (Rs'000s)</th><th>Budget (Rs Cr)</th><th>Actuals Till Date (Rs'000s)</th>
         <th>Status</th>
       </tr></thead>
       <tbody id="pu-tbody"></tbody>
@@ -261,35 +260,35 @@
 <div class="tab-content" id="tab-upload">
   <div class="upload-wrap">
     <div class="upload-banner">
-      <span class="ub-icon">📤</span>
+      <span class="ub-icon">/span>
       <div><h2>Data Upload Centre</h2>
         <p>Upload files for <strong>Current Year 2026-27</strong> and/or <strong>Previous Year 2025-26</strong>. Portal auto-senses months, updates all tables and Trend Analysis.</p>
       </div>
-      <div class="upload-lock">🔐 ADMIN ACCESS ONLY</div>
+      <div class="upload-lock">ADMIN ACCESS ONLY</div>
     </div>
-    <div class="cur-data-box"><h4>📊 Currently Loaded Data Snapshot</h4><div class="cdb-grid" id="curDataGrid"></div></div>
+    <div class="cur-data-box"><h4>Currently Loaded Data Snapshot</h4><div class="cdb-grid" id="curDataGrid"></div></div>
 
     <div style="margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:8px">
-      <span style="background:#1C3A5E;color:#C9A84C;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">📅 FY 2026-27 — CURRENT YEAR</span>
+      <span style="background:#1C3A5E;color:#C9A84C;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">FY 2026-27 - CURRENT YEAR</span>
     </div>
     <div class="upload-cards" style="margin-top:10px">
       <div class="upload-card">
-        <h3>📄 Budget Available — CY 2026-27</h3>
-        <p>Upload <strong>BudgetReport — BUDGET AVAILABLE</strong> for FY 2026-27.<br>Auto-senses: BG_ISL · RG · Actuals Till Date per PU.</p>
+        <h3>Budget Available - CY 2026-27</h3>
+        <p>Upload <strong>BudgetReport - BUDGET AVAILABLE</strong> for FY 2026-27.<br>Auto-senses: BG_ISL - RG - Actuals Till Date per PU.</p>
         <div class="drop-zone" id="dz-budget-cy" ondragover="dzDrag(event,'budget-cy')" ondragleave="dzLeave('budget-cy')" ondrop="dzDrop(event,'budget-cy')">
           <input type="file" id="inp-budget-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'budget','cy')">
-          <span class="dz-icon" id="dz-budget-cy-icon">📂</span>
+          <span class="dz-icon" id="dz-budget-cy-icon">/span>
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-budget-cy-status"></div>
         </div>
       </div>
       <div class="upload-card">
-        <h3>📅 Month-wise Actuals — CY 2026-27</h3>
-        <p>Upload <strong>BudgetReport — MONTH WISE</strong> for FY 2026-27.<br>Auto-senses latest month (APR–MAR) and refreshes trend.</p>
+        <h3>Month-wise Actuals - CY 2026-27</h3>
+        <p>Upload <strong>BudgetReport - MONTH WISE</strong> for FY 2026-27.<br>Auto-senses latest month (APR-MAR) and refreshes trend.</p>
         <div class="drop-zone" id="dz-month-cy" ondragover="dzDrag(event,'month-cy')" ondragleave="dzLeave('month-cy')" ondrop="dzDrop(event,'month-cy')">
           <input type="file" id="inp-month-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'month','cy')">
-          <span class="dz-icon" id="dz-month-cy-icon">📂</span>
+          <span class="dz-icon" id="dz-month-cy-icon">/span>
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-month-cy-status"></div>
@@ -307,7 +306,7 @@
         <p>Upload <strong>Department - SMH - PU wise Budget</strong> for FY 2026-27.<br>Skips Department 00 and PU-98 automatically.</p>
         <div class="drop-zone" id="dz-smhbudget-cy" ondragover="dzDrag(event,'smhbudget-cy')" ondragleave="dzLeave('smhbudget-cy')" ondrop="dzDrop(event,'smhbudget-cy')">
           <input type="file" id="inp-smhbudget-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'smhbudget','cy')">
-          <span class="dz-icon" id="dz-smhbudget-cy-icon">ðŸ“‚</span>
+          <span class="dz-icon" id="dz-smhbudget-cy-icon">span>
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-smhbudget-cy-status"></div>
@@ -318,7 +317,7 @@
         <p>Upload <strong>Department - SMH - PU wise Month Wise</strong> actuals.<br>Refreshes Department, Demand and PU-wise report.</p>
         <div class="drop-zone" id="dz-smhmonth-cy" ondragover="dzDrag(event,'smhmonth-cy')" ondragleave="dzLeave('smhmonth-cy')" ondrop="dzDrop(event,'smhmonth-cy')">
           <input type="file" id="inp-smhmonth-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'smhmonth','cy')">
-          <span class="dz-icon" id="dz-smhmonth-cy-icon">ðŸ“‚</span>
+          <span class="dz-icon" id="dz-smhmonth-cy-icon">span>
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-smhmonth-cy-status"></div>
@@ -327,27 +326,27 @@
     </div>
 
     <div style="margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid #607080;display:flex;align-items:center;gap:8px">
-      <span style="background:#394A5E;color:#A8C0D8;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">📅 FY 2025-26 — PREVIOUS YEAR (for Trend Comparison)</span>
-      <span style="font-size:9px;color:#1A7A4A;font-weight:700">✅ Pre-loaded from static file</span>
+      <span style="background:#394A5E;color:#A8C0D8;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">FY 2025-26 - PREVIOUS YEAR (for Trend Comparison)</span>
+      <span style="font-size:9px;color:#1A7A4A;font-weight:700">OK Pre-loaded from static file</span>
     </div>
     <div class="upload-cards" style="margin-top:10px">
       <div class="upload-card" style="border-top:3px solid #607080">
-        <h3>📄 Budget Available — PY 2025-26</h3>
+        <h3>Budget Available - PY 2025-26</h3>
         <p>Re-upload previous year budget if needed.<br>Currently pre-loaded from 27-Jun-2026 file.</p>
         <div class="drop-zone" id="dz-budget-py" ondragover="dzDrag(event,'budget-py')" ondragleave="dzLeave('budget-py')" ondrop="dzDrop(event,'budget-py')">
           <input type="file" id="inp-budget-py" accept=".xls,.xlsx" onchange="handleFileEx(event,'budget','py')">
-          <span class="dz-icon" id="dz-budget-py-icon">📂</span>
+          <span class="dz-icon" id="dz-budget-py-icon">/span>
           <div class="dz-text">Click or Drag &amp; Drop to refresh PY</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-budget-py-status"></div>
         </div>
       </div>
       <div class="upload-card" style="border-top:3px solid #607080">
-        <h3>📅 Month-wise Actuals — PY 2025-26</h3>
+        <h3>Month-wise Actuals - PY 2025-26</h3>
         <p>Re-upload previous year month-wise if needed.<br>Currently pre-loaded from 27-Jun-2026 file.</p>
         <div class="drop-zone" id="dz-month-py" ondragover="dzDrag(event,'month-py')" ondragleave="dzLeave('month-py')" ondrop="dzDrop(event,'month-py')">
           <input type="file" id="inp-month-py" accept=".xls,.xlsx" onchange="handleFileEx(event,'month','py')">
-          <span class="dz-icon" id="dz-month-py-icon">📂</span>
+          <span class="dz-icon" id="dz-month-py-icon">/span>
           <div class="dz-text">Click or Drag &amp; Drop to refresh PY</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-month-py-status"></div>
@@ -355,14 +354,14 @@
       </div>
     </div>
 
-    <button class="apply-btn" id="applyBtn" onclick="applyUploads()">✅ Apply All Uploaded Data &amp; Refresh Portal</button>
+    <button class="apply-btn" id="applyBtn" onclick="applyUploads()">OK Apply All Uploaded Data &amp; Refresh Portal</button>
 
     <div class="upload-log" style="margin-top:16px">
-      <h3>📋 Upload Log</h3>
+      <h3>Upload Log</h3>
       <table class="log-table">
         <thead><tr><th>File Type</th><th>Filename</th><th>Uploaded At</th><th>Month Detected</th><th>PUs Parsed</th><th>Status</th></tr></thead>
         <tbody id="uploadLogTbody">
-          <tr><td colspan="6" style="color:#8AAAC8;text-align:center;padding:14px">No uploads this session — using pre-loaded data (29-Jun CY + 27-Jun PY)</td></tr>
+          <tr><td colspan="6" style="color:#8AAAC8;text-align:center;padding:14px">No uploads this session - using pre-loaded data (29-Jun CY + 27-Jun PY)</td></tr>
         </tbody>
       </table>
     </div>
@@ -371,7 +370,7 @@
 <div class="tab-content" id="tab-trend">
   <div style="padding:14px 18px">
     <div class="trend-ctrl-bar">
-      <span style="color:#C9A84C;font-weight:700;font-size:12px;white-space:nowrap">📈 TREND ANALYSIS GRAPHS</span>
+      <span style="color:#C9A84C;font-weight:700;font-size:12px;white-space:nowrap">TREND ANALYSIS GRAPHS</span>
       <select id="trendPUSelect" class="trend-sel" onchange="renderTrend()" style="min-width:190px">
         <option value="ALL">All PUs (Aggregate)</option>
       </select>
@@ -380,7 +379,7 @@
         <option value="actualdone">Actual Expenses Done Months</option>
         <option value="cumulative">Cumulative Spend</option>
         <option value="yoy">Year-on-Year %</option>
-        <option value="pubar">Top PUs — Budget vs Actuals</option>
+        <option value="pubar">Top PUs - Budget vs Actuals</option>
         <option value="utilbar">Utilisation Ranking</option>
       </select>
       <select id="trendTopN" class="trend-sel" onchange="renderTrend()">
@@ -402,29 +401,25 @@
         <canvas id="trendMainChart" height="80"></canvas>
       </div>
       <div class="tchart-wrap">
-        <div class="tchart-title">Budget Utilisation — Top PUs</div>
+        <div class="tchart-title">Top PUs by Budget Used (%)</div>
         <canvas id="trendUtilChart" height="200"></canvas>
       </div>
-      <div class="tchart-wrap">
-        <div class="tchart-title">Staff vs Non-Staff Expenditure</div>
-        <canvas id="trendTypeChart" height="200"></canvas>
-      </div>
       <div class="tchart-wrap" style="grid-column:1/-1">
-        <div class="tchart-title">Top 15 PUs — Budget vs Actuals Till Date</div>
+        <div class="tchart-title">Largest PU Spending - Budget vs Actuals</div>
         <canvas id="trendTopPUChart" height="80"></canvas>
       </div>
       <div class="tchart-wrap">
-        <div class="tchart-title">Month-wise Heatmap (₹ Cr)</div>
+        <div class="tchart-title">Month-wise Spending Heatmap (Cr)</div>
         <div id="trendHeatmap"></div>
       </div>
       <div class="tchart-wrap">
-        <div class="tchart-title">Focus PUs — YoY Monthly Comparison</div>
+        <div class="tchart-title">Important PUs - CY vs PY</div>
         <canvas id="trendFocusChart" height="200"></canvas>
       </div>
     </div>
 
     <div style="margin-top:14px;background:#fff;border-radius:8px;border:1px solid #E0EAF4;overflow:hidden">
-      <div style="background:#0A1628;color:#C9A84C;padding:10px 16px;font-size:11px;font-weight:700">📊 Full PU-wise Analytics Table</div>
+      <div style="background:#0A1628;color:#C9A84C;padding:10px 16px;font-size:11px;font-weight:700">Full PU-wise Analytics Table</div>
       <div style="overflow-x:auto">
         <table id="trendTable" style="width:100%;border-collapse:collapse">
           <thead id="trendTHead"></thead>
@@ -440,7 +435,7 @@
     <div class="ai-summary-head">
       <div>
         <div class="ai-summary-title">AI Trend Analysis Summary</div>
-        <div class="ai-summary-sub" id="aiTrendMeta">PU-wise current year, previous year and projection risk summary</div>
+        <div class="ai-summary-sub" id="aiTrendMeta">PU-wise current year, previous year and projection risk summary, excluding Staff PU committed liability</div>
       </div>
       <select class="trend-sel" id="aiTrendScope" onchange="renderAITrendSummary()">
         <option value="priority">Priority PUs</option>
@@ -491,7 +486,7 @@
 </div>
 
 <div style="text-align:center;padding:10px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
-  Revenue Liability Portal &nbsp;•&nbsp; Moradabad Division / Northern Railway &nbsp;•&nbsp; FY 2026-27 &nbsp;•&nbsp; For Official Use Only
+  Revenue Liability Portal &nbsp;â€¢&nbsp; Moradabad Division / Northern Railway &nbsp;â€¢&nbsp; FY 2026-27 &nbsp;â€¢&nbsp; For Official Use Only
 </div>
 
 <script src="assets/js/detail-data.js"></script>
@@ -500,3 +495,5 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>
 </html>
+
+
