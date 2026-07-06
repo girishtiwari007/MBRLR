@@ -905,13 +905,187 @@ function renderPUMaster() {
   document.getElementById('pu-tbody').innerHTML = rows;
 }
 
+function initBPFilter() {
+  const list = document.getElementById('bpPUFilter');
+  if (!list || list.dataset.ready === '1') return;
+  list.innerHTML = PU_META
+    .filter(p => !p.isNeg)
+    .map(p => `<label class="bp-check-item">
+      <input type="checkbox" class="bp-pu-check" value="${p.code}" onchange="onBPPUChange()">
+      <span><strong>PU-${p.code}</strong> ${htmlSafe(p.desc)}</span>
+    </label>`)
+    .join('');
+  list.dataset.ready = '1';
+  updateBPSelectionCount();
+}
+
+function updateBPSelectionCount() {
+  const all = document.getElementById('bpPUAll');
+  const count = document.getElementById('bpPUCount');
+  const checks = Array.from(document.querySelectorAll('#bpPUFilter .bp-pu-check'));
+  if (!count) return;
+  if (all && all.checked) {
+    count.textContent = 'All selected';
+    return;
+  }
+  const selectedCount = checks.filter(ch => ch.checked).length;
+  count.textContent = selectedCount ? `${selectedCount} selected` : 'No PU selected';
+}
+
+function onBPAllToggle(checked) {
+  document.querySelectorAll('#bpPUFilter .bp-pu-check').forEach(ch => {
+    ch.checked = false;
+  });
+  updateBPSelectionCount();
+  renderBPAnalysis();
+}
+
+function onBPPUChange() {
+  const all = document.getElementById('bpPUAll');
+  if (all) all.checked = false;
+  updateBPSelectionCount();
+  renderBPAnalysis();
+}
+
+function setBPSelection(mode) {
+  const all = document.getElementById('bpPUAll');
+  const checks = Array.from(document.querySelectorAll('#bpPUFilter .bp-pu-check'));
+  if (all) all.checked = mode === 'all';
+  checks.forEach(ch => {
+    ch.checked = false;
+  });
+  updateBPSelectionCount();
+  renderBPAnalysis();
+}
+
+function bpSelectedCodes() {
+  const all = document.getElementById('bpPUAll');
+  if (!all) return ['all'];
+  if (all.checked) return ['all'];
+  return Array.from(document.querySelectorAll('#bpPUFilter .bp-pu-check:checked')).map(o => o.value);
+}
+
+function buildBPRows() {
+  const {actualMonths} = getMonthStatus();
+  const actualMonthCount = actualMonths.length;
+  return PU_META.filter(p => !p.isNeg).map(pu => {
+    const budget = getBudget(pu.code);
+    const source = BUDGET[pu.code] || {};
+    const actual = Number(source.actuals_till);
+    const actualTill = Number.isFinite(actual) ? actual : compute(pu.code).totalCommitted;
+    const bp = (budget / 12) * actualMonthCount;
+    const variance = actualTill - bp;
+    const utilPct = budget ? (actualTill / budget) * 100 : (actualTill ? 999 : 0);
+    const overFullBudget = budget > 0 && actualTill > budget;
+    const noExpense = budget > 0 && Math.abs(actualTill) === 0;
+    const status = overFullBudget ? 'Over Full Budget'
+      : noExpense ? 'Budget, No Expense'
+      : variance > 0 ? 'Excess vs BP'
+      : variance < 0 ? 'Saving vs BP'
+      : 'On BP';
+    const remark = overFullBudget ? 'Actual has crossed full year budget. Budget support or booking control required.'
+      : noExpense ? 'Budget is available but no actual expense is booked.'
+      : variance > 0 ? 'Actual spending is ahead of proportionate budget. Review pace and justification.'
+      : variance < 0 ? 'Actual spending is below proportionate budget. Indicates saving or pending booking.'
+      : 'Actual is aligned with proportionate budget.';
+    return {pu, budget, actualTill, bp, variance, utilPct, actualMonthCount, status, remark, overFullBudget, noExpense};
+  });
+}
+
+function getFilteredBPRows() {
+  const selected = bpSelectedCodes();
+  const statusFilter = (document.getElementById('bpStatusFilter') || {}).value || 'all';
+  const typeFilter = (document.getElementById('bpTypeFilter') || {}).value || 'all';
+  const liabilityFilter = (document.getElementById('bpLiabilityFilter') || {}).value || 'all';
+  return buildBPRows().filter(row => {
+    if (!selected.includes('all') && selected.length === 0) return false;
+    if (!selected.includes('all') && !selected.includes(row.pu.code)) return false;
+    if (typeFilter !== 'all' && row.pu.puType !== typeFilter) return false;
+    if (liabilityFilter !== 'all' && row.pu.liab !== liabilityFilter) return false;
+    if (statusFilter === 'excess' && !(row.variance > 0)) return false;
+    if (statusFilter === 'saving' && !(row.variance < 0)) return false;
+    if (statusFilter === 'overbudget' && !row.overFullBudget) return false;
+    if (statusFilter === 'noexpense' && !row.noExpense) return false;
+    return true;
+  });
+}
+
+function renderBPAnalysis() {
+  initBPFilter();
+  const body = document.getElementById('bpTableBody');
+  if (!body) return;
+  const rows = getFilteredBPRows();
+  const {actualMonths, cur} = getMonthStatus();
+  const monthLabels = actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ') || 'No completed month';
+  const totals = rows.reduce((t, r) => {
+    t.budget += r.budget;
+    t.bp += r.bp;
+    t.actual += r.actualTill;
+    t.variance += r.variance;
+    if (r.variance > 0) t.excessCount++;
+    if (r.variance < 0) t.savingCount++;
+    if (r.overFullBudget) t.overCount++;
+    return t;
+  }, {budget:0, bp:0, actual:0, variance:0, excessCount:0, savingCount:0, overCount:0});
+  const kpis = document.getElementById('bpKpis');
+  if (kpis) {
+    kpis.innerHTML = [
+      ['Total Budget Grant', textCr(totals.budget), 'Selected PU budget'],
+      ['Budget Proportionate', textCr(totals.bp), `${actualMonths.length} completed month(s): ${monthLabels}`],
+      ['Actual Till Date', textCr(totals.actual), `As on ${cur.label} ${cur.year}`],
+      [totals.variance >= 0 ? 'Net Excess vs BP' : 'Net Saving vs BP', signedCr(totals.variance), `${totals.excessCount} excess / ${totals.savingCount} saving PUs`],
+      ['Over Full Budget', String(totals.overCount), 'PU count already above full BG']
+    ].map(([l,v,s]) => `<div class="bp-kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join('');
+  }
+  const meta = document.getElementById('bpMeta');
+  if (meta) meta.textContent = `BP = BG / 12 x ${actualMonths.length}. Completed months counted: ${monthLabels}. ${cur.label} is current running month and is not counted in BP month count.`;
+  const title = document.getElementById('bpTableTitle');
+  if (title) title.textContent = `PU-wise Budget Proportionate Position - ${rows.length} PU(s) shown`;
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#607080;padding:16px">No PU found for selected filters.</td></tr>';
+    return;
+  }
+  const rowHtml = rows
+    .sort((a,b) => Math.abs(b.variance) - Math.abs(a.variance))
+    .map(r => {
+      const cls = r.overFullBudget ? 'bp-over' : r.noExpense ? 'bp-noexp' : r.variance > 0 ? 'bp-excess' : r.variance < 0 ? 'bp-saving' : '';
+      return `<tr class="${cls}">
+        <td class="puc puc-link" onclick="openPUDetail('${r.pu.code}')">${r.pu.code}</td>
+        <td class="desc">${htmlSafe(r.pu.desc)}</td>
+        <td>${htmlSafe(r.pu.puType)}</td>
+        <td>${htmlSafe(r.pu.liab)}</td>
+        <td class="n">${textCr(r.budget)}</td>
+        <td class="n">${r.actualMonthCount}</td>
+        <td class="n">${textCr(r.bp)}</td>
+        <td class="n">${textCr(r.actualTill)}</td>
+        <td class="n ${r.variance >= 0 ? 'bp-var-excess' : 'bp-var-saving'}">${signedCr(r.variance)}</td>
+        <td class="n">${r.budget ? r.utilPct.toFixed(1) + '%' : (r.actualTill ? 'No Budget' : '0.0%')}</td>
+        <td><span class="bp-status ${cls}">${htmlSafe(r.status)}</span></td>
+        <td class="bp-remark">${htmlSafe(r.remark)}</td>
+      </tr>`;
+    }).join('');
+  const totalClass = totals.variance >= 0 ? 'bp-excess' : 'bp-saving';
+  body.innerHTML = rowHtml + `<tr class="tot ${totalClass}">
+    <td colspan="4" style="text-align:left">TOTAL SELECTED PUs</td>
+    <td class="n">${textCr(totals.budget)}</td>
+    <td class="n">${actualMonths.length}</td>
+    <td class="n">${textCr(totals.bp)}</td>
+    <td class="n">${textCr(totals.actual)}</td>
+    <td class="n">${signedCr(totals.variance)}</td>
+    <td class="n">${totals.budget ? ((totals.actual / totals.budget) * 100).toFixed(1) + '%' : '0.0%'}</td>
+    <td>${totals.variance >= 0 ? 'Net Excess' : 'Net Saving'}</td>
+    <td class="bp-remark">Calculated on selected filters only.</td>
+  </tr>`;
+}
+
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // TABS
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function switchTab(name) {
   if(name==='trend'){setTimeout(renderTrend,80);}
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
-  const ids = ['liability','monthwise','pumaster','trend','aitrend','smhdetail','upload'];
+  if(name==='bpanalysis'){setTimeout(renderBPAnalysis,80);}
+  const ids = ['liability','monthwise','pumaster','trend','aitrend','bpanalysis','smhdetail','upload'];
   document.querySelectorAll('.tab').forEach((t,i) => {
     t.classList.toggle('active', ids[i]===name);
   });
@@ -1129,6 +1303,28 @@ function noExpenseStatus(flag) {
   return flag ? 'Budget Available, No Expenses' : '';
 }
 
+function detailBPStatus(rowOrTotal) {
+  const {actualMonths} = getMonthStatus();
+  const monthCount = actualMonths.length;
+  const budget = Number(rowOrTotal.budget) || 0;
+  const actualTill = Number(rowOrTotal.actualTill) || 0;
+  const bp = (budget / 12) * monthCount;
+  const variance = actualTill - bp;
+  const overFullBudget = budget > 0 && actualTill > budget;
+  const noExpense = budget > 0 && Math.abs(actualTill) === 0;
+  const status = overFullBudget ? 'Over Full Budget'
+    : noExpense ? 'Budget, No Expense'
+    : variance > 0 ? 'Excess vs BP'
+    : variance < 0 ? 'Saving vs BP'
+    : 'On BP';
+  const remark = overFullBudget ? 'Actual has crossed full year budget.'
+    : noExpense ? 'Budget is available but no actual expense is booked.'
+    : variance > 0 ? 'Actual spending is ahead of proportionate budget.'
+    : variance < 0 ? 'Actual spending is below proportionate budget.'
+    : 'Actual is aligned with proportionate budget.';
+  return {bp, variance, status, remark, monthCount};
+}
+
 function initSMHDetailFilters() {
   const data = window.DETAIL_SMH_DATA;
   const deptSel = document.getElementById('smhDeptFilter');
@@ -1197,7 +1393,7 @@ function renderSMHReportRows(rows, monthKeys) {
   depts.forEach(dept => {
     const deptRows = rows.filter(r => r.deptCode === dept.deptCode);
     const deptTotal = makeDetailTotal(deptRows);
-    const blankDetailCells = monthKeys.length + 4;
+    const blankDetailCells = monthKeys.length + 6;
     html += `<tr class="dept-row"><td>${htmlSafe(dept.deptCode)} - ${htmlSafe(dept.deptName)}</td><td></td><td></td>${'<td></td>'.repeat(blankDetailCells)}</tr>`;
     const smhs = [...new Set(deptRows.map(r => r.smh))].sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
     smhs.forEach(smh => {
@@ -1207,6 +1403,7 @@ function renderSMHReportRows(rows, monthKeys) {
       smhRows.forEach(r => {
         const bal = r.budget - r.actualTill;
         const noExpCls = isSMHBudgetNoExpense(r) ? ' no-exp-row' : '';
+        const bp = detailBPStatus(r);
         html += `<tr class="pu-row${noExpCls}">
           <td></td>
           <td></td>
@@ -1216,11 +1413,14 @@ function renderSMHReportRows(rows, monthKeys) {
           <td><strong>${detailNum(r.actualTill)}</strong></td>
           <td class="${detailBalanceClass(bal, r.budget)}">${detailNum(bal)}</td>
           <td class="no-exp-status">${htmlSafe(noExpenseStatus(isSMHBudgetNoExpense(r)))}</td>
+          <td><span class="bp-status ${bp.variance > 0 ? 'bp-excess' : bp.variance < 0 ? 'bp-saving' : ''}">${htmlSafe(bp.status)}</span></td>
+          <td class="bp-remark">${htmlSafe(bp.remark)}</td>
         </tr>`;
       });
       const smhTotal = makeDetailTotal(smhRows);
       const smhBal = smhTotal.budget - smhTotal.actualTill;
       const smhNoExpCls = isSMHBudgetNoExpense(smhTotal) ? ' no-exp-row' : '';
+      const smhBP = detailBPStatus(smhTotal);
       html += `<tr class="subtot${smhNoExpCls}">
         <td></td>
         <td></td>
@@ -1230,10 +1430,13 @@ function renderSMHReportRows(rows, monthKeys) {
         <td><strong>${detailNum(smhTotal.actualTill)}</strong></td>
         <td class="${detailBalanceClass(smhBal, smhTotal.budget)}">${detailNum(smhBal)}</td>
         <td class="no-exp-status">${htmlSafe(noExpenseStatus(isSMHBudgetNoExpense(smhTotal)))}</td>
+        <td><span class="bp-status ${smhBP.variance > 0 ? 'bp-excess' : smhBP.variance < 0 ? 'bp-saving' : ''}">${htmlSafe(smhBP.status)}</span></td>
+        <td class="bp-remark">${htmlSafe(smhBP.remark)}</td>
       </tr>`;
     });
     const deptBal = deptTotal.budget - deptTotal.actualTill;
     const deptNoExpCls = isSMHBudgetNoExpense(deptTotal) ? ' no-exp-row' : '';
+    const deptBP = detailBPStatus(deptTotal);
     html += `<tr class="dept-total${deptNoExpCls}">
       <td></td>
       <td></td>
@@ -1243,6 +1446,8 @@ function renderSMHReportRows(rows, monthKeys) {
       <td><strong>${detailNum(deptTotal.actualTill)}</strong></td>
       <td class="${detailBalanceClass(deptBal, deptTotal.budget)}">${detailNum(deptBal)}</td>
       <td class="no-exp-status">${htmlSafe(noExpenseStatus(isSMHBudgetNoExpense(deptTotal)))}</td>
+      <td><span class="bp-status ${deptBP.variance > 0 ? 'bp-excess' : deptBP.variance < 0 ? 'bp-saving' : ''}">${htmlSafe(deptBP.status)}</span></td>
+      <td class="bp-remark">${htmlSafe(deptBP.remark)}</td>
     </tr>`;
   });
   return html;
@@ -1303,7 +1508,10 @@ function renderSMHDetail() {
   const leftHeaders = '<th>Department</th><th>Demand</th><th>Primary Unit (PU)</th>';
   head.innerHTML = `<tr>${leftHeaders}<th>Budget<br>2026-27</th>` +
     monthLabels.slice(0,visibleMonthKeys.length).map(l => `<th>${htmlSafe(l.replace(' 2026',''))}<br>Actual</th>`).join('') +
-    '<th>Exp. Total</th><th>Balance<br>(Budget-Exp)</th>' + (mode === 'report' ? '<th>Status</th>' : '<th>Util%</th><th>Status</th>') + '</tr>';
+    '<th>Exp. Total</th><th>Balance<br>(Budget-Exp)</th>' +
+    (mode === 'report'
+      ? '<th>Status</th><th>BP Status</th><th>BP Remark</th>'
+      : '<th>Util%</th><th>Status</th><th>BP Status</th><th>BP Remark</th>') + '</tr>';
   if (!rows.length) {
     body.innerHTML = '<tr><td colspan="10">No rows found for selected filters.</td></tr>';
     return;
@@ -1315,6 +1523,7 @@ function renderSMHDetail() {
   body.innerHTML = grouped.map(r => {
     const bal = r.budget - r.actualTill;
     const noExp = isSMHBudgetNoExpense(r);
+    const bp = detailBPStatus(r);
     const rowClass = (mode === 'dept' ? 'dept-row' : mode === 'smh' ? 'smh-row' : 'pu-row') + (noExp ? ' no-exp-row' : '');
     const first = `${htmlSafe(r.deptCode)} - ${htmlSafe(r.deptName)}`;
     const second = mode === 'dept' ? 'All Demand' : htmlSafe(r.smh);
@@ -1329,6 +1538,8 @@ function renderSMHDetail() {
       <td class="${detailBalanceClass(bal, r.budget)}">${detailNum(bal)}</td>
       <td>${r.budget ? ((r.actualTill / r.budget) * 100).toFixed(1) : '0.0'}%</td>
       <td class="no-exp-status">${htmlSafe(noExpenseStatus(noExp))}</td>
+      <td><span class="bp-status ${bp.variance > 0 ? 'bp-excess' : bp.variance < 0 ? 'bp-saving' : ''}">${htmlSafe(bp.status)}</span></td>
+      <td class="bp-remark">${htmlSafe(bp.remark)}</td>
     </tr>`;
   }).join('');
   } catch (err) {
@@ -1526,7 +1737,33 @@ function downloadExcel() {
   addSheet(wb,'PU Master',HDR_TITLE,HDR_SUB,pmHdrs,pmRows,
     [8,24,16,14,18,12,20,20,16,12,28]);
 
-  // Sheet 5: Dept SMH Analysis - visible report style, no internal raw JSON
+  // Sheet 5: Budget Proportionate Analysis
+  const bpRowsSource = buildBPRows();
+  const bpHdrs = ['PU','Description','PU Type','Liability','Budget Grant BG (Rs\'000s)','Completed Actual Months',
+    'Budget Proportionate (Rs\'000s)','Actual Till Date (Rs\'000s)','Variance vs BP (Rs\'000s)','Utilisation %','BP Status','BP Remark'];
+  const bpRows = bpRowsSource.map(r => {
+    const row = [r.pu.code, r.pu.desc, r.pu.puType, r.pu.liab, r.budget, r.actualMonthCount,
+      Math.round(r.bp), Math.round(r.actualTill), Math.round(r.variance),
+      r.budget ? parseFloat(r.utilPct.toFixed(1)) + '%' : '0.0%', r.status, r.remark];
+    row._noexp = r.noExpense;
+    row._cs = (r.pu.puType === 'Staff PU' && r.pu.liab === 'Committed');
+    row._co = (!row._cs && r.pu.liab === 'Committed');
+    return row;
+  });
+  const bpTotals = bpRowsSource.reduce((t, r) => {
+    t.budget += r.budget; t.bp += r.bp; t.actual += r.actualTill; t.variance += r.variance;
+    return t;
+  }, {budget:0, bp:0, actual:0, variance:0});
+  const bpTotRow = ['', 'TOTAL SELECTED PUs', '', '', Math.round(bpTotals.budget),
+    (getMonthStatus().actualMonths || []).length, Math.round(bpTotals.bp), Math.round(bpTotals.actual),
+    Math.round(bpTotals.variance), bpTotals.budget ? parseFloat(((bpTotals.actual / bpTotals.budget) * 100).toFixed(1)) + '%' : '0.0%',
+    bpTotals.variance >= 0 ? 'Net Excess' : 'Net Saving', 'Calculated on all active PUs.'];
+  bpTotRow._tot = true;
+  bpRows.push(bpTotRow);
+  addSheet(wb,'Budget Proportionate',HDR_TITLE,'BP = Budget Grant / 12 x completed actual months; running month is excluded',bpHdrs,bpRows,
+    [8,26,14,14,18,14,20,20,18,12,18,36]);
+
+  // Sheet 6: Dept SMH Analysis - visible report style, no internal raw JSON
   if (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) {
     const smhData = window.DETAIL_SMH_DATA;
     const smhMonthKeys = smhData.monthKeys || FY_MONTHS;
@@ -1534,9 +1771,9 @@ function downloadExcel() {
     smhMonthKeys.forEach((m, idx) => { if (((smhData.totals || {}).months || {})[m]) lastIdx = idx; });
     lastIdx = Math.min(3, Math.max(2, lastIdx));
     const smhVisibleMonths = smhMonthKeys.slice(0, lastIdx + 1);
-    const smhHeaders = ['Department','Demand','Primary Unit (PU)','Budget 2026-27 (₹000s)']
-      .concat(smhVisibleMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)] + ' Actual (₹000s)'))
-      .concat(['Exp. Total (₹000s)','Balance Budget-Exp (₹000s)','Status']);
+    const smhHeaders = ['Department','Demand','Primary Unit (PU)',"Budget 2026-27 (Rs'000s)"]
+      .concat(smhVisibleMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)] + " Actual (Rs'000s)"))
+      .concat(["Exp. Total (Rs'000s)","Balance Budget-Exp (Rs'000s)",'Status','BP Status','BP Remark']);
     const smhRows = [];
     const depts = [...new Map(smhData.rows.map(r => [r.deptCode + '|' + r.deptName, r])).values()]
       .sort((a,b) => String(a.deptCode).localeCompare(String(b.deptCode), undefined, {numeric:true}));
@@ -1556,43 +1793,46 @@ function downloadExcel() {
           .sort((a,b) => String(a.puCode).localeCompare(String(b.puCode), undefined, {numeric:true}));
         demandRows.forEach(r => {
           const balance = (Number(r.budget) || 0) - (Number(r.actualTill) || 0);
+          const bp = detailBPStatus(r);
           const smhPuRow = [
             '',
             '',
             `PU - ${r.puCode} - ${r.puName}`,
             Number(r.budget) || 0
           ].concat(smhVisibleMonths.map(m => Number((r.months || {})[m]) || 0))
-           .concat([Number(r.actualTill) || 0, balance, isSMHBudgetNoExpense(r) ? 'BUDGET AVAILABLE, NO EXPENSES' : '']);
+           .concat([Number(r.actualTill) || 0, balance, isSMHBudgetNoExpense(r) ? 'BUDGET AVAILABLE, NO EXPENSES' : '', bp.status, bp.remark]);
           smhPuRow._noexp = isSMHBudgetNoExpense(r);
           smhRows.push(smhPuRow);
         });
         const demandTotal = makeDetailTotal(demandRows);
         const demandBalance = demandTotal.budget - demandTotal.actualTill;
+        const demandBP = detailBPStatus(demandTotal);
         const demandTotalRow = [
           '',
           '',
           `Sub-Total: ${smh}`,
           demandTotal.budget
         ].concat(smhVisibleMonths.map(m => demandTotal.months[m] || 0))
-         .concat([demandTotal.actualTill, demandBalance, isSMHBudgetNoExpense(demandTotal) ? 'BUDGET AVAILABLE, NO EXPENSES' : '']);
+         .concat([demandTotal.actualTill, demandBalance, isSMHBudgetNoExpense(demandTotal) ? 'BUDGET AVAILABLE, NO EXPENSES' : '', demandBP.status, demandBP.remark]);
         demandTotalRow._noexp = isSMHBudgetNoExpense(demandTotal);
         demandTotalRow._cs = true;
         smhRows.push(demandTotalRow);
       });
       const deptBalance = deptTotal.budget - deptTotal.actualTill;
+      const deptBP = detailBPStatus(deptTotal);
       const deptTotalRow = [
         '',
         '',
         `Total: ${dept.deptCode} - ${dept.deptName}`,
         deptTotal.budget
       ].concat(smhVisibleMonths.map(m => deptTotal.months[m] || 0))
-       .concat([deptTotal.actualTill, deptBalance, isSMHBudgetNoExpense(deptTotal) ? 'BUDGET AVAILABLE, NO EXPENSES' : '']);
+       .concat([deptTotal.actualTill, deptBalance, isSMHBudgetNoExpense(deptTotal) ? 'BUDGET AVAILABLE, NO EXPENSES' : '', deptBP.status, deptBP.remark]);
       deptTotalRow._noexp = isSMHBudgetNoExpense(deptTotal);
       deptTotalRow._tot = true;
       smhRows.push(deptTotalRow);
     });
     addSheet(wb,'Dept SMH Analysis',HDR_TITLE,'Department > Demand > Primary Unit - Budget vs Expenditure',smhHeaders,smhRows,
-      [18,14,32,16].concat(smhVisibleMonths.map(()=>14)).concat([16,18,28]));
+      [18,14,32,16].concat(smhVisibleMonths.map(()=>14)).concat([16,18,28,18,36]));
   }
 
   XLSX.writeFile(wb, `Revenue_Liability_MBD_FY2026-27_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -1954,7 +2194,7 @@ function setDZState(type, state, msg) {
   dz.classList.remove('done','error','drag-over');
   if(state==='done'){ dz.classList.add('done'); icon.textContent='OK'; stat.className='dz-status ok'; }
   else if(state==='error'){ dz.classList.add('error'); icon.textContent='Error'; stat.className='dz-status err'; }
-  else { icon.textContent='â³'; stat.className='dz-status'; }
+  else { icon.textContent='...'; stat.className='dz-status'; }
   stat.textContent = msg||'';
   // Enable apply button if at least one pending
   document.getElementById('applyBtn').disabled = !(_pendingBudget || _pendingMonth || _pendingSMHBudget || _pendingSMHMonth);
@@ -2013,8 +2253,9 @@ function parseSMHDetailUpload(rows, kind) {
     if (budgetC < 0 || actualC < 0) throw new Error('Cannot map BG_ISL or Actuals Till Date columns.');
   } else {
     FY_MONTHS.forEach((mk, idx) => {
-      const ml = FY_MONTH_LABELS[idx];
-      const ci = hdr.findIndex(h => h === ml || h.startsWith(ml + ' ') || (ml === 'APR' && h.startsWith('APRIL')));
+      const ml = FY_MONTH_LABELS[idx].toUpperCase();
+      const abbr = mk.toUpperCase();
+      const ci = hdr.findIndex(h => h === abbr || h.startsWith(abbr + ' ') || h === ml || h.startsWith(ml + ' '));
       if (ci >= 0) monthCols[mk] = ci;
     });
     if (Object.keys(monthCols).length < 3) throw new Error('Could not map at least 3 month columns.');
@@ -2079,7 +2320,7 @@ function parseUpload(file, type, year) {
   year = year || 'cy';
   const fileTimestamp = uploadFileTimestamp(file);
   const dzId = type + '-' + year;
-  setDZState(dzId, 'loading', 'Reading fileâ€¦');
+  setDZState(dzId, 'loading', 'Reading file...');
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -2143,7 +2384,7 @@ function parseUpload(file, type, year) {
           const ci=hdr.findIndex(h=>h===ml||h.startsWith(ml+' ')||h.startsWith(ml+'-')||(ml==='APR'&&h==='APRIL'));
           if(ci>=0) mCols[mk]=ci;
         });
-        if(Object.keys(mCols).length<3) throw new Error('Could not map â‰¥3 month columns. Check headers.');
+        if(Object.keys(mCols).length<3) throw new Error('Could not map at least 3 month columns. Check headers.');
         const puC=hdr.findIndex(h=>h==='PUCODE'||h==='PU CODE'||h==='PU');
         let parsed={},n=0,latestIdx=0;
         for(let i=hr+1;i<rows.length;i++){
@@ -2314,6 +2555,7 @@ const FOCUS_DESC={'27':'Materials from stock','28':'Materials-Dir. purchase','30
 function renderTrend(){
   if(!window.Chart)return;
   const puSel  =(document.getElementById('trendPUSelect') ||{}).value||'ALL';
+  const useBPSelection = !!((document.getElementById('trendUseBPPU') || {}).checked);
   const cType  =(document.getElementById('trendChartType')||{}).value||'monthly';
   const topNv  =(document.getElementById('trendTopN')     ||{}).value||'10';
   const showPY =((document.getElementById('trendShowPY')  ||{}).checked!==false);
@@ -2326,7 +2568,13 @@ function renderTrend(){
   if (!actualDoneIdxs.includes(CUR_IDX)) actualDoneIdxs.push(CUR_IDX);
   const ML_S=['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
   const activePUs=PU_META.filter(p=>!p.isNeg);
-  const puList=puSel==='ALL'?activePUs:activePUs.filter(p=>p.code===puSel);
+  const trendSelectedCodes = useBPSelection ? bpSelectedCodes() : (puSel === 'ALL' ? ['all'] : [puSel]);
+  const puList=trendSelectedCodes.includes('all')
+    ? activePUs
+    : activePUs.filter(p=>trendSelectedCodes.includes(p.code));
+  const trendScopeLabel = useBPSelection
+    ? (trendSelectedCodes.includes('all') ? 'BP ticks: All PUs' : `BP ticks: ${trendSelectedCodes.length} PU(s)`)
+    : (puSel==='ALL'?'All PUs':'PU-'+puSel);
 
   function fCr(v){return v?(Math.abs(v)*1000/10000000).toFixed(1)+' Cr':'-';}
   function fN(v){return v?Math.round(v).toLocaleString('en-IN'):'-';}
@@ -2342,7 +2590,7 @@ function renderTrend(){
     const yoy=pyA&&pyA!==0?((totA-pyA)/Math.abs(pyA)*100):null;
     const activeMths=sumM(puList,MONTH).filter(v=>v>0).length;
     strip.innerHTML=[
-      ['Budget BG_ISL',fCr(totB),puSel==='ALL'?'All PUs combined':'PU-'+puSel],
+      ['Budget BG_ISL',fCr(totB),trendScopeLabel],
       ['Actuals Till Date',fCr(totA),util.toFixed(1)+'% utilised'],
       ['Balance',fCr(Math.abs(bal)),(bal<0?'Warning Over Budget':'Remaining')],
       ['Months Active',activeMths+'/12','APR 2026 to MAR 2027'],
@@ -2386,7 +2634,7 @@ function renderTrend(){
         });
       }
       const rangeLabel = mainLabels.length ? ` (${mainLabels[0]} to ${mainLabels[mainLabels.length - 1]})` : '';
-      if(titleEl) titleEl.textContent='Actual Expenses Done Months'+rangeLabel+' - '+(puSel==='ALL'?'All PUs':'PU-'+puSel);
+      if(titleEl) titleEl.textContent='Actual Expenses Done Months'+rangeLabel+' - '+trendScopeLabel;
       mainTooltipCallbacks = {afterLabel:c=>c.dataIndex===doneIdxs.indexOf(CUR_IDX)?'Current month till-date / committed':''};
     } else if(cType==='cumulative'){
       let cc=0,cp=0;
@@ -2403,7 +2651,7 @@ function renderTrend(){
       const barsClr=cyV.map((_,i)=>i<CUR_IDX?'rgba(28,111,217,.75)':i===CUR_IDX?'rgba(244,169,50,.85)':'rgba(28,111,217,.2)');
       ds=[{label:'CY 2026-27 Actuals',data:cyV.map(v=>(v*1000/10000000).toFixed(1)),backgroundColor:barsClr,borderRadius:3}];
       if(pyV) ds.push({label:'PY 2025-26',data:pyV.map(v=>(v*1000/10000000).toFixed(1)),type:'line',borderColor:'#C9A84C',backgroundColor:'transparent',borderWidth:2.5,tension:.3,pointRadius:4,borderDash:[4,2]});
-      if(titleEl) titleEl.textContent='Monthly Actuals - '+(puSel==='ALL'?'All PUs':'PU-'+puSel);
+      if(titleEl) titleEl.textContent='Monthly Actuals - '+trendScopeLabel;
     }
     _mC('trendMainChart',{type:'bar',data:{labels:mainLabels,datasets:ds},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}},tooltip:{callbacks:mainTooltipCallbacks||{}}},scales:{x:{ticks:{font:{size:10}}},y:{title:{display:true,text:'Rs Crore'},ticks:{font:{size:10}}}}}});
   } else {
@@ -2463,7 +2711,7 @@ function renderTrend(){
       const isFocus=FOCUS_PUS.includes(pu.code);
       const noExp = isBudgetNoExpense(pu.code);
       return '<tr style="'+(noExp?'background:#FFF4C2;box-shadow:inset 4px 0 0 #B88700;':isFocus?'background:#FFFBF0;':'')+(isFocus?'font-weight:600':'')+'">'+
-        '<td style="font-weight:700;color:#1C3A5E;cursor:pointer" onclick="openPUDetail(\''+pu.code+'\')">PU-'+pu.code+(isFocus?' â­':'')+'</td>'+
+        '<td style="font-weight:700;color:#1C3A5E;cursor:pointer" onclick="openPUDetail(\''+pu.code+'\')">PU-'+pu.code+(isFocus?' *':'')+'</td>'+
         '<td>'+pu.desc+'</td>'+
         '<td style="font-size:9px">'+(pu.puType==='Staff PU'?'<span style="color:#1A7A4A">Staff</span>':'<span style="color:#1A4E9A">Non-Staff</span>')+'</td>'+
         '<td>'+fN(b.bg_isl||0)+'</td>'+
@@ -2583,6 +2831,7 @@ function renderAll() {
   renderLiability();
   renderMonthwise();
   renderPUMaster();
+  renderBPAnalysis();
   document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'RG not active - using BG_ISL';
   const {cur:_cur}=getMonthStatus();
   const _cmb=document.getElementById('curMonBadge'); if(_cmb) _cmb.textContent=_cur.label+' '+_cur.year;

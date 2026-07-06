@@ -15,7 +15,7 @@
 </head>
 <body>
 
-<!-- â•â• LOGIN OVERLAY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- LOGIN OVERLAY -->
 <div id="loginOverlay">
   <div class="login-box">
     <div class="login-emblem">NR</div>
@@ -152,6 +152,7 @@
   <div class="tab" onclick="switchTab('pumaster')">PU Master</div>
   <div class="tab" onclick="switchTab('trend')">Trend Analysis Graphs</div>
   <div class="tab" onclick="switchTab('aitrend')">AI Trend Analysis Summary</div>
+  <div class="tab tab-feature" onclick="switchTab('bpanalysis')">Budget Proportionate Analysis</div>
   <div class="tab" onclick="switchTab('smhdetail')">Dept SMH Analysis</div>
   <div class="tab" id="uploadTab" onclick="switchTab('upload')" style="display:none">Data Upload</div>
 </div>
@@ -260,7 +261,7 @@
 <div class="tab-content" id="tab-upload">
   <div class="upload-wrap">
     <div class="upload-banner">
-      <span class="ub-icon">/span>
+      <span class="ub-icon">FILE</span>
       <div><h2>Data Upload Centre</h2>
         <p>Upload files for <strong>Current Year 2026-27</strong> and/or <strong>Previous Year 2025-26</strong>. Portal auto-senses months, updates all tables and Trend Analysis.</p>
       </div>
@@ -277,7 +278,7 @@
         <p>Upload <strong>BudgetReport - BUDGET AVAILABLE</strong> for FY 2026-27.<br>Auto-senses: BG_ISL - RG - Actuals Till Date per PU.</p>
         <div class="drop-zone" id="dz-budget-cy" ondragover="dzDrag(event,'budget-cy')" ondragleave="dzLeave('budget-cy')" ondrop="dzDrop(event,'budget-cy')">
           <input type="file" id="inp-budget-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'budget','cy')">
-          <span class="dz-icon" id="dz-budget-cy-icon">/span>
+          <span class="dz-icon" id="dz-budget-cy-icon">FOLDER</span>
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-budget-cy-status"></div>
@@ -288,7 +289,7 @@
         <p>Upload <strong>BudgetReport - MONTH WISE</strong> for FY 2026-27.<br>Auto-senses latest month (APR-MAR) and refreshes trend.</p>
         <div class="drop-zone" id="dz-month-cy" ondragover="dzDrag(event,'month-cy')" ondragleave="dzLeave('month-cy')" ondrop="dzDrop(event,'month-cy')">
           <input type="file" id="inp-month-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'month','cy')">
-          <span class="dz-icon" id="dz-month-cy-icon">/span>
+          <span class="dz-icon" id="dz-month-cy-icon">FOLDER</span>
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-month-cy-status"></div>
@@ -306,7 +307,7 @@
         <p>Upload <strong>Department - SMH - PU wise Budget</strong> for FY 2026-27.<br>Skips Department 00 and PU-98 automatically.</p>
         <div class="drop-zone" id="dz-smhbudget-cy" ondragover="dzDrag(event,'smhbudget-cy')" ondragleave="dzLeave('smhbudget-cy')" ondrop="dzDrop(event,'smhbudget-cy')">
           <input type="file" id="inp-smhbudget-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'smhbudget','cy')">
-          <span class="dz-icon" id="dz-smhbudget-cy-icon">span>
+          <span class="dz-icon" id="dz-smhbudget-cy-icon">FOLDER</span>
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-smhbudget-cy-status"></div>
@@ -317,7 +318,7 @@
         <p>Upload <strong>Department - SMH - PU wise Month Wise</strong> actuals.<br>Refreshes Department, Demand and PU-wise report.</p>
         <div class="drop-zone" id="dz-smhmonth-cy" ondragover="dzDrag(event,'smhmonth-cy')" ondragleave="dzLeave('smhmonth-cy')" ondrop="dzDrop(event,'smhmonth-cy')">
           <input type="file" id="inp-smhmonth-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'smhmonth','cy')">
-          <span class="dz-icon" id="dz-smhmonth-cy-icon">span>
+          <span class="dz-icon" id="dz-smhmonth-cy-icon">FOLDER</span>
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-smhmonth-cy-status"></div>
@@ -335,7 +336,7 @@
         <p>Re-upload previous year budget if needed.<br>Currently pre-loaded from 27-Jun-2026 file.</p>
         <div class="drop-zone" id="dz-budget-py" ondragover="dzDrag(event,'budget-py')" ondragleave="dzLeave('budget-py')" ondrop="dzDrop(event,'budget-py')">
           <input type="file" id="inp-budget-py" accept=".xls,.xlsx" onchange="handleFileEx(event,'budget','py')">
-          <span class="dz-icon" id="dz-budget-py-icon">/span>
+          <span class="dz-icon" id="dz-budget-py-icon">FOLDER</span>
           <div class="dz-text">Click or Drag &amp; Drop to refresh PY</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-budget-py-status"></div>
@@ -346,7 +347,7 @@
         <p>Re-upload previous year month-wise if needed.<br>Currently pre-loaded from 27-Jun-2026 file.</p>
         <div class="drop-zone" id="dz-month-py" ondragover="dzDrag(event,'month-py')" ondragleave="dzLeave('month-py')" ondrop="dzDrop(event,'month-py')">
           <input type="file" id="inp-month-py" accept=".xls,.xlsx" onchange="handleFileEx(event,'month','py')">
-          <span class="dz-icon" id="dz-month-py-icon">/span>
+          <span class="dz-icon" id="dz-month-py-icon">FOLDER</span>
           <div class="dz-text">Click or Drag &amp; Drop to refresh PY</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-month-py-status"></div>
@@ -374,6 +375,10 @@
       <select id="trendPUSelect" class="trend-sel" onchange="renderTrend()" style="min-width:190px">
         <option value="ALL">All PUs (Aggregate)</option>
       </select>
+      <label class="trend-tick-link">
+        <input type="checkbox" id="trendUseBPPU" onchange="renderTrend()">
+        Use BP PU ticks
+      </label>
       <select id="trendChartType" class="trend-sel" onchange="renderTrend()">
         <option value="monthly">Monthly Actuals</option>
         <option value="actualdone">Actual Expenses Done Months</option>
@@ -447,6 +452,91 @@
   </div>
 </div>
 
+<div class="tab-content" id="tab-bpanalysis">
+  <div class="bp-wrap">
+    <div class="bp-head">
+      <div>
+        <div class="bp-title">Budget Proportionate Analysis</div>
+        <div class="bp-sub" id="bpMeta">BP = Budget Grant / 12 x completed actual months. Current running month is not counted.</div>
+      </div>
+      <div class="bp-formula">BP = BG / 12 x Actual Months</div>
+    </div>
+
+    <div class="bp-filter-panel">
+      <div class="bp-filter-title">Select PU Filter</div>
+      <div class="bp-filter-grid">
+        <label>
+          PU Selection
+          <div class="bp-check-head">
+            <label class="bp-check-all">
+              <input type="checkbox" id="bpPUAll" checked onchange="onBPAllToggle(this.checked)">
+              <span>All PUs</span>
+            </label>
+            <span id="bpPUCount" class="bp-count">All selected</span>
+          </div>
+          <div id="bpPUFilter" class="bp-check-list"></div>
+        </label>
+        <label>
+          BP Status
+          <select id="bpStatusFilter" class="bp-filter-select" onchange="renderBPAnalysis()">
+            <option value="all">All Status</option>
+            <option value="excess">Excess only</option>
+            <option value="saving">Saving only</option>
+            <option value="overbudget">Over full budget</option>
+            <option value="noexpense">Budget but no expense</option>
+          </select>
+        </label>
+        <label>
+          PU Type
+          <select id="bpTypeFilter" class="bp-filter-select" onchange="renderBPAnalysis()">
+            <option value="all">All PU Types</option>
+            <option value="Staff PU">Staff PU</option>
+            <option value="Non Staff PU">Non Staff PU</option>
+          </select>
+        </label>
+        <label>
+          Liability
+          <select id="bpLiabilityFilter" class="bp-filter-select" onchange="renderBPAnalysis()">
+            <option value="all">All Liability</option>
+            <option value="Committed">Committed</option>
+            <option value="Planned">Planned</option>
+          </select>
+        </label>
+      </div>
+      <div class="bp-filter-actions">
+        <button type="button" onclick="setBPSelection('all')">Select All</button>
+        <button type="button" onclick="setBPSelection('clear')">Clear PU Selection</button>
+      </div>
+    </div>
+
+    <div class="bp-kpis" id="bpKpis"></div>
+    <div class="bp-table-wrap">
+      <div class="bp-table-title" id="bpTableTitle">PU-wise Budget Proportionate Position</div>
+      <div class="bp-scroll">
+        <table class="bp-table">
+          <thead>
+            <tr>
+              <th>PU</th>
+              <th>Description</th>
+              <th>PU Type</th>
+              <th>Liability</th>
+              <th>Budget Grant</th>
+              <th>Actual Months</th>
+              <th>Budget Proportionate</th>
+              <th>Actual Till Date</th>
+              <th>Excess / Saving</th>
+              <th>Utilisation</th>
+              <th>BP Status</th>
+              <th>Accounts Remark</th>
+            </tr>
+          </thead>
+          <tbody id="bpTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="tab-content" id="tab-smhdetail">
   <div class="smh-wrap">
     <div class="smh-head">
@@ -486,7 +576,7 @@
 </div>
 
 <div style="text-align:center;padding:10px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
-  Revenue Liability Portal &nbsp;â€¢&nbsp; Moradabad Division / Northern Railway &nbsp;â€¢&nbsp; FY 2026-27 &nbsp;â€¢&nbsp; For Official Use Only
+  Revenue Liability Portal &nbsp;-&nbsp; Moradabad Division / Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
 </div>
 
 <script src="assets/js/detail-data.js"></script>
