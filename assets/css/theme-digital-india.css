@@ -76,3 +76,25 @@ select.fsel{max-width:135px}select.fsel.wide{min-width:150px;max-width:170px}sel
 .export-actions{display:inline-flex;align-items:center;gap:4px;margin-left:4px;white-space:nowrap}
 .pdf-btn{background:linear-gradient(180deg,#DFF2FF 0%,#83C8EE 100%)!important;border-color:#B9E6FF!important;color:#071324!important}
 @media(max-width:1100px){.view-main{margin-left:0}.fbar{flex-wrap:wrap!important}.fbar-group{width:100%;flex-wrap:wrap}.filter-main,.status-main,.view-main{flex:1 1 100%}select.fsel.wide{min-width:180px}}
+
+@media(max-width:768px){
+  .fbar{margin:6px 8px!important;padding:6px!important;gap:6px!important}
+  .fbar-group{width:100%!important;flex-wrap:wrap!important;gap:5px!important;padding:6px!important}
+  .fbar-group.filter-main{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch!important}
+  .fbar-group.status-main{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:stretch!important}
+  .filter-main,.status-main{flex:1 1 100%!important}
+  .fbar-lbl{grid-column:1/-1!important;width:100%!important;text-align:center!important}
+  select.fsel,select.fsel.wide,select.fsel.compact{width:100%!important;flex:1 1 46%;min-width:0!important;max-width:none!important;min-height:38px!important;border-radius:8px!important}
+  #activityFilter{grid-column:1/-1!important}
+  .util-filter{grid-column:1/-1!important;width:100%!important;min-height:38px!important;border-radius:8px!important;justify-content:space-between!important}
+  .export-actions{grid-column:1/-1;width:100%;margin-left:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .export-actions .dl-btn{flex:1;justify-content:center}
+  .rg-note,.cur-month-pill,.live-clock{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;min-height:34px!important;font-size:9px!important;white-space:normal!important}
+  .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;border-bottom:0}
+  .tab{min-height:58px;border:1px solid #BED0E4;border-radius:8px;background:#fff;color:#123A63;white-space:normal;text-align:center}
+  .tab.active{background:#1A3A6A;color:#fff;border-color:#FFB347}
+}
+
+@media(max-width:360px){
+  .fbar-group.status-main{grid-template-columns:1fr!important}
+}

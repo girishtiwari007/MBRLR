@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260707-export';
+const ASSET_VERSION = '20260707-mobilefilter';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -1222,6 +1222,7 @@ function switchTab(name) {
   if(['liability','monthwise','pumaster'].includes(name)){setTimeout(renderAll,50);}
   if(name==='upload') renderCurDataGrid();
   if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
+  setTimeout(applyMobileTableLabels, 140);
 }
 
 function textCr(n) {
@@ -3505,7 +3506,50 @@ function renderAll() {
   document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'BG_ISL';
   const {cur:_cur}=getMonthStatus();
   const _cmb=document.getElementById('curMonBadge'); if(_cmb) _cmb.textContent=_cur.label+' '+_cur.year;
-  setTimeout(()=>{addDualScroll();attachPUPopup();},80);
+  setTimeout(()=>{addDualScroll();attachPUPopup();applyMobileTableLabels();},80);
+}
+
+function tableHeaderLabels(table) {
+  const rows = Array.from((table.tHead || table.querySelector('thead'))?.rows || []);
+  if (!rows.length) return [];
+  const grid = [];
+  rows.forEach((row, r) => {
+    grid[r] = grid[r] || [];
+    let c = 0;
+    Array.from(row.cells).forEach(cell => {
+      while (grid[r][c]) c++;
+      const rs = Math.max(1, cell.rowSpan || 1);
+      const cs = Math.max(1, cell.colSpan || 1);
+      const text = cell.textContent.replace(/\s+/g, ' ').trim();
+      for (let rr = 0; rr < rs; rr++) {
+        grid[r + rr] = grid[r + rr] || [];
+        for (let cc = 0; cc < cs; cc++) {
+          const existing = grid[r + rr][c + cc];
+          grid[r + rr][c + cc] = existing ? `${existing} ${text}`.trim() : text;
+        }
+      }
+      c += cs;
+    });
+  });
+  const width = Math.max(...grid.map(r => r.length));
+  return Array.from({length:width}, (_, c) => {
+    const parts = grid.map(r => r[c]).filter(Boolean);
+    return [...new Set(parts)].join(' - ').replace(/\s+-\s+$/, '') || 'Value';
+  });
+}
+
+function applyMobileTableLabels() {
+  document.querySelectorAll('table').forEach(table => {
+    const labels = tableHeaderLabels(table);
+    if (!labels.length) return;
+    Array.from(table.tBodies || []).forEach(tbody => {
+      Array.from(tbody.rows).forEach(row => {
+        Array.from(row.cells).forEach((cell, i) => {
+          if (!cell.dataset.label) cell.dataset.label = labels[i] || `Column ${i + 1}`;
+        });
+      });
+    });
+  });
 }
 
 // SheetJS embedded inline above
