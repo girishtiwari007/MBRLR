@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260706-compactbar';
+const ASSET_VERSION = '20260707-export';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -1241,6 +1241,17 @@ function signedCr(n) {
   return (value > 0 ? '+' : '-') + textCr(Math.abs(value));
 }
 
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function htmlSafe(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -1684,8 +1695,17 @@ function renderSMHDetail() {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // EXCEL DOWNLOAD
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function downloadExcel() {
-  const wb = XLSX.utils.book_new();
+async function downloadExcel() {
+  document.body.dataset.exportStatus = 'excel-started';
+  try {
+  const useExcelJS = !!window.ExcelJS;
+  const wb = useExcelJS ? new ExcelJS.Workbook() : XLSX.utils.book_new();
+  if (useExcelJS) {
+    wb.creator = 'Revenue Liability Portal';
+    wb.created = new Date();
+    wb.modified = new Date();
+    wb.properties.date1904 = false;
+  }
   const HDR_TITLE = 'REVENUE LIABILITY PORTAL - MORADABAD DIVISION';
   const HDR_SUB   = "Northern Railway  |  Financial Authority Dashboard  |  All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees";
   const {cur} = getMonthStatus();
@@ -1704,6 +1724,82 @@ function downloadExcel() {
   }
 
   function addSheet(wb, sheetName, titleRow, subRow, headers, dataRows, colWidths) {
+    if (useExcelJS) {
+      const ws = wb.addWorksheet(sheetName, {
+        views: [{state:'frozen', ySplit:4}],
+        pageSetup: {orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:9}
+      });
+      ws.addRow([titleRow]);
+      ws.addRow([subRow]);
+      ws.addRow([]);
+      ws.addRow(headers);
+      dataRows.forEach(r => ws.addRow(Array.from(r)));
+      ws.columns = colWidths.map(w => ({width:w}));
+      ws.mergeCells(1, 1, 1, headers.length);
+      ws.mergeCells(2, 1, 2, headers.length);
+
+      const border = {
+        top:{style:'thin', color:{argb:'FFB8C8E0'}},
+        left:{style:'thin', color:{argb:'FFB8C8E0'}},
+        bottom:{style:'thin', color:{argb:'FFB8C8E0'}},
+        right:{style:'thin', color:{argb:'FFB8C8E0'}}
+      };
+      const fill = color => ({type:'pattern', pattern:'solid', fgColor:{argb:'FF' + color}});
+      const font = (color, bold=false, size=10) => ({name:'Calibri', size, bold, color:{argb:'FF' + color}});
+
+      ws.getRow(1).height = 24;
+      ws.getRow(1).eachCell(cell => {
+        cell.fill = fill('0A1628');
+        cell.font = font('C9A84C', true, 14);
+        cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
+      });
+      ws.getRow(2).height = 18;
+      ws.getRow(2).eachCell(cell => {
+        cell.fill = fill('1C3A5E');
+        cell.font = font('DDEEFF', true, 9);
+        cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
+      });
+      ws.getRow(4).height = 22;
+      ws.getRow(4).eachCell(cell => {
+        cell.fill = fill('1A3A6A');
+        cell.font = font('FFFFFF', true, 9);
+        cell.border = border;
+        cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
+      });
+
+      dataRows.forEach((rowData, idx) => {
+        const row = ws.getRow(idx + 5);
+        let bg = 'FFFFFF';
+        if (rowData) {
+          const label = String(rowData[0] || '');
+          if (label === '98' || rowData._neg) bg = 'FFE8E8';
+          else if (rowData._noexp) bg = 'FFF4C2';
+          else if (rowData._cs) bg = 'E8FAF0';
+          else if (rowData._co) bg = 'FFF8E8';
+          else if (rowData._tot) bg = 'E8EFF8';
+        }
+        row.eachCell({includeEmpty:true}, (cell, colNumber) => {
+          cell.fill = fill(bg);
+          cell.border = border;
+          cell.font = font(rowData && rowData._tot ? '0A1628' : '1A2433', !!(rowData && rowData._tot), 10);
+          cell.alignment = {horizontal: colNumber > 2 ? 'right' : 'left', vertical:'middle', wrapText:true};
+          if (typeof cell.value === 'number') cell.numFmt = '#,##0';
+          if (typeof cell.value === 'number' && cell.value < 0) cell.font = font('B00020', true, 10);
+          const text = String(cell.value || '').toUpperCase();
+          if (text.includes('OVER') || text.includes('EXCESS') || text.includes('NO BUDGET')) {
+            cell.font = font('B00020', true, 10);
+          }
+          if (text.includes('BUDGET AVAILABLE, NO EXPENSES')) {
+            cell.fill = fill('FFF1A8');
+            cell.font = font('6C4700', true, 10);
+          }
+        });
+      });
+      ws.autoFilter = {from:{row:4,column:1}, to:{row:4,column:headers.length}};
+      ws.eachRow(row => row.commit && row.commit());
+      return;
+    }
+
     const aoa = [];
     // Title rows
     aoa.push([titleRow]);
@@ -1965,7 +2061,361 @@ function downloadExcel() {
       [18,14,32,16].concat(smhVisibleMonths.map(()=>14)).concat([16,18,28,18,36]));
   }
 
-  XLSX.writeFile(wb, `Revenue_Liability_MBD_FY2026-27_${new Date().toISOString().slice(0,10)}.xlsx`);
+  const fileDate = new Date().toISOString().slice(0,10);
+  if (useExcelJS) {
+    const buffer = await wb.xlsx.writeBuffer();
+    saveBlob(new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
+      `Revenue_Liability_MBD_FY2026-27_${fileDate}.xlsx`);
+  } else {
+    XLSX.writeFile(wb, `Revenue_Liability_MBD_FY2026-27_${fileDate}.xlsx`);
+  }
+  document.body.dataset.exportStatus = 'excel-finished';
+  } catch (err) {
+    console.error('Excel export failed', err);
+    document.body.dataset.exportStatus = 'excel-error';
+    alert('Excel export failed: ' + (err.message || err));
+  }
+}
+
+
+function reportRowsForActivePUs() {
+  return activePUMeta().map(pu => {
+    const cv = compute(pu.code);
+    const budget = cv.budget || 0;
+    const actual = cv.totalCommitted || 0;
+    const utilPct = budget ? (actual / budget) * 100 : (actual ? 999 : 0);
+    return {
+      pu, cv, budget, actual, utilPct,
+      balance: cv.balanceBudget || 0,
+      noExpense: isBudgetNoExpense(pu.code),
+      over: (cv.balanceBudget || 0) < 0,
+      high: utilPct >= 85 || (cv.balanceBudget || 0) < 0 || (budget === 0 && actual !== 0)
+    };
+  });
+}
+
+function canvasDataUrl(width, height, drawFn) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, width, height);
+  drawFn(ctx, width, height);
+  return canvas.toDataURL('image/png', 0.95);
+}
+
+function drawReportFrame(ctx, width, height, title) {
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = '#D8E5F2';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, width - 2, height - 2);
+  ctx.fillStyle = '#0A1628';
+  ctx.font = 'bold 18px Segoe UI, Arial';
+  ctx.fillText(title, 18, 28);
+  ctx.strokeStyle = '#1A3A6A';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(48, height - 44);
+  ctx.lineTo(width - 20, height - 44);
+  ctx.moveTo(48, 42);
+  ctx.lineTo(48, height - 44);
+  ctx.stroke();
+}
+
+function makeLineChart(title, labels, series) {
+  return canvasDataUrl(900, 310, (ctx, width, height) => {
+    drawReportFrame(ctx, width, height, title);
+    const left = 55, right = width - 28, top = 50, bottom = height - 58;
+    const max = Math.max(1, ...series.flatMap(s => s.values).map(Number)) * 1.12;
+    const x = idx => left + (idx / Math.max(labels.length - 1, 1)) * (right - left);
+    const y = val => bottom - (Number(val) / max) * (bottom - top);
+    ctx.strokeStyle = '#EEF3F8';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const yy = top + i * (bottom - top) / 4;
+      ctx.beginPath();
+      ctx.moveTo(left, yy);
+      ctx.lineTo(right, yy);
+      ctx.stroke();
+    }
+    series.forEach(s => {
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      s.values.forEach((v, idx) => idx === 0 ? ctx.moveTo(x(idx), y(v)) : ctx.lineTo(x(idx), y(v)));
+      ctx.stroke();
+      ctx.fillStyle = s.color;
+      s.values.forEach((v, idx) => {
+        ctx.beginPath();
+        ctx.arc(x(idx), y(v), 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    });
+    ctx.font = '12px Segoe UI, Arial';
+    ctx.fillStyle = '#33485F';
+    labels.forEach((label, idx) => ctx.fillText(label, x(idx) - 10, height - 34));
+    let lx = left;
+    series.forEach(s => {
+      ctx.fillStyle = s.color;
+      ctx.fillRect(lx, height - 20, 12, 8);
+      ctx.fillStyle = '#1A2433';
+      ctx.fillText(s.name, lx + 18, height - 12);
+      lx += 112;
+    });
+  });
+}
+
+function makeBarChart(title, labels, values, colors) {
+  return canvasDataUrl(900, 310, (ctx, width, height) => {
+    drawReportFrame(ctx, width, height, title);
+    const left = 58, right = width - 28, top = 52, bottom = height - 60;
+    const max = Math.max(1, ...values.map(Number)) * 1.12;
+    const gap = 12;
+    const bw = Math.max(16, (right - left - gap * (labels.length - 1)) / Math.max(labels.length, 1));
+    ctx.strokeStyle = '#EEF3F8';
+    for (let i = 0; i <= 4; i++) {
+      const yy = top + i * (bottom - top) / 4;
+      ctx.beginPath();
+      ctx.moveTo(left, yy);
+      ctx.lineTo(right, yy);
+      ctx.stroke();
+    }
+    labels.forEach((label, idx) => {
+      const h = (Number(values[idx]) / max) * (bottom - top);
+      const x = left + idx * (bw + gap);
+      ctx.fillStyle = colors[idx] || '#1A7A4A';
+      ctx.fillRect(x, bottom - h, bw, h);
+      ctx.fillStyle = '#33485F';
+      ctx.font = '11px Segoe UI, Arial';
+      ctx.save();
+      ctx.translate(x + bw / 2, bottom + 13);
+      ctx.rotate(-Math.PI / 6);
+      ctx.fillText(label, -8, 0);
+      ctx.restore();
+    });
+  });
+}
+
+function makeGroupedBarChart(title, labels, budgetValues, actualValues) {
+  return canvasDataUrl(900, 310, (ctx, width, height) => {
+    drawReportFrame(ctx, width, height, title);
+    const left = 58, right = width - 28, top = 52, bottom = height - 60;
+    const max = Math.max(1, ...budgetValues, ...actualValues) * 1.12;
+    const groupW = (right - left) / Math.max(labels.length, 1);
+    const bw = Math.max(12, Math.min(28, groupW / 3));
+    ctx.strokeStyle = '#EEF3F8';
+    for (let i = 0; i <= 4; i++) {
+      const yy = top + i * (bottom - top) / 4;
+      ctx.beginPath();
+      ctx.moveTo(left, yy);
+      ctx.lineTo(right, yy);
+      ctx.stroke();
+    }
+    labels.forEach((label, idx) => {
+      const gx = left + idx * groupW + groupW / 2;
+      const bh = (Number(budgetValues[idx]) / max) * (bottom - top);
+      const ah = (Number(actualValues[idx]) / max) * (bottom - top);
+      ctx.fillStyle = 'rgba(26,74,138,.65)';
+      ctx.fillRect(gx - bw - 2, bottom - bh, bw, bh);
+      ctx.fillStyle = 'rgba(26,122,74,.78)';
+      ctx.fillRect(gx + 2, bottom - ah, bw, ah);
+      ctx.fillStyle = '#33485F';
+      ctx.font = '11px Segoe UI, Arial';
+      ctx.fillText(label, gx - 18, bottom + 17);
+    });
+    ctx.fillStyle = 'rgba(26,74,138,.65)';
+    ctx.fillRect(left, height - 22, 12, 8);
+    ctx.fillStyle = '#1A2433';
+    ctx.fillText('Budget', left + 18, height - 14);
+    ctx.fillStyle = 'rgba(26,122,74,.78)';
+    ctx.fillRect(left + 95, height - 22, 12, 8);
+    ctx.fillStyle = '#1A2433';
+    ctx.fillText('Actual', left + 113, height - 14);
+  });
+}
+
+async function downloadPDFReport() {
+  document.body.dataset.exportStatus = 'pdf-started';
+  try {
+  const jsPDF = window.jspdf && window.jspdf.jsPDF;
+  if (!jsPDF || !jsPDF.API.autoTable) {
+    document.body.dataset.exportStatus = 'pdf-error';
+    alert('PDF library not loaded. Please refresh and try again.');
+    return;
+  }
+  const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 34;
+  const today = new Date().toISOString().slice(0,10);
+  const {cur, actualMonths} = getMonthStatus();
+  const rows = reportRowsForActivePUs();
+  const totals = rows.reduce((t, r) => {
+    t.budget += r.budget;
+    t.actual += r.actual;
+    t.balance += r.balance;
+    t.proj += r.cv.projPerMonth || 0;
+    return t;
+  }, {budget:0, actual:0, balance:0, proj:0});
+  const util = totals.budget ? (totals.actual / totals.budget) * 100 : 0;
+  const highRisk = rows.filter(r => r.high).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance)).slice(0, 14);
+  const noExp = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget).slice(0, 14);
+  const bpRows = buildBPRows().sort((a,b) => Math.abs(b.variance) - Math.abs(a.variance)).slice(0, 14);
+  const aiRows = buildAITrendItems().slice(0, 10);
+  const smhRows = (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) ? window.DETAIL_SMH_DATA.rows : [];
+  const smhDept = [...new Map(smhRows.filter(r => !isSkippedDisplayPU(r.puCode)).map(r => [r.deptCode + '|' + r.deptName, r])).values()]
+    .map(d => {
+      const dr = smhRows.filter(r => r.deptCode === d.deptCode && !isSkippedDisplayPU(r.puCode));
+      const total = makeDetailTotal(dr);
+      return {name:`${d.deptCode} - ${d.deptName}`, budget:total.budget, actual:total.actualTill, balance:total.budget - total.actualTill};
+    }).sort((a,b) => b.actual - a.actual).slice(0, 12);
+
+  function header(title) {
+    doc.setFillColor(10, 22, 40);
+    doc.rect(0, 0, pageW, 44, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text(title, margin, 27);
+    doc.setTextColor(201, 168, 76);
+    doc.setFontSize(9);
+    doc.text(`FY 2026-27 | As on ${formatAsOnDate(_dataAsOnDate)} | Current Month ${cur.label} ${cur.year}`, pageW - margin, 27, {align:'right'});
+  }
+  function footer() {
+    doc.setTextColor(96, 112, 128);
+    doc.setFontSize(8);
+    doc.text('Revenue Liability Portal - Moradabad Division / Northern Railway - For Official Use Only', margin, pageH - 16);
+    doc.text(String(doc.internal.getNumberOfPages()), pageW - margin, pageH - 16, {align:'right'});
+  }
+  function addPage(title) {
+    if (doc.internal.getNumberOfPages() > 1 || doc.lastAutoTable) doc.addPage();
+    header(title);
+    footer();
+  }
+  function autoTable(opts) {
+    doc.autoTable(Object.assign({
+      theme:'grid',
+      margin:{left:margin, right:margin},
+      styles:{fontSize:8, cellPadding:3, lineColor:[190,205,225], lineWidth:.4, overflow:'linebreak'},
+      headStyles:{fillColor:[26,58,106], textColor:[255,255,255], fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[246,250,254]},
+      didDrawPage: () => { header(opts.pageTitle || 'Revenue Liability Report'); footer(); }
+    }, opts));
+  }
+
+  addPage('Revenue Liability Report - Executive Summary');
+  doc.setTextColor(10, 22, 40);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text('Revenue Liability Portal', margin, 96);
+  doc.setFontSize(14);
+  doc.text('Moradabad Division / Northern Railway', margin, 120);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Financial Year 2026-27 | Current Month: ${cur.label} ${cur.year} | Actual months: ${actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ')}`, margin, 145);
+  doc.text(`Budget basis: ${isRGActive() ? 'RG Active' : 'RG not active - using BG_ISL'} | Excluded: PU-72, 73, 74, 75 GST heads and PU-98 recoveries from normal expenditure view.`, margin, 162);
+  autoTable({
+    startY: 190,
+    pageTitle:'Revenue Liability Report - Executive Summary',
+    head:[['KPI','Value']],
+    body:[
+      ['Gross Budget', textCr(totals.budget)],
+      ['Actual / Committed', textCr(totals.actual)],
+      ['Balance Budget', textCr(totals.balance)],
+      ['Utilisation', util.toFixed(1) + '%'],
+      ['Projection / Month', textCr(totals.proj)],
+      ['High Risk PUs', String(highRisk.length)]
+    ],
+    columnStyles:{0:{fontStyle:'bold', fillColor:[232,239,248]}, 1:{halign:'right', fontStyle:'bold'}},
+    tableWidth:360
+  });
+  autoTable({
+    startY: doc.lastAutoTable.finalY + 18,
+    pageTitle:'Revenue Liability Report - Executive Summary',
+    head:[['Data Area','FY','Source / File']],
+    body:Object.values(SOURCE_REGISTER).map(s => [s.label, s.fy, s.source]),
+    columnStyles:{2:{cellWidth:320}}
+  });
+
+  addPage('Revenue Liability Report - Graphs');
+  const monthLabels = FY_MONTH_LABELS.map((m,i) => m + (i <= 8 ? '-26' : '-27'));
+  const cyMonthly = FY_MONTHS.map(m => rows.reduce((s,r) => s + (Number((MONTH[r.pu.code] || {})[m]) || 0), 0) / 10000);
+  const pyMonthly = FY_MONTHS.map(m => rows.reduce((s,r) => s + (Number((MONTH_PY[r.pu.code] || {})[m]) || 0), 0) / 10000);
+  const topUtil = rows.filter(r => r.budget > 0).sort((a,b) => b.utilPct - a.utilPct).slice(0, 10);
+  const topActual = rows.slice().sort((a,b) => b.actual - a.actual).slice(0, 10);
+  doc.addImage(makeLineChart('CY vs PY Monthly Actuals (Rs Cr)', monthLabels, [
+    {name:'CY 2026-27', values:cyMonthly, color:'#1A7A4A'},
+    {name:'PY 2025-26', values:pyMonthly, color:'#1A4E9A'}
+  ]), 'PNG', margin, 62, 360, 124);
+  doc.addImage(makeBarChart('Top Utilisation PUs (%)', topUtil.map(r => 'PU-' + r.pu.code), topUtil.map(r => Math.min(150, r.utilPct)), topUtil.map(r => r.utilPct > 100 ? '#B00020' : r.utilPct > 85 ? '#E85D04' : '#1A7A4A')), 'PNG', margin + 395, 62, 360, 124);
+  doc.addImage(makeGroupedBarChart('Major PUs - Budget vs Actual (Rs Cr)', topActual.map(r => 'PU-' + r.pu.code), topActual.map(r => r.budget / 10000), topActual.map(r => r.actual / 10000)), 'PNG', margin, 216, 755, 124);
+
+  addPage('Revenue Liability Report - Risk Analysis');
+  autoTable({
+    startY: 58,
+    pageTitle:'Revenue Liability Report - Risk Analysis',
+    head:[['PU','Description','Budget','Actual','Balance','Util %','Status']],
+    body:highRisk.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), textCr(r.actual), textCr(r.balance), r.utilPct.toFixed(1) + '%', r.over ? 'Over Budget' : r.utilPct >= 85 ? 'High Utilisation' : 'Watch']),
+    columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
+  });
+  autoTable({
+    startY: doc.lastAutoTable.finalY + 16,
+    pageTitle:'Revenue Liability Report - Risk Analysis',
+    head:[['PU','Description','Budget','Remark']],
+    body:noExp.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), 'Budget available but no expense booked']),
+    columnStyles:{2:{halign:'right'}}
+  });
+
+  addPage('Revenue Liability Report - BP and AI Summary');
+  autoTable({
+    startY: 58,
+    pageTitle:'Revenue Liability Report - BP and AI Summary',
+    head:[['PU','Description','Budget','BP','Actual','Variance','BP Status']],
+    body:bpRows.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), textCr(r.bp), textCr(r.actualTill), signedCr(r.variance), r.status]),
+    columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
+  });
+  autoTable({
+    startY: doc.lastAutoTable.finalY + 16,
+    pageTitle:'Revenue Liability Report - BP and AI Summary',
+    head:[['PU','AI Trend / Liability Remark']],
+    body:aiRows.map(r => ['PU-' + r.pu.code, `${r.risk.toUpperCase()}: CY as-on ${textCr(r.cyTotalAsOn)} vs PY ${textCr(r.pyTotalAsOn)}; balance ${textCr(r.cv.balanceBudget)}; utilisation ${r.utilPct.toFixed(1)}%.`]),
+    columnStyles:{1:{cellWidth:620}}
+  });
+
+  addPage('Revenue Liability Report - Annexure');
+  autoTable({
+    startY: 58,
+    pageTitle:'Revenue Liability Report - Annexure',
+    head:[['Department','Budget','Actual','Balance']],
+    body:smhDept.map(r => [r.name, detailCr(r.budget), detailCr(r.actual), detailCr(r.balance)]),
+    columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'}}
+  });
+
+  doc.save(`Revenue_Liability_MBD_Report_FY2026-27_${today}.pdf`);
+  document.body.dataset.exportStatus = 'pdf-finished';
+  } catch (err) {
+    console.error('PDF export failed', err);
+    document.body.dataset.exportStatus = 'pdf-error';
+    alert('PDF export failed: ' + (err.message || err));
+  }
+}
+
+window.downloadExcel = downloadExcel;
+window.downloadPDFReport = downloadPDFReport;
+
+function initExportButtons() {
+  const excelBtn = document.getElementById('downloadExcelBtn');
+  const pdfBtn = document.getElementById('downloadPdfBtn');
+  if (excelBtn && !excelBtn.dataset.bound) {
+    excelBtn.dataset.bound = '1';
+    excelBtn.addEventListener('click', downloadExcel);
+  }
+  if (pdfBtn && !pdfBtn.dataset.bound) {
+    pdfBtn.dataset.bound = '1';
+    pdfBtn.addEventListener('click', downloadPDFReport);
+  }
 }
 
 
@@ -3044,6 +3494,7 @@ function renderMonthwise() {
 
 function renderAll() {
   initPopup();
+  initExportButtons();
   renderCards();
   renderJuneBars();
   renderLiability();
@@ -3051,7 +3502,7 @@ function renderAll() {
   renderPUMaster();
   renderBPAnalysis();
   renderRemarks();
-  document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'RG not active - using BG_ISL';
+  document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'BG_ISL';
   const {cur:_cur}=getMonthStatus();
   const _cmb=document.getElementById('curMonBadge'); if(_cmb) _cmb.textContent=_cur.label+' '+_cur.year;
   setTimeout(()=>{addDualScroll();attachPUPopup();},80);
