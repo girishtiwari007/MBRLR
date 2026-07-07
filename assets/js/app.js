@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260707-mobilefilter';
+const ASSET_VERSION = '20260707-pdfplus';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -2261,10 +2261,14 @@ async function downloadPDFReport() {
     return t;
   }, {budget:0, actual:0, balance:0, proj:0});
   const util = totals.budget ? (totals.actual / totals.budget) * 100 : 0;
-  const highRisk = rows.filter(r => r.high).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance)).slice(0, 14);
-  const noExp = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget).slice(0, 14);
-  const bpRows = buildBPRows().sort((a,b) => Math.abs(b.variance) - Math.abs(a.variance)).slice(0, 14);
-  const aiRows = buildAITrendItems().slice(0, 10);
+  const highRiskAll = rows.filter(r => r.high).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance));
+  const highRisk = highRiskAll.slice(0, 18);
+  const noExpAll = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget);
+  const noExp = noExpAll.slice(0, 18);
+  const bpAll = buildBPRows().sort((a,b) => Math.abs(b.variance) - Math.abs(a.variance));
+  const bpRows = bpAll.slice(0, 18);
+  const aiAll = buildAITrendItems();
+  const aiRows = aiAll.slice(0, 14);
   const smhRows = (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) ? window.DETAIL_SMH_DATA.rows : [];
   const smhDept = [...new Map(smhRows.filter(r => !isSkippedDisplayPU(r.puCode)).map(r => [r.deptCode + '|' + r.deptName, r])).values()]
     .map(d => {
@@ -2272,6 +2276,79 @@ async function downloadPDFReport() {
       const total = makeDetailTotal(dr);
       return {name:`${d.deptCode} - ${d.deptName}`, budget:total.budget, actual:total.actualTill, balance:total.budget - total.actualTill};
     }).sort((a,b) => b.actual - a.actual).slice(0, 12);
+  const actualMonthLabels = actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]);
+  const completedMonthKeys = actualMonths.length ? actualMonths : FY_MONTHS.slice(0, Math.max(1, cur.idx));
+  const portalSummaryRows = [
+    ['PU coverage', `${rows.length} active expenditure PUs`, 'PU-72, 73, 74, 75 GST and PU-98 recovery are excluded from normal display.'],
+    ['Risk coverage', `${highRiskAll.length} high/watch PUs`, 'Includes over-budget, high utilisation, no-budget spend and budget-with-no-expense cases.'],
+    ['BP coverage', `${bpAll.length} PUs`, `BP uses ${actualMonths.length} completed actual month(s): ${actualMonthLabels.join(', ') || 'none'}.`],
+    ['AI trend coverage', `${aiAll.length} non-staff/planned PUs`, 'Staff PU with committed liability is excluded from AI trend summary.'],
+    ['SMH coverage', `${smhRows.filter(r => !isSkippedDisplayPU(r.puCode)).length} detail rows`, 'Department 00 and PU-98 recovery are excluded from SMH operational view.']
+  ];
+  const liabilityAnnexure = rows.slice().sort((a,b) => b.actual - a.actual).map(r => [
+    'PU-' + r.pu.code,
+    r.pu.desc,
+    r.pu.puType,
+    r.pu.liab,
+    textCr(r.budget),
+    textCr(r.actual),
+    textCr(r.balance),
+    r.budget ? r.utilPct.toFixed(1) + '%' : (r.actual ? 'No Budget' : '0.0%'),
+    r.noExpense ? 'Budget, No Expense' : r.over ? 'Over Budget' : r.utilPct >= 85 ? 'High Utilisation' : 'Normal'
+  ]);
+  const monthWiseAnnexure = rows.slice().sort((a,b) => b.actual - a.actual).map(r => {
+    const md = MONTH[r.pu.code] || {};
+    return [
+      'PU-' + r.pu.code,
+      r.pu.desc,
+      ...completedMonthKeys.map(m => textCr(Number(md[m]) || 0)),
+      textCr(r.actual),
+      textCr(r.balance)
+    ];
+  });
+  const puMasterAnnexure = activePUMeta().map(pu => {
+    const cv = compute(pu.code);
+    return [
+      'PU-' + pu.code,
+      pu.desc,
+      pu.puType,
+      pu.liab,
+      textCr(cv.budget),
+      textCr(cv.totalCommitted),
+      textCr(cv.balanceBudget),
+      cv.utilisedPct != null ? cv.utilisedPct.toFixed(1) + '%' : (cv.totalCommitted ? 'No Budget' : '0.0%')
+    ];
+  });
+  const sourceRows = Object.values(SOURCE_REGISTER).map(s => [s.label, s.fy, s.source, s.used || '', s.remarks || 'Pre-loaded / uploaded portal source']);
+  const exclusionRows = [
+    ['Department 00', 'Skipped in detailed SMH analysis', 'Non-operational/summary department code is not mixed with department expenditure review.'],
+    ['PU-98', 'Skipped from normal expenditure view', 'Credit or recoveries are shown separately and not treated as expenditure.'],
+    ['PU-72, PU-73, PU-74, PU-75', 'Skipped from portal display and analysis', 'GST/tax adjustment heads are excluded from operational PU expenditure analysis.'],
+    ['Staff PU committed liability', 'Skipped from AI Trend Summary only', 'Committed staff liability is stable/obligatory and can distort AI trend prioritisation.']
+  ];
+  const smhDetailAnnexure = smhRows
+    .filter(r => !isSkippedDisplayPU(r.puCode) && normPUCode(r.puCode) !== '98')
+    .sort((a,b) => (Number(b.actualTill) || 0) - (Number(a.actualTill) || 0))
+    .slice(0, 120)
+    .map(r => {
+      const bal = (Number(r.budget) || 0) - (Number(r.actualTill) || 0);
+      const bp = detailBPStatus(r);
+      return [
+        `${r.deptCode} - ${r.deptName}`,
+        r.smh,
+        `PU-${r.puCode} - ${r.puName}`,
+        detailCr(r.budget),
+        detailCr(r.actualTill),
+        detailCr(bal),
+        isSMHBudgetNoExpense(r) ? 'Budget, No Expense' : bal < 0 ? 'Over Budget' : 'Normal',
+        bp.status
+      ];
+    });
+  const smhNoExpenseAnnexure = smhRows
+    .filter(r => !isSkippedDisplayPU(r.puCode) && normPUCode(r.puCode) !== '98' && isSMHBudgetNoExpense(r))
+    .sort((a,b) => (Number(b.budget) || 0) - (Number(a.budget) || 0))
+    .slice(0, 80)
+    .map(r => [`${r.deptCode} - ${r.deptName}`, r.smh, `PU-${r.puCode} - ${r.puName}`, detailCr(r.budget), 'Budget available but no actual expense booked']);
 
   function header(title) {
     doc.setFillColor(10, 22, 40);
@@ -2327,7 +2404,8 @@ async function downloadPDFReport() {
       ['Balance Budget', textCr(totals.balance)],
       ['Utilisation', util.toFixed(1) + '%'],
       ['Projection / Month', textCr(totals.proj)],
-      ['High Risk PUs', String(highRisk.length)]
+      ['High / Watch PUs', String(highRiskAll.length)],
+      ['Budget but No Expense PUs', String(noExpAll.length)]
     ],
     columnStyles:{0:{fontStyle:'bold', fillColor:[232,239,248]}, 1:{halign:'right', fontStyle:'bold'}},
     tableWidth:360
@@ -2336,8 +2414,15 @@ async function downloadPDFReport() {
     startY: doc.lastAutoTable.finalY + 18,
     pageTitle:'Revenue Liability Report - Executive Summary',
     head:[['Data Area','FY','Source / File']],
-    body:Object.values(SOURCE_REGISTER).map(s => [s.label, s.fy, s.source]),
+    body:sourceRows.map(r => [r[0], r[1], r[2]]),
     columnStyles:{2:{cellWidth:320}}
+  });
+  autoTable({
+    startY: doc.lastAutoTable.finalY + 18,
+    pageTitle:'Revenue Liability Report - Executive Summary',
+    head:[['Coverage Area','Current Position','Officer Note']],
+    body:portalSummaryRows,
+    columnStyles:{2:{cellWidth:360}}
   });
 
   addPage('Revenue Liability Report - Graphs');
@@ -2357,8 +2442,8 @@ async function downloadPDFReport() {
   autoTable({
     startY: 58,
     pageTitle:'Revenue Liability Report - Risk Analysis',
-    head:[['PU','Description','Budget','Actual','Balance','Util %','Status']],
-    body:highRisk.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), textCr(r.actual), textCr(r.balance), r.utilPct.toFixed(1) + '%', r.over ? 'Over Budget' : r.utilPct >= 85 ? 'High Utilisation' : 'Watch']),
+    head:[['PU','Description','Budget','Actual','Balance','Util %','Status','Suggested Review']],
+    body:highRisk.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), textCr(r.actual), textCr(r.balance), r.utilPct.toFixed(1) + '%', r.over ? 'Over Budget' : r.utilPct >= 85 ? 'High Utilisation' : 'Watch', r.over ? 'Budget support / booking control' : r.noExpense ? 'Check pending booking' : 'Monitor next booking cycle']),
     columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
   });
   autoTable({
@@ -2373,8 +2458,8 @@ async function downloadPDFReport() {
   autoTable({
     startY: 58,
     pageTitle:'Revenue Liability Report - BP and AI Summary',
-    head:[['PU','Description','Budget','BP','Actual','Variance','BP Status']],
-    body:bpRows.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), textCr(r.bp), textCr(r.actualTill), signedCr(r.variance), r.status]),
+    head:[['PU','Description','Budget','BP','Actual','Variance','Util %','BP Status','Accounts Remark']],
+    body:bpRows.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), textCr(r.bp), textCr(r.actualTill), signedCr(r.variance), r.budget ? r.utilPct.toFixed(1) + '%' : '0.0%', r.status, r.remark]),
     columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
   });
   autoTable({
@@ -2385,14 +2470,80 @@ async function downloadPDFReport() {
     columnStyles:{1:{cellWidth:620}}
   });
 
-  addPage('Revenue Liability Report - Annexure');
+  addPage('Revenue Liability Report - PU-wise Liability Annexure');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - Annexure',
+    pageTitle:'Revenue Liability Report - PU-wise Liability Annexure',
+    head:[['PU','Description','Type','Liability','Budget','Actual','Balance','Util %','Status']],
+    body:liabilityAnnexure,
+    styles:{fontSize:7, cellPadding:2.5, overflow:'linebreak'},
+    columnStyles:{1:{cellWidth:170},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'}}
+  });
+
+  addPage('Revenue Liability Report - Month-wise Actual Annexure');
+  autoTable({
+    startY: 58,
+    pageTitle:'Revenue Liability Report - Month-wise Actual Annexure',
+    head:[['PU','Description'].concat(completedMonthKeys.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)])).concat(['Total Actual','Balance'])],
+    body:monthWiseAnnexure,
+    styles:{fontSize:7, cellPadding:2.5, overflow:'linebreak'},
+    columnStyles:{1:{cellWidth:170}}
+  });
+
+  addPage('Revenue Liability Report - PU Master Annexure');
+  autoTable({
+    startY: 58,
+    pageTitle:'Revenue Liability Report - PU Master Annexure',
+    head:[['PU','Description','PU Type','Liability','Budget','Actual','Balance','Util %']],
+    body:puMasterAnnexure,
+    styles:{fontSize:7, cellPadding:2.5, overflow:'linebreak'},
+    columnStyles:{1:{cellWidth:210},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'}}
+  });
+
+  addPage('Revenue Liability Report - Sources and Clarifications');
+  autoTable({
+    startY: 58,
+    pageTitle:'Revenue Liability Report - Sources and Clarifications',
+    head:[['Data Area','FY','Source / File','Used In','Remarks']],
+    body:sourceRows,
+    styles:{fontSize:7.5, cellPadding:3, overflow:'linebreak'},
+    columnStyles:{2:{cellWidth:210},3:{cellWidth:170},4:{cellWidth:190}}
+  });
+  autoTable({
+    startY: doc.lastAutoTable.finalY + 16,
+    pageTitle:'Revenue Liability Report - Sources and Clarifications',
+    head:[['Code / Rule','Treatment in Portal','Clarification']],
+    body:exclusionRows,
+    columnStyles:{2:{cellWidth:440}}
+  });
+
+  addPage('Revenue Liability Report - Department / SMH Summary');
+  autoTable({
+    startY: 58,
+    pageTitle:'Revenue Liability Report - Department / SMH Summary',
     head:[['Department','Budget','Actual','Balance']],
     body:smhDept.map(r => [r.name, detailCr(r.budget), detailCr(r.actual), detailCr(r.balance)]),
     columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'}}
   });
+  autoTable({
+    startY: doc.lastAutoTable.finalY + 16,
+    pageTitle:'Revenue Liability Report - Department / SMH Summary',
+    head:[['Department','Demand','Primary Unit','Budget','Actual','Balance','Status','BP Status']],
+    body:smhDetailAnnexure,
+    styles:{fontSize:6.8, cellPadding:2.2, overflow:'linebreak'},
+    columnStyles:{0:{cellWidth:120},2:{cellWidth:185},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
+  });
+  if (smhNoExpenseAnnexure.length) {
+    addPage('Revenue Liability Report - Budget Available No Expense');
+    autoTable({
+      startY: 58,
+      pageTitle:'Revenue Liability Report - Budget Available No Expense',
+      head:[['Department','Demand','Primary Unit','Budget','Remark']],
+      body:smhNoExpenseAnnexure,
+      styles:{fontSize:7.5, cellPadding:3, overflow:'linebreak'},
+      columnStyles:{2:{cellWidth:260},3:{halign:'right'},4:{cellWidth:230}}
+    });
+  }
 
   doc.save(`Revenue_Liability_MBD_Report_FY2026-27_${today}.pdf`);
   document.body.dataset.exportStatus = 'pdf-finished';
@@ -2659,7 +2810,13 @@ function addDualScroll(){
     function syncW(){ const t=wrap.querySelector('table'); if(t) inner.style.width=t.scrollWidth+'px'; }
     syncW(); top.addEventListener('scroll',()=>wrap.scrollLeft=top.scrollLeft);
     wrap.addEventListener('scroll',()=>top.scrollLeft=wrap.scrollLeft);
-    new ResizeObserver(syncW).observe(wrap);
+    try {
+      if (window.ResizeObserver && wrap instanceof Element) {
+        new ResizeObserver(syncW).observe(wrap);
+      }
+    } catch (e) {
+      setTimeout(syncW, 200);
+    }
   });
 }
 
