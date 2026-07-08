@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="portal-build" content="rlp-mbd-2026-07-03-v2.1.1">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260707-pdfplus">
+<link rel="stylesheet" href="assets/css/main.css?v=20260708-dockpanel">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -108,7 +108,102 @@
 </div>
 
 
+<!-- REPORT MENU -->
+<div class="report-menu" id="reportMenu" role="navigation" aria-label="Report navigation">
+  <div class="report-menu-head">
+    <span class="nav-pointer" aria-hidden="true"></span>
+    <div>
+      <div class="report-menu-title">Report Menu</div>
+      <div class="report-menu-sub">Direct jump to report pages</div>
+    </div>
+    <span class="report-menu-badge">NEW OPTIONS</span>
+  </div>
+  <div class="report-menu-actions">
+    <button class="report-menu-btn active" type="button" data-report-tab="liability" aria-pressed="true">
+      <span>Main Report</span><small>Revenue Liability</small>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="monthwise" aria-pressed="false">
+      <span>Month-wise</span><small>Actuals and projection</small>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="trend" aria-pressed="false">
+      <span>Graphs</span><small>Trend analysis</small>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="aitrend" aria-pressed="false">
+      <span>AI Summary</span><small>PU risk remarks</small><em>NEW</em>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="bpanalysis" aria-pressed="false">
+      <span>BP Analysis</span><small>Proportionate review</small><em>NEW</em>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="smhdetail" aria-pressed="false">
+      <span>Dept SMH</span><small>Detailed report</small><em>NEW</em>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="pumaster" aria-pressed="false">
+      <span>PU Master</span><small>Code reference</small>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="remarks" aria-pressed="false">
+      <span>Remarks</span><small>Sources and rules</small><em>NEW</em>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="upload" id="uploadMenuBtn" aria-pressed="false" style="display:none">
+      <span>Upload</span><small>Admin data update</small>
+    </button>
+  </div>
+</div>
+
+<!-- SMART TOOLS SIMULATION -->
+<div class="smart-tools" id="smartTools">
+  <div class="quick-search">
+    <label for="quickSearch">Quick Search</label>
+    <input id="quickSearch" type="search" placeholder="Search report, PU code, PU name..." autocomplete="off">
+    <div class="quick-results" id="quickResults"></div>
+  </div>
+  <div class="risk-spotlight" id="riskSpotlight">
+    <span class="risk-title">Risk Spotlight</span>
+    <div class="risk-items" id="riskItems"></div>
+  </div>
+  <div class="smart-actions">
+    <select id="savedViewSelect" title="Session saved views">
+      <option value="">Session Views</option>
+    </select>
+    <button type="button" id="saveViewBtn">Save View</button>
+    <button type="button" id="startTourBtn">Tour</button>
+    <button type="button" id="officerBriefBtn">Officer Brief</button>
+  </div>
+</div>
+
+<div class="tour-bubble" id="tourBubble" aria-live="polite">
+  <div class="tour-title" id="tourTitle">Portal Tour</div>
+  <div class="tour-text" id="tourText"></div>
+  <div class="tour-actions">
+    <button type="button" id="tourNextBtn">Next</button>
+    <button type="button" id="tourCloseBtn">Close</button>
+  </div>
+</div>
+
+<div class="brief-modal" id="officerBriefModal" aria-hidden="true">
+  <div class="brief-box">
+    <div class="brief-head">
+      <div>
+        <div class="brief-title">Officer Brief</div>
+        <div class="brief-sub">Presentation-ready financial summary</div>
+      </div>
+      <button type="button" id="briefCloseBtn">Close</button>
+    </div>
+    <div class="brief-body" id="officerBriefBody"></div>
+  </div>
+</div>
+
+
 <!-- CARDS -->
+<div class="dashboard-dock" id="dashboardDock">
+  <button class="dock-toggle" id="dockToggle" type="button" aria-expanded="true" aria-controls="dashboardPanel" title="Auto-hide summary panel">
+    <span class="dock-hand" aria-hidden="true"></span>
+    <span class="dock-text">Summary Panel</span>
+    <span class="dock-state" id="dockState">PINNED</span>
+  </button>
+  <button class="dock-pin" id="dockPin" type="button" aria-pressed="true" title="Pin or auto-hide summary panel">PIN</button>
+</div>
+
+<div class="dashboard-panel" id="dashboardPanel">
 <div class="cards" id="summaryCards"></div>
 
 <!-- JUNE PROGRESS -->
@@ -134,9 +229,10 @@
     Current month auto-detected from system date.
   </span>
 </div>
+</div>
 
 <!-- TABS -->
-<div class="tabs">
+<div class="tabs legacy-tabs" aria-hidden="true">
   <div class="tab active" onclick="switchTab('liability')">Revenue Liability</div>
   <div class="tab" onclick="switchTab('monthwise')">Month-wise Actuals</div>
   <div class="tab" onclick="switchTab('pumaster')">PU Master</div>
@@ -614,7 +710,7 @@
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260707-pdfplus"></script>
+<script src="assets/js/app.js?v=20260708-simall"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>

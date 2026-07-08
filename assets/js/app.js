@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260707-pdfplus';
+const ASSET_VERSION = '20260708-simall';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -82,6 +82,8 @@ async function doLogin() {
   document.getElementById('loginOverlay').classList.add('hidden');
   if (user === 'ADMIN') {
     document.getElementById('uploadTab').style.display = '';
+    const uploadMenuBtn = document.getElementById('uploadMenuBtn');
+    if (uploadMenuBtn) uploadMenuBtn.style.display = '';
   }
   renderAll(); // Re-render after login to ensure tables are populated
   setTimeout(()=>{addDualScroll();attachPUPopup();},100);
@@ -95,6 +97,8 @@ function restoreLoginSession() {
   if (user === 'ADMIN') {
     const uploadTab = document.getElementById('uploadTab');
     if (uploadTab) uploadTab.style.display = '';
+    const uploadMenuBtn = document.getElementById('uploadMenuBtn');
+    if (uploadMenuBtn) uploadMenuBtn.style.display = '';
   }
 }
 
@@ -1202,19 +1206,382 @@ function handleTopFilterChange(sourceLabel) {
   if (tab === 'smhdetail' && typeof renderSMHDetail === 'function') renderSMHDetail();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// TABS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Tabs and report menu
+const TAB_IDS = ['liability','monthwise','pumaster','trend','aitrend','bpanalysis','smhdetail','remarks','upload'];
+
+function syncReportNavigation(name) {
+  document.querySelectorAll('[data-report-tab]').forEach(btn => {
+    const active = btn.dataset.reportTab === name;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
+function jumpReport(name) {
+  switchTab(name);
+}
+
+function initReportMenuButtons() {
+  document.querySelectorAll('[data-report-tab]').forEach(btn => {
+    if (btn.dataset.menuBound === '1') return;
+    btn.dataset.menuBound = '1';
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      const target = btn.dataset.reportTab;
+      if (target) jumpReport(target);
+    });
+  });
+  syncReportNavigation(activeTabName());
+}
+
+function setDashboardPinned(pinned) {
+  const panel = document.getElementById('dashboardPanel');
+  const pin = document.getElementById('dockPin');
+  const toggle = document.getElementById('dockToggle');
+  const state = document.getElementById('dockState');
+  if (!panel || !pin || !toggle || !state) return;
+  panel.classList.toggle('collapsed', !pinned);
+  panel.classList.toggle('auto-hide', !pinned);
+  document.body.classList.toggle('summary-auto', !pinned);
+  pin.textContent = pinned ? 'PIN' : 'AUTO';
+  pin.setAttribute('aria-pressed', pinned ? 'true' : 'false');
+  toggle.setAttribute('aria-expanded', pinned ? 'true' : 'false');
+  state.textContent = pinned ? 'PINNED' : 'AUTO-HIDE';
+  try { sessionStorage.setItem('rlp_summary_pinned', pinned ? '1' : '0'); } catch(e) {}
+}
+
+function initDashboardDock() {
+  const panel = document.getElementById('dashboardPanel');
+  const pin = document.getElementById('dockPin');
+  const toggle = document.getElementById('dockToggle');
+  if (!panel || !pin || !toggle || pin.dataset.bound === '1') return;
+  pin.dataset.bound = '1';
+  let saved = '1';
+  try { saved = sessionStorage.getItem('rlp_summary_pinned') || '1'; } catch(e) {}
+  setDashboardPinned(saved !== '0');
+  pin.addEventListener('click', () => {
+    setDashboardPinned(pin.getAttribute('aria-pressed') !== 'true');
+  });
+  toggle.addEventListener('click', () => {
+    setDashboardPinned(toggle.getAttribute('aria-expanded') !== 'true');
+  });
+  const dock = document.getElementById('dashboardDock');
+  if (dock) {
+    dock.addEventListener('dblclick', () => {
+      setDashboardPinned(pin.getAttribute('aria-pressed') !== 'true');
+    });
+  }
+}
+
+const REPORT_LABELS = {
+  liability:['Main Report','Revenue Liability'],
+  monthwise:['Month-wise','Actuals and projection'],
+  trend:['Graphs','Trend Analysis Graphs'],
+  aitrend:['AI Summary','PU risk remarks'],
+  bpanalysis:['BP Analysis','Budget Proportionate'],
+  smhdetail:['Dept SMH','Department SMH details'],
+  pumaster:['PU Master','Code reference'],
+  remarks:['Remarks','Sources and rules'],
+  upload:['Upload','Admin data update']
+};
+
+function smartSearchItems() {
+  const reportItems = Object.entries(REPORT_LABELS)
+    .filter(([key]) => key !== 'upload' || ((document.getElementById('uploadMenuBtn') || {}).style || {}).display !== 'none')
+    .map(([key, val]) => ({type:'report', key, title:val[0], sub:val[1]}));
+  const puItems = activePUMeta().map(pu => ({
+    type:'pu',
+    key:pu.code,
+    title:`PU-${pu.code} ${pu.desc}`,
+    sub:`${pu.puType} | ${pu.liab}`
+  }));
+  return reportItems.concat(puItems);
+}
+
+function renderQuickResults(term) {
+  const box = document.getElementById('quickResults');
+  if (!box) return;
+  const q = String(term || '').trim().toLowerCase();
+  if (!q) {
+    box.classList.remove('show');
+    box.innerHTML = '';
+    return;
+  }
+  const results = smartSearchItems()
+    .filter(item => (`${item.title} ${item.sub} ${item.key}`).toLowerCase().includes(q))
+    .slice(0, 8);
+  if (!results.length) {
+    box.innerHTML = '<button class="quick-result" type="button"><strong>No match found</strong><small>Try PU code, report name or description</small></button>';
+    box.classList.add('show');
+    return;
+  }
+  box.innerHTML = results.map((item, idx) => `
+    <button class="quick-result" type="button" data-search-index="${idx}">
+      <strong>${htmlSafe(item.title)}</strong>
+      <small>${htmlSafe(item.sub)}</small>
+    </button>`).join('');
+  box.classList.add('show');
+  box.querySelectorAll('[data-search-index]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = results[Number(btn.dataset.searchIndex)];
+      if (!item) return;
+      box.classList.remove('show');
+      const input = document.getElementById('quickSearch');
+      if (input) input.value = '';
+      if (item.type === 'report') jumpReport(item.key);
+      if (item.type === 'pu') openPUDetail(item.key);
+    });
+  });
+}
+
+function buildRiskSpotlightItems() {
+  const rows = reportRowsForActivePUs();
+  const over = rows.filter(r => r.over).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance))[0];
+  const noExp = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget)[0];
+  const highUtil = rows.filter(r => r.budget > 0).sort((a,b) => b.utilPct - a.utilPct)[0];
+  const bigBalance = rows.filter(r => r.balance > 0).sort((a,b) => b.balance - a.balance)[0];
+  const items = [];
+  if (over) items.push({cls:'high', label:'Over Budget', pu:over.pu, value:textCr(Math.abs(over.balance)), sub:'Needs control/support'});
+  if (noExp) items.push({cls:'warn', label:'No Expense', pu:noExp.pu, value:textCr(noExp.budget), sub:'Budget available'});
+  if (highUtil) items.push({cls:highUtil.utilPct >= 100 ? 'high' : 'warn', label:'Top Util', pu:highUtil.pu, value:highUtil.utilPct.toFixed(1) + '%', sub:textCr(highUtil.actual)});
+  if (bigBalance) items.push({cls:'good', label:'Largest Balance', pu:bigBalance.pu, value:textCr(bigBalance.balance), sub:'Available'});
+  return items;
+}
+
+function renderRiskSpotlight() {
+  const wrap = document.getElementById('riskItems');
+  if (!wrap) return;
+  const items = buildRiskSpotlightItems();
+  wrap.innerHTML = items.map(item => `
+    <button type="button" class="risk-chip ${item.cls}" data-risk-pu="${htmlSafe(item.pu.code)}">
+      <span>${htmlSafe(item.label)}</span>
+      <strong>PU-${htmlSafe(item.pu.code)} ${htmlSafe(item.value)}</strong>
+      <small>${htmlSafe(item.sub)} | ${htmlSafe(item.pu.desc)}</small>
+    </button>`).join('');
+  wrap.querySelectorAll('[data-risk-pu]').forEach(btn => {
+    btn.addEventListener('click', () => openPUDetail(btn.dataset.riskPu));
+  });
+}
+
+function currentViewSnapshot() {
+  return {
+    tab: activeTabName(),
+    top:{
+      type:(document.getElementById('typeFilter') || {}).value || 'all',
+      liab:(document.getElementById('liabFilter') || {}).value || 'all',
+      activity:(document.getElementById('activityFilter') || {}).value || 'all',
+      utilCompare:(document.getElementById('utilCompare') || {}).value || 'all',
+      utilPct:(document.getElementById('utilPctFilter') || {}).value || ''
+    },
+    smh:{
+      dept:(document.getElementById('smhDeptFilter') || {}).value || 'all',
+      demand:(document.getElementById('smhCodeFilter') || {}).value || 'all',
+      pu:(document.getElementById('smhPUFilter') || {}).value || 'all',
+      mode:(document.getElementById('smhViewMode') || {}).value || 'report'
+    },
+    bp:{
+      status:(document.getElementById('bpStatusFilter') || {}).value || 'all',
+      type:(document.getElementById('bpTypeFilter') || {}).value || 'all',
+      liability:(document.getElementById('bpLiabilityFilter') || {}).value || 'all'
+    }
+  };
+}
+
+function applyViewSnapshot(view) {
+  if (!view) return;
+  if (view.top) {
+    const map = {typeFilter:view.top.type, liabFilter:view.top.liab, activityFilter:view.top.activity, utilCompare:view.top.utilCompare, utilPctFilter:view.top.utilPct};
+    Object.entries(map).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.value = value; });
+  }
+  if (view.smh) {
+    const map = {smhDeptFilter:view.smh.dept, smhCodeFilter:view.smh.demand, smhPUFilter:view.smh.pu, smhViewMode:view.smh.mode};
+    Object.entries(map).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.value = value; });
+  }
+  if (view.bp) {
+    const map = {bpStatusFilter:view.bp.status, bpTypeFilter:view.bp.type, bpLiabilityFilter:view.bp.liability};
+    Object.entries(map).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.value = value; });
+  }
+  switchTab(view.tab || 'liability');
+  setTimeout(() => {
+    renderAll();
+    if (view.tab === 'smhdetail') renderSMHDetail();
+    if (view.tab === 'bpanalysis') renderBPAnalysis();
+  }, 80);
+}
+
+function sessionViews() {
+  try { return JSON.parse(sessionStorage.getItem('rlp_session_views') || '[]'); } catch(e) { return []; }
+}
+
+function saveSessionViews(views) {
+  try { sessionStorage.setItem('rlp_session_views', JSON.stringify(views.slice(-12))); } catch(e) {}
+}
+
+function refreshSavedViews() {
+  const sel = document.getElementById('savedViewSelect');
+  if (!sel) return;
+  const current = sel.value;
+  const views = sessionViews();
+  sel.innerHTML = '<option value="">Session Views</option>' + views.map((v, i) => `<option value="${i}">${htmlSafe(v.name)}</option>`).join('');
+  sel.value = current;
+}
+
+function saveCurrentSessionView() {
+  const tab = activeTabName();
+  const label = (REPORT_LABELS[tab] || ['Current View'])[0];
+  const now = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  const views = sessionViews();
+  views.push({name:`${label} - ${now}`, view:currentViewSnapshot()});
+  saveSessionViews(views);
+  refreshSavedViews();
+  showFilterAlert('View saved for this browser session.');
+}
+
+const TOUR_STEPS = [
+  ['Report Menu', 'Use these report boxes to jump directly to any major report without searching through filters.'],
+  ['Quick Search', 'Type a PU code, PU name or report name. Select a result to open it immediately.'],
+  ['Risk Spotlight', 'These cards surface urgent items like over-budget, no-expense and high-utilisation PUs.'],
+  ['Summary Panel', 'Use PIN/AUTO to keep KPI cards open or auto-hide them for more table space.'],
+  ['Officer Brief', 'Open a short higher-authority summary before downloading the full PDF report.']
+];
+let tourIndex = 0;
+
+function showTourStep() {
+  const bubble = document.getElementById('tourBubble');
+  if (!bubble) return;
+  const step = TOUR_STEPS[tourIndex] || TOUR_STEPS[0];
+  const title = document.getElementById('tourTitle');
+  const text = document.getElementById('tourText');
+  if (title) title.textContent = `${tourIndex + 1}/${TOUR_STEPS.length} - ${step[0]}`;
+  if (text) text.textContent = step[1];
+  bubble.classList.add('show');
+}
+
+function closeTour() {
+  const bubble = document.getElementById('tourBubble');
+  if (bubble) bubble.classList.remove('show');
+}
+
+function startTour() {
+  tourIndex = 0;
+  showTourStep();
+}
+
+function renderOfficerBrief() {
+  const body = document.getElementById('officerBriefBody');
+  if (!body) return;
+  const rows = reportRowsForActivePUs();
+  const totals = rows.reduce((t, r) => {
+    t.budget += r.budget; t.actual += r.actual; t.balance += r.balance;
+    return t;
+  }, {budget:0, actual:0, balance:0});
+  const util = totals.budget ? totals.actual / totals.budget * 100 : 0;
+  const over = rows.filter(r => r.over).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance)).slice(0, 5);
+  const noExp = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget).slice(0, 5);
+  const high = rows.filter(r => r.budget > 0).sort((a,b) => b.utilPct - a.utilPct).slice(0, 5);
+  body.innerHTML = `
+    <div class="brief-kpis">
+      <div class="brief-kpi"><span>Gross Budget</span><strong>${textCr(totals.budget)}</strong></div>
+      <div class="brief-kpi"><span>Actual Till Date</span><strong>${textCr(totals.actual)}</strong></div>
+      <div class="brief-kpi"><span>Balance</span><strong>${textCr(totals.balance)}</strong></div>
+      <div class="brief-kpi"><span>Utilisation</span><strong>${util.toFixed(1)}%</strong></div>
+    </div>
+    <div class="brief-list"><h4>Priority Observations</h4><ul>
+      <li>${over.length} PU(s) are over budget or require close control.</li>
+      <li>${noExp.length} major PU(s) have budget available but no expense booked.</li>
+      <li>Highest utilisation PU: ${high[0] ? `PU-${high[0].pu.code} at ${high[0].utilPct.toFixed(1)}%` : 'not available'}.</li>
+      <li>Use the full PDF Report for detailed annexures and source notes.</li>
+    </ul></div>
+    <div class="brief-list"><h4>Top Over Budget / Watch PUs</h4><ul>
+      ${(over.length ? over : high).map(r => `<li>PU-${htmlSafe(r.pu.code)} ${htmlSafe(r.pu.desc)} - balance ${textCr(r.balance)}, utilisation ${r.utilPct.toFixed(1)}%</li>`).join('')}
+    </ul></div>
+    <div class="brief-list"><h4>Budget Available But No Expense</h4><ul>
+      ${noExp.length ? noExp.map(r => `<li>PU-${htmlSafe(r.pu.code)} ${htmlSafe(r.pu.desc)} - budget ${textCr(r.budget)}</li>`).join('') : '<li>No major no-expense item found in current view.</li>'}
+    </ul></div>`;
+}
+
+function openOfficerBrief() {
+  renderOfficerBrief();
+  const modal = document.getElementById('officerBriefModal');
+  if (modal) {
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+}
+
+function closeOfficerBrief() {
+  const modal = document.getElementById('officerBriefModal');
+  if (modal) {
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+}
+
+function initSmartTools() {
+  const quick = document.getElementById('quickSearch');
+  if (quick && quick.dataset.bound !== '1') {
+    quick.dataset.bound = '1';
+    quick.addEventListener('input', () => renderQuickResults(quick.value));
+    quick.addEventListener('keydown', e => {
+      if (e.key === 'Escape') renderQuickResults('');
+    });
+  }
+  const saveBtn = document.getElementById('saveViewBtn');
+  if (saveBtn && saveBtn.dataset.bound !== '1') {
+    saveBtn.dataset.bound = '1';
+    saveBtn.addEventListener('click', saveCurrentSessionView);
+  }
+  const savedSel = document.getElementById('savedViewSelect');
+  if (savedSel && savedSel.dataset.bound !== '1') {
+    savedSel.dataset.bound = '1';
+    savedSel.addEventListener('change', () => {
+      const idx = Number(savedSel.value);
+      const item = sessionViews()[idx];
+      if (item) applyViewSnapshot(item.view);
+    });
+  }
+  const tourBtn = document.getElementById('startTourBtn');
+  if (tourBtn && tourBtn.dataset.bound !== '1') {
+    tourBtn.dataset.bound = '1';
+    tourBtn.addEventListener('click', startTour);
+  }
+  const tourNext = document.getElementById('tourNextBtn');
+  if (tourNext && tourNext.dataset.bound !== '1') {
+    tourNext.dataset.bound = '1';
+    tourNext.addEventListener('click', () => {
+      tourIndex = (tourIndex + 1) % TOUR_STEPS.length;
+      showTourStep();
+    });
+  }
+  const tourClose = document.getElementById('tourCloseBtn');
+  if (tourClose && tourClose.dataset.bound !== '1') {
+    tourClose.dataset.bound = '1';
+    tourClose.addEventListener('click', closeTour);
+  }
+  const briefBtn = document.getElementById('officerBriefBtn');
+  if (briefBtn && briefBtn.dataset.bound !== '1') {
+    briefBtn.dataset.bound = '1';
+    briefBtn.addEventListener('click', openOfficerBrief);
+  }
+  const briefClose = document.getElementById('briefCloseBtn');
+  if (briefClose && briefClose.dataset.bound !== '1') {
+    briefClose.dataset.bound = '1';
+    briefClose.addEventListener('click', closeOfficerBrief);
+  }
+  refreshSavedViews();
+  renderRiskSpotlight();
+}
+
 function switchTab(name) {
   if (name !== activeTabName()) resetFiltersForNavigation();
   if(name==='trend'){setTimeout(renderTrend,80);}
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
   if(name==='bpanalysis'){setTimeout(renderBPAnalysis,80);}
   if(name==='remarks'){setTimeout(renderRemarks,80);}
-  const ids = ['liability','monthwise','pumaster','trend','aitrend','bpanalysis','smhdetail','remarks','upload'];
   document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', ids[i]===name);
+    t.classList.toggle('active', TAB_IDS[i]===name);
   });
+  syncReportNavigation(name);
   document.querySelectorAll('.tab-content').forEach(tc => {
     tc.classList.toggle('active', tc.id==='tab-'+name);
   });
@@ -1224,6 +1591,9 @@ function switchTab(name) {
   if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
   setTimeout(applyMobileTableLabels, 140);
 }
+
+window.jumpReport = jumpReport;
+window.switchTab = switchTab;
 
 function textCr(n) {
   if (!n || isNaN(n)) return '0.00 Cr';
@@ -3653,6 +4023,9 @@ function renderMonthwise() {
 function renderAll() {
   initPopup();
   initExportButtons();
+  initReportMenuButtons();
+  initDashboardDock();
+  initSmartTools();
   renderCards();
   renderJuneBars();
   renderLiability();

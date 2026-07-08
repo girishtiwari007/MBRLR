@@ -42,6 +42,10 @@ thead tr,thead th{background:#12315F}
 thead th.sub{background:#245A8D;border-bottom-color:#FF9933}
 .fy-badge,.dl-btn,.jun-badge{background:#FF9933;color:#10243E}
 .tab.active{color:#138A4B;border-bottom-color:#FF9933}
+.report-menu{border-left-color:#FF9933;background:linear-gradient(180deg,#FFFFFF 0%,#F7FAFD 100%)}
+.report-menu-btn.active{background:#12315F;border-color:#FF9933}
+.report-menu-badge,.nav-pointer::before{background:#FFB347}
+.nav-pointer::after{border-left-color:#FFB347}
 
 html[data-theme="digital-india"][data-block-style="raised"] .card{
   border:1px solid rgba(185,200,216,.9);
