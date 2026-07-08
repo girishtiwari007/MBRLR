@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260708-simall';
+const ASSET_VERSION = '20260708-bpcompact';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';

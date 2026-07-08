@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="portal-build" content="rlp-mbd-2026-07-03-v2.1.1">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260708-dockpanel">
+<link rel="stylesheet" href="assets/css/main.css?v=20260708-bpcompact">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -550,19 +550,29 @@
     </div>
 
     <div class="bp-filter-panel">
-      <div class="bp-filter-title">Select PU Filter</div>
+      <div class="bp-filter-title">Report Filters</div>
       <div class="bp-filter-grid">
-        <label>
-          PU Selection
-          <div class="bp-check-head">
+        <div class="bp-pu-filter">
+          <div class="bp-filter-label">PU Selection</div>
+          <details class="bp-pu-drawer" id="bpPUDrawer">
+            <summary>
+              <span>PU Ticks</span>
+              <strong id="bpPUCount">All selected</strong>
+            </summary>
+            <div class="bp-check-head">
             <label class="bp-check-all">
               <input type="checkbox" id="bpPUAll" checked onchange="onBPAllToggle(this.checked)">
               <span>All PUs</span>
             </label>
-            <span id="bpPUCount" class="bp-count">All selected</span>
-          </div>
-          <div id="bpPUFilter" class="bp-check-list"></div>
-        </label>
+            <span class="bp-count">Multi select</span>
+            </div>
+            <div id="bpPUFilter" class="bp-check-list"></div>
+            <div class="bp-filter-actions">
+              <button type="button" onclick="setBPSelection('all')">Select All</button>
+              <button type="button" onclick="setBPSelection('clear')">Clear PU Selection</button>
+            </div>
+          </details>
+        </div>
         <label>
           BP Status
           <select id="bpStatusFilter" class="bp-filter-select" onchange="renderBPAnalysis()">
@@ -589,10 +599,6 @@
             <option value="Planned">Planned</option>
           </select>
         </label>
-      </div>
-      <div class="bp-filter-actions">
-        <button type="button" onclick="setBPSelection('all')">Select All</button>
-        <button type="button" onclick="setBPSelection('clear')">Clear PU Selection</button>
       </div>
     </div>
 
@@ -710,7 +716,7 @@
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260708-simall"></script>
+<script src="assets/js/app.js?v=20260708-bpcompact"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>
