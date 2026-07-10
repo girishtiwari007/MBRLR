@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260708-bpcompact';
+const ASSET_VERSION = '20260710-briefpdf';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -725,6 +725,62 @@ function renderJuneBars() {
   document.getElementById('juneBars').innerHTML = html;
 }
 
+function renderSummaryPage() {
+  const cardSrc = document.getElementById('summaryCards');
+  const cardDest = document.getElementById('summaryPageCards');
+  if (cardSrc && cardDest) cardDest.innerHTML = cardSrc.innerHTML;
+
+  const barSrc = document.getElementById('juneBars');
+  const barDest = document.getElementById('summaryPageBars');
+  if (barSrc && barDest) barDest.innerHTML = barSrc.innerHTML || '<div class="summary-empty">No utilisation progress data available.</div>';
+
+  const {cur, actualMonths, futureMonths} = getMonthStatus();
+  const curLbl = document.getElementById('summaryCurMonLabel');
+  if (curLbl) curLbl.textContent = `${cur.label} ${cur.year}`;
+  const meta = document.getElementById('summaryMeta');
+  if (meta) {
+    const months = actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ') || 'No completed month';
+    meta.textContent = `As on ${cur.label} ${cur.year}; completed actual months: ${months}. Future projection covers ${futureMonths.length} month(s).`;
+  }
+
+  const rows = reportRowsForActivePUs();
+  const highRisk = rows.filter(r => r.high).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance));
+  const noExpense = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget);
+  const overBudget = rows.filter(r => r.over).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance));
+  const bcRows = typeof buildBudgetControlRows === 'function' ? buildBudgetControlRows() : [];
+  const askTotal = bcRows.reduce((s,r) => s + (r.askAmount || 0), 0);
+  const surrenderTotal = bcRows.reduce((s,r) => s + (r.surrenderAmount || 0), 0);
+  const topAsk = bcRows.filter(r => r.askAmount > 0).sort((a,b) => b.askAmount - a.askAmount)[0];
+  const topSurrender = bcRows.filter(r => r.surrenderAmount > 0).sort((a,b) => b.surrenderAmount - a.surrenderAmount)[0];
+  const topUtil = rows.slice().sort((a,b) => b.utilPct - a.utilPct)[0];
+  const points = [
+    ['High / Watch PUs', String(highRisk.length), highRisk[0] ? `Top: PU-${highRisk[0].pu.code} ${highRisk[0].pu.desc}` : 'No high-risk PU at present', 'risk'],
+    ['Over Budget', String(overBudget.length), overBudget[0] ? `PU-${overBudget[0].pu.code}: ${textCr(Math.abs(overBudget[0].balance))} over` : 'No over-budget PU shown', 'danger'],
+    ['Budget, No Expense', String(noExpense.length), noExpense[0] ? `Largest: PU-${noExpense[0].pu.code} ${textCr(noExpense[0].budget)}` : 'No budget-without-expense item', 'warn'],
+    ['Amount to Ask', textCr(askTotal), topAsk ? `Top ask: PU-${topAsk.pu.code} ${textCr(topAsk.askAmount)}` : 'No additional grant projected', 'danger'],
+    ['Possible Surrender', textCr(surrenderTotal), topSurrender ? `Top saving: PU-${topSurrender.pu.code} ${textCr(topSurrender.surrenderAmount)}` : 'No surrender signal projected', 'good'],
+    ['Top Utilisation', topUtil ? `${topUtil.utilPct.toFixed(1)}%` : '0.0%', topUtil ? `PU-${topUtil.pu.code} ${topUtil.pu.desc}` : 'No utilisation data', 'risk']
+  ];
+  const pointBox = document.getElementById('summaryMainPoints');
+  if (pointBox) {
+    pointBox.innerHTML = points.map(([label,value,note,cls]) => `
+      <div class="summary-point ${cls}">
+        <div class="summary-point-label">${htmlSafe(label)}</div>
+        <div class="summary-point-value">${htmlSafe(value)}</div>
+        <div class="summary-point-note">${htmlSafe(note)}</div>
+      </div>`).join('');
+  }
+
+  const note = document.getElementById('summaryPageNote');
+  const formula = (document.getElementById('noteFormulaText') || {}).textContent || '';
+  if (note) {
+    note.innerHTML = `
+      <strong>Figures:</strong> Stored in Rs '000s. <strong>Budget:</strong> ${isRGActive() ? 'RG active' : 'BG_ISL active until RG is available'}.
+      <strong>Liability Formula:</strong> ${htmlSafe(formula)}
+      <strong>Excluded:</strong> PU-72, PU-73, PU-74, PU-75 GST heads and PU-98 recoveries are excluded from normal operational display.`;
+  }
+}
+
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // LIABILITY TABLE
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1115,6 +1171,233 @@ function renderBPAnalysis() {
   </tr>`;
 }
 
+function budgetControlStage() {
+  const d = new Date();
+  const month = d.getMonth();
+  if (month >= 3 && month <= 6) {
+    return {code:'BG', label:'BG / BE', askLabel:'AR Proposal', note:'Current ceiling is BG/BE; prepare August Review from current projection.'};
+  }
+  if (month === 7 || month === 8) {
+    return {code:'AR', label:'August Review', askLabel:'AR Requirement', note:'Use AR to identify likely saving or additional requirement early.'};
+  }
+  if (month >= 9 && month <= 11) {
+    return {code:'REA', label:isRGActive() ? 'RG Approved' : 'REA Asked', askLabel:isRGActive() ? 'RG Control' : 'REA Asked', note:isRGActive() ? 'RG is the revised spending ceiling.' : 'REA is the Railway demand before Board approval.'};
+  }
+  if (month === 0 || month === 1) {
+    return {code:'FME', label:'FME / FM', askLabel:'FME Asked', note:'January FM should show realistic expenditure expected up to 31 March.'};
+  }
+  return {code:'FG', label:'FG / March Closing', askLabel:'FG Control', note:'FG is final authority before March closing and Appropriation Accounts.'};
+}
+
+function fyElapsedFactor() {
+  const cur = getCurrentFYMonth();
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const dayPart = Math.min(1, Math.max(0.05, now.getDate() / daysInMonth));
+  return Math.max(0.25, cur.idx + dayPart);
+}
+
+function budgetControlStatus(row) {
+  if (row.noExpense) {
+    return {
+      key:'noexpense',
+      label:'Budget, No Expense',
+      cls:'bc-noexpense',
+      remark:`Budget exists but no booking is visible. Keep under ${row.stage.askLabel}; confirm whether this can be surrendered or retained for firm liability.`
+    };
+  }
+  if (row.askAmount > 0 || row.noBudgetSpend) {
+    return {
+      key:'ask',
+      label:'Ask / Additional Grant',
+      cls:'bc-ask',
+      remark:`Projected requirement is above current ceiling. Ask ${textCr(row.askAmount)} through ${row.stage.askLabel} / re-appropriation support and control further booking.`
+    };
+  }
+  if (row.surrenderAmount > 0 && row.utilPct < 70) {
+    return {
+      key:'surrender',
+      label:'Surrender Review',
+      cls:'bc-surrender',
+      remark:`Possible surrender is ${textCr(row.surrenderAmount)} based on till-date projection. Confirm pending bills, contracts and staff liability before surrender.`
+    };
+  }
+  if (row.utilPct >= 85 || row.projectionGapRatio > 0.9) {
+    return {
+      key:'watch',
+      label:'Watch List',
+      cls:'bc-watch',
+      remark:'Projection is close to ceiling or utilisation is high. Watch booking pace before next budget review stage.'
+    };
+  }
+  return {
+    key:'normal',
+    label:'Normal Control',
+    cls:'bc-normal',
+    remark:'Projection is within current ceiling. Continue monthly control against the next budget review stage.'
+  };
+}
+
+function buildBudgetControlRows() {
+  const {actualMonths} = getMonthStatus();
+  const elapsedFactor = fyElapsedFactor();
+  const stage = budgetControlStage();
+  return activePUMeta().map(pu => {
+    const ceiling = getBudget(pu.code);
+    const source = BUDGET[pu.code] || {};
+    const actual = Number(source.actuals_till);
+    const actualTill = Number.isFinite(actual) ? actual : compute(pu.code).totalCommitted;
+    const projectedRequirement = Math.max(actualTill, elapsedFactor > 0 ? (actualTill / elapsedFactor) * 12 : actualTill);
+    const varianceVsCeiling = projectedRequirement - ceiling;
+    const askAmount = Math.max(0, varianceVsCeiling);
+    const surrenderAmount = Math.max(0, ceiling - projectedRequirement);
+    const utilPct = ceiling ? (actualTill / ceiling) * 100 : (actualTill ? 999 : 0);
+    const noExpense = ceiling > 0 && Math.abs(actualTill) === 0;
+    const noBudgetSpend = ceiling <= 0 && Math.abs(actualTill) > 0;
+    const projectionGapRatio = ceiling ? projectedRequirement / Math.abs(ceiling) : 999;
+    const row = {
+      pu, stage, ceiling, actualTill, projectedRequirement, varianceVsCeiling,
+      askAmount, surrenderAmount, utilPct, noExpense, noBudgetSpend,
+      projectionGapRatio, elapsedFactor, actualMonthCount: actualMonths.length
+    };
+    return Object.assign(row, budgetControlStatus(row));
+  }).sort((a,b) => {
+    const rank = {ask:5, watch:4, noexpense:3, surrender:2, normal:1};
+    return (rank[b.key] - rank[a.key]) ||
+      (Math.max(b.askAmount, b.surrenderAmount) - Math.max(a.askAmount, a.surrenderAmount));
+  });
+}
+
+function getFilteredBudgetControlRows() {
+  const action = (document.getElementById('bcActionFilter') || {}).value || 'all';
+  const type = (document.getElementById('bcTypeFilter') || {}).value || 'all';
+  const liability = (document.getElementById('bcLiabilityFilter') || {}).value || 'all';
+  const impact = (document.getElementById('bcImpactFilter') || {}).value || 'all';
+  const minImpact = impact === 'all' ? 0 : Number(impact) * 100;
+  return buildBudgetControlRows().filter(row => {
+    if (action !== 'all' && row.key !== action) return false;
+    if (type !== 'all' && row.pu.puType !== type) return false;
+    if (liability !== 'all' && row.pu.liab !== liability) return false;
+    if (minImpact && Math.max(row.askAmount, row.surrenderAmount) < minImpact) return false;
+    return true;
+  });
+}
+
+function renderBudgetControl() {
+  const body = document.getElementById('bcTableBody');
+  if (!body) return;
+  const rows = getFilteredBudgetControlRows();
+  const allRows = buildBudgetControlRows();
+  const {actualMonths, cur} = getMonthStatus();
+  const stage = budgetControlStage();
+  const elapsedFactor = fyElapsedFactor();
+  const monthLabels = actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ') || 'No completed month';
+  const totals = allRows.reduce((t, r) => {
+    t.ceiling += r.ceiling;
+    t.actual += r.actualTill;
+    t.projected += r.projectedRequirement;
+    t.ask += r.askAmount;
+    t.surrender += r.surrenderAmount;
+    t[r.key] = (t[r.key] || 0) + 1;
+    return t;
+  }, {ceiling:0, actual:0, projected:0, ask:0, surrender:0});
+  const filteredTotals = rows.reduce((t, r) => {
+    t.ceiling += r.ceiling;
+    t.actual += r.actualTill;
+    t.projected += r.projectedRequirement;
+    t.ask += r.askAmount;
+    t.surrender += r.surrenderAmount;
+    return t;
+  }, {ceiling:0, actual:0, projected:0, ask:0, surrender:0});
+
+  const meta = document.getElementById('bcMeta');
+  if (meta) meta.textContent = `As on ${cur.label} ${cur.year}; projection uses actual till date over ${elapsedFactor.toFixed(2)} elapsed FY month(s). ${stage.note}`;
+  const basis = document.getElementById('bcBasis');
+  if (basis) basis.textContent = `${stage.label} | ${isRGActive() ? 'RG Active' : 'BG/BE Ceiling'}`;
+
+  const flow = document.getElementById('bcFlow');
+  if (flow) {
+    const flowItems = [
+      ['BG / BE','Original grant','April spending ceiling'],
+      ['AR','August Review','First saving/excess review'],
+      ['REA','Budget Asked','Railway demand to Board'],
+      ['RG','Revised Grant','Board approved revised ceiling'],
+      ['FME / FM','Final Modified Estimate','January realistic March forecast'],
+      ['FG','Final Grant','Last authorised allocation'],
+      ['Actual','March Closing','Appropriation Accounts']
+    ];
+    flow.innerHTML = flowItems.map(([t,s,n]) => `<div class="bc-step ${t.includes(stage.code) || stage.label.includes(t) ? 'active' : ''}"><strong>${t}</strong><span>${s}</span><em>${n}</em></div>`).join('');
+  }
+
+  const kpis = document.getElementById('bcKpis');
+  if (kpis) {
+    const util = totals.ceiling ? (totals.actual / totals.ceiling) * 100 : 0;
+    kpis.innerHTML = [
+      ['Current Ceiling', textCr(totals.ceiling), isRGActive() ? 'RG is active in data' : 'Using BG/BE until RG is available'],
+      ['Actual Till Date', textCr(totals.actual), `${util.toFixed(1)}% of current ceiling`],
+      ['Projected Requirement', textCr(totals.projected), `Till-date projection to 31 March`],
+      ['Amount to Ask', textCr(totals.ask), `${totals.ask || 0 ? 'Requirement above ceiling' : 'No net excess projected'}`],
+      ['Possible Surrender', textCr(totals.surrender), 'Subject to pending liabilities'],
+      ['Current Stage', stage.label, stage.askLabel]
+    ].map(([l,v,s]) => `<div class="bc-kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join('');
+  }
+
+  const actionGrid = document.getElementById('bcActionGrid');
+  if (actionGrid) {
+    const actionCards = [
+      ['ask','Ask From Board', totals.ask, totals.ask ? 'Requirement above current ceiling' : 'No excess projected'],
+      ['surrender','Can Surrender', totals.surrender, 'Verify committed liability first'],
+      ['noexpense','No Expense', totals.noexpense || 0, 'Budget exists, no actual'],
+      ['watch','Watch List', totals.watch || 0, 'Close to ceiling'],
+      ['normal','Normal', totals.normal || 0, 'Within control']
+    ];
+    actionGrid.innerHTML = actionCards.map(([cls,label,value,note]) => {
+      const display = typeof value === 'number' && (cls === 'ask' || cls === 'surrender') ? textCr(value) : value;
+      return `<button type="button" class="bc-action-card ${cls}" onclick="setBudgetControlAction('${cls}')"><strong>${display}</strong><span>${label}</span><em>${htmlSafe(note)}</em></button>`;
+    }).join('');
+  }
+
+  const title = document.getElementById('bcTableTitle');
+  if (title) title.textContent = `PU-wise Ask / Surrender Control Register - ${rows.length} PU(s) shown`;
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#607080;padding:16px">No PU found for selected Budget Control filters.</td></tr>';
+    return;
+  }
+  const rowHtml = rows.map(r => `<tr class="${r.cls}">
+    <td class="puc puc-link" onclick="openPUDetail('${r.pu.code}')">${htmlSafe(r.pu.code)}</td>
+    <td class="desc">${htmlSafe(r.pu.desc)}</td>
+    <td class="n">${textCr(r.ceiling)}</td>
+    <td class="n">${textCr(r.actualTill)}</td>
+    <td class="n">${textCr(r.projectedRequirement)}</td>
+    <td class="n bp-var-excess">${r.askAmount ? textCr(r.askAmount) : '-'}</td>
+    <td class="n bp-var-saving">${r.surrenderAmount ? textCr(r.surrenderAmount) : '-'}</td>
+    <td>${htmlSafe(r.stage.askLabel)}</td>
+    <td class="n">${r.ceiling ? r.utilPct.toFixed(1) + '%' : (r.actualTill ? 'No Budget' : '0.0%')}</td>
+    <td><span class="bc-status ${r.cls}">${htmlSafe(r.label)}</span></td>
+    <td class="bc-remark">${htmlSafe(r.remark)}</td>
+  </tr>`).join('');
+  body.innerHTML = rowHtml + `<tr class="tot ${filteredTotals.ask > filteredTotals.surrender ? 'bc-ask' : 'bc-surrender'}">
+    <td colspan="2" style="text-align:left">TOTAL SHOWN PUs</td>
+    <td class="n">${textCr(filteredTotals.ceiling)}</td>
+    <td class="n">${textCr(filteredTotals.actual)}</td>
+    <td class="n">${textCr(filteredTotals.projected)}</td>
+    <td class="n">${textCr(filteredTotals.ask)}</td>
+    <td class="n">${textCr(filteredTotals.surrender)}</td>
+    <td>${htmlSafe(stage.askLabel)}</td>
+    <td class="n">${filteredTotals.ceiling ? ((filteredTotals.actual / filteredTotals.ceiling) * 100).toFixed(1) + '%' : '0.0%'}</td>
+    <td>Filtered Total</td>
+    <td class="bc-remark">Ask and surrender are based on current till-date projection. Final proposal should be vetted against committed liabilities and pending bills.</td>
+  </tr>`;
+  setTimeout(applyMobileTableLabels, 50);
+}
+
+function setBudgetControlAction(action) {
+  const filter = document.getElementById('bcActionFilter');
+  if (!filter) return;
+  filter.value = action || 'all';
+  renderBudgetControl();
+}
+
 function activeTabName() {
   const active = document.querySelector('.tab-content.active');
   return active ? active.id.replace('tab-', '') : 'liability';
@@ -1186,12 +1469,20 @@ function resetBPFilters() {
   updateBPSelectionCount();
 }
 
+function resetBudgetControlFilters() {
+  ['bcActionFilter','bcTypeFilter','bcLiabilityFilter','bcImpactFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = 'all';
+  });
+}
+
 function resetFiltersForNavigation() {
   resetTopFilters();
   resetTrendFilters();
   resetAITrendFilters();
   resetSMHFilters();
   resetBPFilters();
+  resetBudgetControlFilters();
 }
 
 function handleTopFilterChange(sourceLabel) {
@@ -1207,7 +1498,7 @@ function handleTopFilterChange(sourceLabel) {
 }
 
 // Tabs and report menu
-const TAB_IDS = ['liability','monthwise','pumaster','trend','aitrend','bpanalysis','smhdetail','remarks','upload'];
+const TAB_IDS = ['summary','liability','monthwise','pumaster','trend','aitrend','bpanalysis','budgetcontrol','smhdetail','remarks','upload'];
 
 function syncReportNavigation(name) {
   document.querySelectorAll('[data-report-tab]').forEach(btn => {
@@ -1274,11 +1565,13 @@ function initDashboardDock() {
 }
 
 const REPORT_LABELS = {
+  summary:['Summary','Main points'],
   liability:['Main Report','Revenue Liability'],
   monthwise:['Month-wise','Actuals and projection'],
   trend:['Graphs','Trend Analysis Graphs'],
   aitrend:['AI Summary','PU risk remarks'],
   bpanalysis:['BP Analysis','Budget Proportionate'],
+  budgetcontrol:['Budget Control','Saving/excess action'],
   smhdetail:['Dept SMH','Department SMH details'],
   pumaster:['PU Master','Code reference'],
   remarks:['Remarks','Sources and rules'],
@@ -1467,24 +1760,179 @@ function startTour() {
   showTourStep();
 }
 
-function renderOfficerBrief() {
-  const body = document.getElementById('officerBriefBody');
-  if (!body) return;
+function openTopUtilisationBrief() {
+  const rows = reportRowsForActivePUs()
+    .filter(r => r.budget > 0 || r.actual !== 0)
+    .sort((a,b) => b.utilPct - a.utilPct)
+    .slice(0, 15);
+  const top = rows[0];
+  const bars = rows.map(r => {
+    const pctVal = Math.max(0, Math.min(200, r.utilPct || 0));
+    const col = r.utilPct >= 100 ? '#B00020' : r.utilPct >= 85 ? '#E85D04' : r.utilPct >= 60 ? '#C07000' : '#1A7A4A';
+    const remark = r.over ? 'Over budget - control booking / seek support'
+      : r.utilPct >= 85 ? 'High utilisation - watch before next booking'
+      : r.noExpense ? 'Budget available but no expense'
+      : 'Within current watch range';
+    return `<div class="tu-row">
+      <div class="tu-code">PU-${htmlSafe(r.pu.code)}</div>
+      <div class="tu-main">
+        <div class="tu-title">${htmlSafe(r.pu.desc)}</div>
+        <div class="tu-bar"><span style="width:${Math.min(100,pctVal)}%;background:${col}"></span></div>
+        <div class="tu-note">${htmlSafe(remark)}</div>
+      </div>
+      <div class="tu-val" style="color:${col}">${r.utilPct.toFixed(1)}%</div>
+      <div class="tu-bal">${textCr(r.balance)}</div>
+    </div>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Top Utilisation Brief | Revenue Liability Portal</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Tahoma,"Segoe UI",Arial,sans-serif;background:#F3F7FB;color:#0A1628;padding:18px}
+    .brief-page{max-width:1120px;margin:0 auto;background:#fff;border:1px solid #D8E5F2;border-top:5px solid #C9A84C;border-radius:10px;box-shadow:0 10px 28px rgba(10,22,40,.12);overflow:hidden}
+    .tu-head{background:#0A1628;color:#DDEEFF;padding:18px 22px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+    .tu-head h1{font-size:20px;color:#C9A84C;margin-bottom:4px}
+    .tu-head p{font-size:11px;color:#A8C0D8}
+    .tu-kpi{background:#FFF4C2;color:#071324;border-radius:8px;padding:10px 14px;text-align:center;min-width:150px}
+    .tu-kpi span{display:block;font-size:9px;font-weight:900;text-transform:uppercase;color:#5A3E00}
+    .tu-kpi strong{display:block;font-size:20px;margin-top:3px}
+    .tu-body{padding:14px 18px}
+    .tu-row{display:grid;grid-template-columns:70px minmax(0,1fr) 80px 110px;gap:12px;align-items:center;border:1px solid #E3ECF6;border-left:4px solid #1A4E9A;border-radius:8px;padding:10px;margin-bottom:8px;background:#F8FBFF}
+    .tu-code{font-size:12px;font-weight:900;color:#123A63}
+    .tu-title{font-size:12px;font-weight:900;color:#0A1628}
+    .tu-bar{height:10px;background:#E8EFF8;border-radius:8px;overflow:hidden;margin:6px 0}
+    .tu-bar span{display:block;height:100%;border-radius:8px}
+    .tu-note{font-size:10px;color:#607080}
+    .tu-val{font-size:14px;font-weight:900;text-align:right}
+    .tu-bal{font-size:11px;font-weight:800;color:#33485F;text-align:right}
+    .tu-footer{padding:10px 18px;border-top:1px solid #E3ECF6;font-size:10px;color:#607080;text-align:center}
+    @media(max-width:700px){.tu-row{grid-template-columns:1fr}.tu-val,.tu-bal{text-align:left}.tu-head{display:block}.tu-kpi{margin-top:10px}}
+  </style></head><body><div class="brief-page">
+    <div class="tu-head">
+      <div><h1>Top Utilisation Brief</h1><p>PU-wise high utilisation position for higher authority review. Figures are based on current portal data.</p></div>
+      <div class="tu-kpi"><span>Highest Utilisation</span><strong>${top ? top.utilPct.toFixed(1) + '%' : '0.0%'}</strong><small>${top ? 'PU-' + htmlSafe(top.pu.code) + ' ' + htmlSafe(top.pu.desc) : 'No data'}</small></div>
+    </div>
+    <div class="tu-body">${bars || '<div class="tu-row">No utilisation data available.</div>'}</div>
+    <div class="tu-footer">Revenue Liability Portal - Moradabad Division / Northern Railway - Generated ${new Date().toLocaleString('en-IN')}</div>
+  </div></body></html>`;
+  const w = window.open('', '_blank');
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+  } else {
+    showFilterAlert('Popup blocked. Please allow popup to open Top Utilisation Brief.');
+  }
+}
+
+function buildOfficerBriefData() {
   const rows = reportRowsForActivePUs();
   const totals = rows.reduce((t, r) => {
     t.budget += r.budget; t.actual += r.actual; t.balance += r.balance;
     return t;
   }, {budget:0, actual:0, balance:0});
-  const util = totals.budget ? totals.actual / totals.budget * 100 : 0;
-  const over = rows.filter(r => r.over).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance)).slice(0, 5);
-  const noExp = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget).slice(0, 5);
+  totals.util = totals.budget ? totals.actual / totals.budget * 100 : 0;
+  const highWatchAll = rows.filter(r => r.high).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance));
+  const overAll = rows.filter(r => r.over).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance));
+  const noExpAll = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget);
   const high = rows.filter(r => r.budget > 0).sort((a,b) => b.utilPct - a.utilPct).slice(0, 5);
+  const over = overAll.slice(0, 5);
+  const noExp = noExpAll.slice(0, 5);
+  const bcRows = typeof buildBudgetControlRows === 'function' ? buildBudgetControlRows() : [];
+  const askTotal = bcRows.reduce((s,r) => s + (r.askAmount || 0), 0);
+  const surrenderTotal = bcRows.reduce((s,r) => s + (r.surrenderAmount || 0), 0);
+  const topAsk = bcRows.filter(r => r.askAmount > 0).sort((a,b) => b.askAmount - a.askAmount)[0];
+  const topSurrender = bcRows.filter(r => r.surrenderAmount > 0).sort((a,b) => b.surrenderAmount - a.surrenderAmount)[0];
+  const topUtil = high[0];
+  return {rows, totals, highWatchAll, overAll, noExpAll, high, over, noExp, askTotal, surrenderTotal, topAsk, topSurrender, topUtil};
+}
+
+function openOfficerBriefPDF() {
+  const d = buildOfficerBriefData();
+  const {cur, actualMonths} = getMonthStatus();
+  const generated = new Date().toLocaleString('en-IN');
+  const explainRows = [
+    ['High / Watch PUs', `${d.highWatchAll.length}`, d.highWatchAll[0] ? `Top: PU-${d.highWatchAll[0].pu.code} ${d.highWatchAll[0].pu.desc}` : 'No high/watch PU', 'PUs requiring close monitoring due to over-budget position, high utilisation, no-budget spend or other risk signals. These should be reviewed before next booking cycle.'],
+    ['Over Budget', `${d.overAll.length}`, d.overAll[0] ? `PU-${d.overAll[0].pu.code}: ${textCr(Math.abs(d.overAll[0].balance))} over` : 'No over-budget PU', 'Items where committed expenditure has crossed the available budget ceiling. Booking control or additional budget support may be needed.'],
+    ['Budget, No Expense', `${d.noExpAll.length}`, d.noExpAll[0] ? `Largest: PU-${d.noExpAll[0].pu.code} ${textCr(d.noExpAll[0].budget)}` : 'No no-expense item', 'Budget provision exists but no actual expenditure is visible. Confirm whether liability is pending or saving can be proposed.'],
+    ['Amount to Ask', textCr(d.askTotal), d.topAsk ? `Top ask: PU-${d.topAsk.pu.code} ${textCr(d.topAsk.askAmount)}` : 'No additional grant projected', 'Projection indicates requirement above current budget ceiling. This is the amount to examine for AR/REA/RG/FME support.'],
+    ['Possible Surrender', textCr(d.surrenderTotal), d.topSurrender ? `Top saving: PU-${d.topSurrender.pu.code} ${textCr(d.topSurrender.surrenderAmount)}` : 'No surrender signal projected', 'Projected saving against current ceiling. Confirm pending bills and committed liability before surrender proposal.'],
+    ['Top Utilisation', d.topUtil ? d.topUtil.utilPct.toFixed(1) + '%' : '0.0%', d.topUtil ? `PU-${d.topUtil.pu.code} ${d.topUtil.pu.desc}` : 'No utilisation data', 'Highest utilisation head by current portal data. This needs special monitoring if it is near or above budget ceiling.']
+  ];
+  const cards = explainRows.map(([title,value,note]) => `<div class="ob-card"><span>${htmlSafe(title)}</span><strong>${htmlSafe(value)}</strong><small>${htmlSafe(note)}</small></div>`).join('');
+  const explanations = explainRows.map(([title,value,note,explain]) => `<tr><td>${htmlSafe(title)}</td><td>${htmlSafe(value)}</td><td>${htmlSafe(note)}</td><td>${htmlSafe(explain)}</td></tr>`).join('');
+  const watchList = (d.over.length ? d.over : d.high).map(r => `<tr><td>PU-${htmlSafe(r.pu.code)}</td><td>${htmlSafe(r.pu.desc)}</td><td>${textCr(r.balance)}</td><td>${r.utilPct.toFixed(1)}%</td><td>${r.over ? 'Over budget / support required' : 'High utilisation watch'}</td></tr>`).join('');
+  const noExpRows = d.noExp.map(r => `<tr><td>PU-${htmlSafe(r.pu.code)}</td><td>${htmlSafe(r.pu.desc)}</td><td>${textCr(r.budget)}</td><td>Budget available but no actual expense booked</td></tr>`).join('');
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Officer Brief PDF | Revenue Liability Portal</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Tahoma,"Segoe UI",Arial,sans-serif;background:#F3F7FB;color:#0A1628;padding:16px}
+    .page{max-width:1160px;margin:0 auto;background:#fff;border:1px solid #D8E5F2;border-top:5px solid #C9A84C;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(10,22,40,.12)}
+    .head{background:#0A1628;color:#DDEEFF;padding:18px 22px;display:flex;justify-content:space-between;gap:16px}
+    h1{font-size:20px;color:#C9A84C;margin-bottom:4px}
+    .head p{font-size:11px;color:#A8C0D8;line-height:1.45}
+    .print{border:1px solid #C9A84C;background:#FFF4C2;color:#071324;border-radius:7px;padding:8px 12px;font-size:11px;font-weight:900;cursor:pointer;height:34px}
+    .body{padding:16px 18px}
+    .kpis,.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+    .cards{grid-template-columns:repeat(3,1fr)}
+    .kpi,.ob-card{border:1px solid #D8E5F2;border-left:4px solid #1A4E9A;border-radius:8px;background:#F8FBFF;padding:10px}
+    .ob-card:nth-child(2),.ob-card:nth-child(4){border-left-color:#B00020}.ob-card:nth-child(3){border-left-color:#B88700}.ob-card:nth-child(5){border-left-color:#1A7A4A}.ob-card:nth-child(6){border-left-color:#E85D04}
+    span{display:block;font-size:8px;font-weight:900;color:#607080;text-transform:uppercase}
+    strong{display:block;font-size:17px;color:#0A1628;margin:4px 0;font-weight:900}
+    small{display:block;font-size:10px;color:#496276;line-height:1.35}
+    .sec{margin-top:12px;border:1px solid #D8E5F2;border-radius:8px;overflow:hidden}
+    .sec h2{background:#1A3A6A;color:#DDEEFF;font-size:12px;padding:8px 10px}
+    table{width:100%;border-collapse:collapse;font-size:10px}
+    th{background:#2474B8;color:#fff;text-align:left;padding:7px;border:1px solid #B8D0E8}
+    td{padding:7px;border:1px solid #D2E0EF;vertical-align:top;line-height:1.35}
+    .foot{text-align:center;font-size:9px;color:#607080;padding:10px;border-top:1px solid #D8E5F2}
+    @page{size:A4 landscape;margin:10mm}
+    @media print{body{background:#fff;padding:0}.page{box-shadow:none;border-radius:0}.print{display:none}.body{padding:10px}.sec{break-inside:avoid}.kpis,.cards{gap:6px}.kpi,.ob-card{padding:8px}strong{font-size:14px}td,th{font-size:8.5px;padding:5px}}
+  </style></head><body><div class="page">
+    <div class="head"><div><h1>Officer Brief</h1><p>Revenue Liability Portal - Moradabad Division / Northern Railway<br>FY 2026-27 | Current month: ${cur.label} ${cur.year} | Completed months: ${actualMonths.length} | Generated: ${generated}</p></div><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="body">
+      <div class="kpis">
+        <div class="kpi"><span>Gross Budget</span><strong>${textCr(d.totals.budget)}</strong><small>Active operational PU budget</small></div>
+        <div class="kpi"><span>Actual Till Date</span><strong>${textCr(d.totals.actual)}</strong><small>Committed / actual visible in portal</small></div>
+        <div class="kpi"><span>Balance</span><strong>${textCr(d.totals.balance)}</strong><small>Budget less committed</small></div>
+        <div class="kpi"><span>Utilisation</span><strong>${d.totals.util.toFixed(1)}%</strong><small>Actual against budget</small></div>
+      </div>
+      <div class="cards">${cards}</div>
+      <div class="sec"><h2>Brief Explanation of Each Point</h2><table><thead><tr><th>Point</th><th>Value</th><th>Current Signal</th><th>Brief Meaning / Action</th></tr></thead><tbody>${explanations}</tbody></table></div>
+      <div class="sec"><h2>Top Over Budget / Watch PUs</h2><table><thead><tr><th>PU</th><th>Description</th><th>Balance</th><th>Utilisation</th><th>Action Remark</th></tr></thead><tbody>${watchList || '<tr><td colspan="5">No major watch item found.</td></tr>'}</tbody></table></div>
+      <div class="sec"><h2>Budget Available But No Expense</h2><table><thead><tr><th>PU</th><th>Description</th><th>Budget</th><th>Remark</th></tr></thead><tbody>${noExpRows || '<tr><td colspan="4">No major no-expense item found.</td></tr>'}</tbody></table></div>
+    </div>
+    <div class="foot">For Official Use Only - Revenue Liability Portal</div>
+  </div></body></html>`;
+  const w = window.open('', '_blank');
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => { try { w.print(); } catch(e) {} }, 250);
+  } else {
+    showFilterAlert('Popup blocked. Please allow popup to open Officer Brief PDF.');
+  }
+}
+
+function renderOfficerBrief() {
+  const body = document.getElementById('officerBriefBody');
+  if (!body) return;
+  const d = buildOfficerBriefData();
+  const {totals, highWatchAll, overAll, noExpAll, high, over, noExp, askTotal, surrenderTotal, topAsk, topSurrender, topUtil} = d;
   body.innerHTML = `
     <div class="brief-kpis">
       <div class="brief-kpi"><span>Gross Budget</span><strong>${textCr(totals.budget)}</strong></div>
       <div class="brief-kpi"><span>Actual Till Date</span><strong>${textCr(totals.actual)}</strong></div>
       <div class="brief-kpi"><span>Balance</span><strong>${textCr(totals.balance)}</strong></div>
-      <div class="brief-kpi"><span>Utilisation</span><strong>${util.toFixed(1)}%</strong></div>
+      <div class="brief-kpi"><span>Utilisation</span><strong>${totals.util.toFixed(1)}%</strong></div>
+    </div>
+    <div class="brief-exec-grid">
+      <div class="brief-exec-card risk"><span>High / Watch PUs</span><strong>${highWatchAll.length}</strong><small>${highWatchAll[0] ? `Top: PU-${htmlSafe(highWatchAll[0].pu.code)} ${htmlSafe(highWatchAll[0].pu.desc)}` : 'No high/watch PU'}</small></div>
+      <div class="brief-exec-card danger"><span>Over Budget</span><strong>${overAll.length}</strong><small>${overAll[0] ? `PU-${htmlSafe(overAll[0].pu.code)}: ${textCr(Math.abs(overAll[0].balance))} over` : 'No over-budget PU'}</small></div>
+      <div class="brief-exec-card warn"><span>Budget, No Expense</span><strong>${noExpAll.length}</strong><small>${noExpAll[0] ? `Largest: PU-${htmlSafe(noExpAll[0].pu.code)} ${textCr(noExpAll[0].budget)}` : 'No no-expense item'}</small></div>
+      <div class="brief-exec-card danger"><span>Amount to Ask</span><strong>${textCr(askTotal)}</strong><small>${topAsk ? `Top ask: PU-${htmlSafe(topAsk.pu.code)} ${textCr(topAsk.askAmount)}` : 'No additional grant projected'}</small></div>
+      <div class="brief-exec-card good"><span>Possible Surrender</span><strong>${textCr(surrenderTotal)}</strong><small>${topSurrender ? `Top saving: PU-${htmlSafe(topSurrender.pu.code)} ${textCr(topSurrender.surrenderAmount)}` : 'No surrender signal projected'}</small></div>
+      <button type="button" class="brief-exec-card clickable risk" onclick="openTopUtilisationBrief()"><span>Top Utilisation</span><strong>${topUtil ? topUtil.utilPct.toFixed(1) + '%' : '0.0%'}</strong><small>${topUtil ? `PU-${htmlSafe(topUtil.pu.code)} ${htmlSafe(topUtil.pu.desc)} - click for brief` : 'Click for brief page'}</small></button>
     </div>
     <div class="brief-list"><h4>Priority Observations</h4><ul>
       <li>${over.length} PU(s) are over budget or require close control.</li>
@@ -1563,6 +2011,11 @@ function initSmartTools() {
     briefBtn.dataset.bound = '1';
     briefBtn.addEventListener('click', openOfficerBrief);
   }
+  const briefPdfBtn = document.getElementById('briefPdfBtn');
+  if (briefPdfBtn && briefPdfBtn.dataset.bound !== '1') {
+    briefPdfBtn.dataset.bound = '1';
+    briefPdfBtn.addEventListener('click', openOfficerBriefPDF);
+  }
   const briefClose = document.getElementById('briefCloseBtn');
   if (briefClose && briefClose.dataset.bound !== '1') {
     briefClose.dataset.bound = '1';
@@ -1574,9 +2027,11 @@ function initSmartTools() {
 
 function switchTab(name) {
   if (name !== activeTabName()) resetFiltersForNavigation();
+  if(name==='summary'){setTimeout(renderSummaryPage,80);}
   if(name==='trend'){setTimeout(renderTrend,80);}
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
   if(name==='bpanalysis'){setTimeout(renderBPAnalysis,80);}
+  if(name==='budgetcontrol'){setTimeout(renderBudgetControl,80);}
   if(name==='remarks'){setTimeout(renderRemarks,80);}
   document.querySelectorAll('.tab').forEach((t,i) => {
     t.classList.toggle('active', TAB_IDS[i]===name);
@@ -3034,8 +3489,14 @@ function openPUDetail(code) {
   .pu-info p{font-size:11px;color:#A8C0D8;margin-top:3px}
   .badges{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
   .pbadge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.3);color:#fff}
-  .print-btn{margin-left:auto;background:#C9A84C;color:#0A1628;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700}
-  .print-btn:hover{background:#E8C050}
+  .print-tools{margin-left:auto;position:relative;min-width:98px}
+  .print-tools summary{list-style:none;background:#C9A84C;color:#0A1628;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:800;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .print-tools summary::-webkit-details-marker{display:none}
+  .print-tools summary:hover{background:#E8C050}
+  .print-menu{position:absolute;right:0;top:34px;z-index:20;background:#fff;border:1px solid #D8E5F2;border-radius:8px;box-shadow:0 10px 24px rgba(10,22,40,.20);padding:6px;display:grid;gap:5px;min-width:170px}
+  .print-menu button{border:0;border-radius:6px;background:#F4F8FE;color:#0A1628;padding:8px 10px;text-align:left;cursor:pointer;font-size:11px;font-weight:800}
+  .print-menu button:hover{background:#E8F0FF}
+  .print-menu small{display:block;color:#607080;font-size:9px;font-weight:600;margin-top:1px}
   .section{background:#fff;border-radius:8px;padding:20px 24px;margin:16px 24px;box-shadow:0 2px 10px rgba(10,22,40,.08);border:1px solid #E0EAF4}
   .sec-title{font-size:13px;font-weight:700;color:#1C3A5E;border-bottom:2px solid #E0EAF4;padding-bottom:8px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
   .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
@@ -3054,8 +3515,38 @@ function openPUDetail(code) {
   table.data-tbl thead th{padding:8px 12px;color:#B8D0F0;font-size:10px;font-weight:600;text-align:left;letter-spacing:.3px;text-transform:uppercase}
   table.data-tbl thead th.r{text-align:right}
   footer{text-align:center;padding:16px;font-size:10px;color:#8AAAC8;border-top:1px solid #E0EAF4;margin-top:8px}
-  @media print{.print-btn{display:none}.section{box-shadow:none;border:1px solid #ccc}}
+  @page{size:A4 landscape;margin:10mm}
+  @media print{
+    body{background:#fff;font-size:10px}
+    .print-tools{display:none}
+    .page-hdr{padding:10px 16px;border-bottom:2px solid #C9A84C}
+    .pu-num{font-size:28px}
+    .pu-info h1{font-size:15px}
+    .pu-info p{font-size:9px}
+    .section{box-shadow:none;border:1px solid #CBD7E5;margin:8px 10px;padding:10px 12px;break-inside:avoid}
+    .sec-title{font-size:11px;margin-bottom:8px;padding-bottom:5px}
+    .kpi-grid{grid-template-columns:repeat(6,1fr);gap:6px}
+    .kpi{padding:8px 9px}
+    .kpi-val{font-size:13px}
+    .kpi-lbl,.kpi-sub{font-size:7px}
+    .ring-wrap{gap:14px}
+    .ring-wrap svg{width:100px;height:100px}
+    table.data-tbl thead th{font-size:8px;padding:5px 7px}
+    table.data-tbl td{font-size:9px!important;padding:5px 7px!important}
+    footer{font-size:8px;padding:8px}
+    body.print-one .print-detail{display:none!important}
+    body.print-one .section{margin:7px 10px;padding:9px 11px}
+    body.print-two .print-page-2{break-before:page;page-break-before:always}
+  }
 </style>
+<script>
+  function setPrintMode(mode){
+    document.body.classList.remove('print-one','print-two');
+    document.body.classList.add(mode === 'one' ? 'print-one' : 'print-two');
+    document.documentElement.setAttribute('data-print-mode', mode);
+    setTimeout(function(){ window.print(); }, 80);
+  }
+</script>
 </head>
 <body>
 <div class="page-hdr">
@@ -3069,11 +3560,18 @@ function openPUDetail(code) {
       <span class="pbadge" style="background:#8A5A00">${cur.label} ${cur.year} - Active Month</span>
     </div>
   </div>
-  <button class="print-btn" onclick="window.print()">Print / PDF</button>
+  <details class="print-tools">
+    <summary>Print/PDF</summary>
+    <div class="print-menu">
+      <button type="button" onclick="setPrintMode('one')">1 Page Summary<small>KPI and utilisation view</small></button>
+      <button type="button" onclick="setPrintMode('two')">2 Page Detail<small>Summary + table pages</small></button>
+      <button type="button" onclick="window.print()">Normal Print<small>Full visible page</small></button>
+    </div>
+  </details>
 </div>
 
 <!-- KPI CARDS -->
-<div class="section">
+<div class="section print-summary">
   <div class="sec-title">Key Performance Indicators</div>
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-lbl">BG_ISL Budget</div><div class="kpi-val">${fCr(b.bg_isl||0)}</div><div class="kpi-sub">${(b.bg_isl||0).toLocaleString('en-IN')} Rs'000s</div></div>
@@ -3086,7 +3584,7 @@ function openPUDetail(code) {
 </div>
 
 <!-- UTILISATION RING -->
-<div class="section">
+<div class="section print-summary">
   <div class="sec-title">Budget Utilisation</div>
   <div class="ring-wrap">
     <svg width="140" height="140" viewBox="0 0 140 140">
@@ -3109,7 +3607,7 @@ function openPUDetail(code) {
 </div>
 
 <!-- BUDGET BREAKDOWN TABLE -->
-<div class="section">
+<div class="section print-detail">
   <div class="sec-title">Budget Breakdown</div>
   <table class="data-tbl">
     <thead><tr><th>Parameter</th><th class="r">Rs '000s</th><th class="r">Rs Crore</th></tr></thead>
@@ -3118,7 +3616,7 @@ function openPUDetail(code) {
 </div>
 
 <!-- MONTHLY PROJECTION TABLE -->
-<div class="section">
+<div class="section print-detail print-page-2">
   <div class="sec-title">Month-wise Actuals & Projections - FY 2026-27</div>
   <table class="data-tbl">
     <thead><tr>
@@ -4028,10 +4526,12 @@ function renderAll() {
   initSmartTools();
   renderCards();
   renderJuneBars();
+  renderSummaryPage();
   renderLiability();
   renderMonthwise();
   renderPUMaster();
   renderBPAnalysis();
+  renderBudgetControl();
   renderRemarks();
   document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'BG_ISL';
   const {cur:_cur}=getMonthStatus();

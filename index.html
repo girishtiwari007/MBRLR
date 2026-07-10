@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="portal-build" content="rlp-mbd-2026-07-03-v2.1.1">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260708-bpcompact">
+<link rel="stylesheet" href="assets/css/main.css?v=20260710-briefpdf">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -119,6 +119,9 @@
     <span class="report-menu-badge">NEW OPTIONS</span>
   </div>
   <div class="report-menu-actions">
+    <button class="report-menu-btn" type="button" data-report-tab="summary" aria-pressed="false">
+      <span>Summary</span><small>Main points</small><em>NEW</em>
+    </button>
     <button class="report-menu-btn active" type="button" data-report-tab="liability" aria-pressed="true">
       <span>Main Report</span><small>Revenue Liability</small>
     </button>
@@ -133,6 +136,9 @@
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="bpanalysis" aria-pressed="false">
       <span>BP Analysis</span><small>Proportionate review</small><em>NEW</em>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="budgetcontrol" aria-pressed="false">
+      <span>Budget Control</span><small>Saving/excess action</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="smhdetail" aria-pressed="false">
       <span>Dept SMH</span><small>Detailed report</small><em>NEW</em>
@@ -186,7 +192,10 @@
         <div class="brief-title">Officer Brief</div>
         <div class="brief-sub">Presentation-ready financial summary</div>
       </div>
-      <button type="button" id="briefCloseBtn">Close</button>
+      <div class="brief-head-actions">
+        <button type="button" id="briefPdfBtn">PDF Print</button>
+        <button type="button" id="briefCloseBtn">Close</button>
+      </div>
     </div>
     <div class="brief-body" id="officerBriefBody"></div>
   </div>
@@ -233,15 +242,39 @@
 
 <!-- TABS -->
 <div class="tabs legacy-tabs" aria-hidden="true">
+  <div class="tab tab-feature" onclick="switchTab('summary')">Summary</div>
   <div class="tab active" onclick="switchTab('liability')">Revenue Liability</div>
   <div class="tab" onclick="switchTab('monthwise')">Month-wise Actuals</div>
   <div class="tab" onclick="switchTab('pumaster')">PU Master</div>
   <div class="tab" onclick="switchTab('trend')">Trend Analysis Graphs</div>
   <div class="tab" onclick="switchTab('aitrend')">AI Trend Analysis Summary</div>
   <div class="tab tab-feature" onclick="switchTab('bpanalysis')">Budget Proportionate Analysis</div>
+  <div class="tab tab-feature" onclick="switchTab('budgetcontrol')">Budget Control</div>
   <div class="tab" onclick="switchTab('smhdetail')">Dept SMH Analysis</div>
   <div class="tab" onclick="switchTab('remarks')">Remarks / Clarification</div>
   <div class="tab" id="uploadTab" onclick="switchTab('upload')" style="display:none">Data Upload</div>
+</div>
+<!-- TAB: SUMMARY -->
+<div class="tab-content" id="tab-summary">
+  <div class="summary-page">
+    <div class="summary-head">
+      <div>
+        <div class="summary-title">Executive Summary</div>
+        <div class="summary-sub" id="summaryMeta">Main budget, liability, utilisation and action points in one page.</div>
+      </div>
+      <button class="summary-open-main" type="button" onclick="switchTab('liability')">Open Main Report</button>
+    </div>
+    <div class="summary-main-grid" id="summaryMainPoints"></div>
+    <div class="cards summary-cards" id="summaryPageCards"></div>
+    <div class="summary-section">
+      <div class="summary-section-title"><span id="summaryCurMonLabel">Current Month</span> - Highest Utilised PU Progress</div>
+      <div class="prog-grid" id="summaryPageBars"></div>
+    </div>
+    <div class="summary-section">
+      <div class="summary-section-title">Budget Notes</div>
+      <div class="summary-note" id="summaryPageNote"></div>
+    </div>
+  </div>
 </div>
 <!-- TAB: LIABILITY -->
 <div class="tab-content active" id="tab-liability">
@@ -630,6 +663,89 @@
   </div>
 </div>
 
+<div class="tab-content" id="tab-budgetcontrol">
+  <div class="bc-wrap">
+    <div class="bc-head">
+      <div>
+        <div class="bc-title">Indian Railways Budget Control</div>
+        <div class="bc-sub" id="bcMeta">Grant control view for current budget, actual expenditure, saving/excess and next action.</div>
+      </div>
+      <div class="bc-basis" id="bcBasis">BG_ISL Control</div>
+    </div>
+
+    <div class="bc-flow" id="bcFlow"></div>
+    <div class="bc-kpis" id="bcKpis"></div>
+
+    <div class="bc-filter-panel">
+      <div class="bc-filter-title">Control Filters</div>
+      <div class="bc-filter-grid">
+        <label>
+          Action Status
+          <select id="bcActionFilter" class="bp-filter-select" onchange="renderBudgetControl()">
+            <option value="all">All Action Status</option>
+            <option value="ask">Ask / Additional Grant</option>
+            <option value="surrender">Surrender Review</option>
+            <option value="watch">Watch List</option>
+            <option value="noexpense">Budget but No Expense</option>
+            <option value="normal">Normal Control</option>
+          </select>
+        </label>
+        <label>
+          PU Type
+          <select id="bcTypeFilter" class="bp-filter-select" onchange="renderBudgetControl()">
+            <option value="all">All PU Types</option>
+            <option value="Staff PU">Staff PU</option>
+            <option value="Non Staff PU">Non Staff PU</option>
+          </select>
+        </label>
+        <label>
+          Liability
+          <select id="bcLiabilityFilter" class="bp-filter-select" onchange="renderBudgetControl()">
+            <option value="all">All Liability</option>
+            <option value="Committed">Committed</option>
+            <option value="Planned">Planned</option>
+          </select>
+        </label>
+        <label>
+          Minimum Impact
+          <select id="bcImpactFilter" class="bp-filter-select" onchange="renderBudgetControl()">
+            <option value="all">All Impact</option>
+            <option value="25">Above Rs 25 Lakh</option>
+            <option value="100">Above Rs 1 Cr</option>
+            <option value="500">Above Rs 5 Cr</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="bc-action-grid" id="bcActionGrid"></div>
+
+    <div class="bc-table-wrap">
+      <div class="bc-table-title" id="bcTableTitle">PU-wise Budget Control Register</div>
+      <div class="bc-scroll">
+        <table class="bc-table">
+          <thead>
+            <tr>
+              <th>PU</th>
+              <th>Description</th>
+              <th>Current Ceiling</th>
+              <th>Actual Till Date</th>
+              <th>Projected Requirement</th>
+              <th>Amount to Ask</th>
+              <th>Possible Surrender</th>
+              <th>Suggested Stage</th>
+              <th>Utilisation</th>
+              <th>Control Status</th>
+              <th>Budget Control Remark</th>
+            </tr>
+          </thead>
+          <tbody id="bcTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="tab-content" id="tab-smhdetail">
   <div class="smh-wrap">
     <div class="smh-head">
@@ -716,7 +832,7 @@
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260708-bpcompact"></script>
+<script src="assets/js/app.js?v=20260710-briefpdf"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>
