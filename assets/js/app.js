@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260710-briefpdf';
+const ASSET_VERSION = '20260710-biview';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -781,6 +781,377 @@ function renderSummaryPage() {
   }
 }
 
+function handleAIDashboardJump(tab) {
+  if (!tab) return;
+  const sel = document.getElementById('aiDashClassicSelect');
+  if (sel) sel.value = '';
+  switchTab(tab);
+}
+
+function renderAIDashboard() {
+  const kpis = document.getElementById('aiDashKpis');
+  if (!kpis) return;
+  const rows = reportRowsForActivePUs();
+  const bcRows = typeof buildBudgetControlRows === 'function' ? buildBudgetControlRows() : [];
+  const totals = rows.reduce((t, r) => {
+    t.budget += r.budget;
+    t.actual += r.actual;
+    t.balance += r.balance;
+    return t;
+  }, {budget:0, actual:0, balance:0});
+  const util = totals.budget ? (totals.actual / totals.budget) * 100 : 0;
+  const highWatch = rows.filter(r => r.high).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance));
+  const over = rows.filter(r => r.over).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance));
+  const noExpense = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget);
+  const topUtil = rows.slice().sort((a,b) => b.utilPct - a.utilPct)[0];
+  const askTotal = bcRows.reduce((s,r) => s + (r.askAmount || 0), 0);
+  const surrenderTotal = bcRows.reduce((s,r) => s + (r.surrenderAmount || 0), 0);
+  const topAsk = bcRows.filter(r => r.askAmount > 0).sort((a,b) => b.askAmount - a.askAmount)[0];
+  const topSurrender = bcRows.filter(r => r.surrenderAmount > 0).sort((a,b) => b.surrenderAmount - a.surrenderAmount)[0];
+  const {cur, actualMonths} = getMonthStatus();
+  const meta = document.getElementById('aiDashMeta');
+  if (meta) meta.textContent = `Current control view as on ${cur.label} ${cur.year}; ${actualMonths.length} completed month(s) used for trend signals. Classic tables remain available from the selector.`;
+
+  kpis.innerHTML = [
+    ['Gross Budget', textCr(totals.budget), 'Operational active PUs', 'good'],
+    ['Actual Till Date', textCr(totals.actual), `${util.toFixed(1)}% utilised`, util >= 85 ? 'risk' : 'good'],
+    ['High / Watch PUs', String(highWatch.length), highWatch[0] ? `Top: PU-${highWatch[0].pu.code}` : 'No watch signal', 'risk'],
+    ['Amount to Ask', textCr(askTotal), topAsk ? `PU-${topAsk.pu.code} is highest` : 'No ask projected', 'danger'],
+    ['Possible Surrender', textCr(surrenderTotal), topSurrender ? `PU-${topSurrender.pu.code} is highest` : 'No surrender signal', 'good'],
+    ['No Expense Budget', String(noExpense.length), noExpense[0] ? `Largest PU-${noExpense[0].pu.code}` : 'No item', 'warn']
+  ].map(([label,value,note,cls]) => `<div class="ai-dash-kpi ${cls}"><span>${htmlSafe(label)}</span><strong>${htmlSafe(value)}</strong><small>${htmlSafe(note)}</small></div>`).join('');
+
+  const priority = document.getElementById('aiDashPriority');
+  if (priority) {
+    const priorityRows = highWatch.slice(0, 8);
+    priority.innerHTML = priorityRows.length ? priorityRows.map(r => {
+      const cls = r.over ? 'danger' : r.utilPct >= 85 ? 'risk' : r.noExpense ? 'warn' : 'normal';
+      const remark = r.over ? `Over by ${textCr(Math.abs(r.balance))}`
+        : r.noExpense ? `Budget ${textCr(r.budget)} but no expense`
+        : `Utilisation ${r.utilPct.toFixed(1)}%`;
+      return `<button type="button" class="ai-priority-row ${cls}" onclick="openPUDetail('${r.pu.code}')">
+        <span>PU-${htmlSafe(r.pu.code)}</span><strong>${htmlSafe(r.pu.desc)}</strong><em>${htmlSafe(remark)}</em>
+      </button>`;
+    }).join('') : '<div class="ai-empty">No priority watch signal available.</div>';
+  }
+
+  const actions = document.getElementById('aiDashActions');
+  if (actions) {
+    const actionLines = [
+      over.length ? `Control booking in ${over.length} over-budget PU(s), starting with PU-${over[0].pu.code}.` : 'No over-budget PU is visible in current operational view.',
+      noExpense.length ? `Review ${noExpense.length} budget-with-no-expense PU(s) for pending liability or surrender.` : 'No major budget-without-expense signal at present.',
+      askTotal > 0 ? `Examine ${textCr(askTotal)} as possible amount to ask through budget review process.` : 'No net additional grant ask is projected by current control rule.',
+      surrenderTotal > 0 ? `Confirm pending bills before treating ${textCr(surrenderTotal)} as possible surrender.` : 'No surrender signal is projected by current control rule.',
+      topUtil ? `Top utilisation is PU-${topUtil.pu.code} at ${topUtil.utilPct.toFixed(1)}%; use click-through for PU detail.` : 'No utilisation signal available.'
+    ];
+    actions.innerHTML = `<ul class="ai-action-list">${actionLines.map(x => `<li>${htmlSafe(x)}</li>`).join('')}</ul>`;
+  }
+
+  const askBox = document.getElementById('aiDashAskSurrender');
+  if (askBox) {
+    const max = Math.max(askTotal, surrenderTotal, 1);
+    askBox.innerHTML = `
+      <div class="ai-balance-row"><span>Amount to Ask</span><strong>${textCr(askTotal)}</strong><div><i style="width:${Math.min(100,(askTotal/max)*100)}%"></i></div><small>${topAsk ? `Top ask: PU-${topAsk.pu.code} ${textCr(topAsk.askAmount)}` : 'No additional grant projected'}</small></div>
+      <div class="ai-balance-row surrender"><span>Possible Surrender</span><strong>${textCr(surrenderTotal)}</strong><div><i style="width:${Math.min(100,(surrenderTotal/max)*100)}%"></i></div><small>${topSurrender ? `Top saving: PU-${topSurrender.pu.code} ${textCr(topSurrender.surrenderAmount)}` : 'No surrender signal projected'}</small></div>`;
+  }
+
+  const utilBox = document.getElementById('aiDashUtilisation');
+  if (utilBox) {
+    const utilRows = rows.slice().sort((a,b) => b.utilPct - a.utilPct).slice(0, 10);
+    utilBox.innerHTML = utilRows.map(r => {
+      const col = r.utilPct >= 100 ? '#B00020' : r.utilPct >= 85 ? '#E85D04' : r.utilPct >= 60 ? '#C07000' : '#1A7A4A';
+      return `<div class="ai-util-row" onclick="openPUDetail('${r.pu.code}')">
+        <div><strong>PU-${htmlSafe(r.pu.code)} ${htmlSafe(r.pu.desc)}</strong><span>${htmlSafe(r.pu.puType)} | ${htmlSafe(r.pu.liab)}</span></div>
+        <div class="ai-util-bar"><i style="width:${Math.min(100, Math.max(0, r.utilPct))}%;background:${col}"></i></div>
+        <b style="color:${col}">${r.utilPct.toFixed(1)}%</b>
+      </div>`;
+    }).join('');
+  }
+}
+
+const REPORT_VIEW_MODE_KEY = 'rlp_report_view_mode';
+let reportViewMode = 'classic';
+
+function currentReportTitle(tab) {
+  const label = REPORT_LABELS[tab] || ['Current Report', 'Report view'];
+  return {title: label[0], sub: label[1]};
+}
+
+function biKpi(label, value, note, cls) {
+  return `<div class="bi-kpi ${cls || ''}"><span>${htmlSafe(label)}</span><strong>${htmlSafe(value)}</strong><small>${htmlSafe(note || '')}</small></div>`;
+}
+
+function biBars(rows, valueKey, labelFn, noteFn, clsFn) {
+  const max = Math.max(1, ...rows.map(r => Math.abs(Number(r._barValue ?? r[valueKey]) || 0)));
+  return rows.map(r => {
+    const val = Math.abs(Number(r._barValue ?? r[valueKey]) || 0);
+    const width = Math.min(100, (val / max) * 100);
+    const cls = clsFn ? clsFn(r) : '';
+    return `<button type="button" class="bi-bar-row ${cls}" onclick="${r.pu ? `openPUDetail('${r.pu.code}')` : ''}">
+      <div><strong>${htmlSafe(labelFn(r))}</strong><span>${htmlSafe(noteFn ? noteFn(r) : '')}</span></div>
+      <div class="bi-bar-track"><i style="width:${width}%"></i></div>
+      <b>${htmlSafe(r._displayValue || textCr(val))}</b>
+    </button>`;
+  }).join('') || '<div class="bi-empty">No rows available for this view.</div>';
+}
+
+function filteredSMHRowsForBI() {
+  const data = window.DETAIL_SMH_DATA;
+  if (!data || !Array.isArray(data.rows)) return [];
+  const dept = (document.getElementById('smhDeptFilter') || {}).value || 'all';
+  const smh = (document.getElementById('smhCodeFilter') || {}).value || 'all';
+  const puFilter = (document.getElementById('smhPUFilter') || {}).value || 'all';
+  const activityFilter = (document.getElementById('activityFilter') || {}).value || 'all';
+  return data.rows.filter(r =>
+    !isSkippedDisplayPU(r.puCode) &&
+    (dept === 'all' || r.deptCode === dept) &&
+    (smh === 'all' || r.smh === smh) &&
+    (puFilter === 'all' || r.puCode === puFilter) &&
+    (activityFilter !== 'budget-no-exp' || isSMHBudgetNoExpense(r))
+  );
+}
+
+function biDataForCurrentReport(tab) {
+  const rows = reportRowsForActivePUs();
+  const totals = rows.reduce((t, r) => {
+    t.budget += r.budget;
+    t.actual += r.actual;
+    t.balance += r.balance;
+    return t;
+  }, {budget:0, actual:0, balance:0});
+  totals.util = totals.budget ? (totals.actual / totals.budget) * 100 : 0;
+  const over = rows.filter(r => r.over).sort((a,b) => Math.abs(b.balance) - Math.abs(a.balance));
+  const noExpense = rows.filter(r => r.noExpense).sort((a,b) => b.budget - a.budget);
+  const topUtil = rows.filter(r => r.budget > 0).sort((a,b) => b.utilPct - a.utilPct);
+  const bcRows = typeof buildBudgetControlRows === 'function' ? buildBudgetControlRows() : [];
+  const askTotal = bcRows.reduce((s,r) => s + (r.askAmount || 0), 0);
+  const surrenderTotal = bcRows.reduce((s,r) => s + (r.surrenderAmount || 0), 0);
+  const base = {
+    kpis: [
+      ['Gross Budget', textCr(totals.budget), 'Current operational budget', 'good'],
+      ['Actual Till Date', textCr(totals.actual), `${totals.util.toFixed(1)}% utilised`, totals.util >= 85 ? 'risk' : 'good'],
+      ['Balance', textCr(totals.balance), totals.balance < 0 ? 'Over spent' : 'Available budget', totals.balance < 0 ? 'danger' : 'good'],
+      ['Watch Items', String(over.length + noExpense.length), 'Over budget + no-expense signals', 'warn']
+    ],
+    bars: topUtil.slice(0, 8).map(r => Object.assign({_displayValue: r.utilPct.toFixed(1) + '%'}, r)),
+    barsTitle: 'Top Utilisation',
+    actions: [
+      over[0] ? `First control point: PU-${over[0].pu.code} is over by ${textCr(Math.abs(over[0].balance))}.` : 'No over-budget PU in the current visible dataset.',
+      noExpense[0] ? `Review PU-${noExpense[0].pu.code}: budget ${textCr(noExpense[0].budget)} but no expense booked.` : 'No budget-without-expense signal in the current view.',
+      askTotal ? `Budget Control projects ${textCr(askTotal)} as amount to ask, subject to verification.` : 'No net additional grant ask is projected from current budget control rule.',
+      surrenderTotal ? `Possible surrender signal is ${textCr(surrenderTotal)} after pending liability verification.` : 'No surrender signal is projected from current budget control rule.'
+    ],
+    focusRows: over.concat(noExpense).slice(0, 6)
+  };
+
+  if (tab === 'pumaster') {
+    const meta = activePUMeta();
+    const staff = meta.filter(p => p.puType === 'Staff PU').length;
+    const nonStaff = meta.filter(p => p.puType === 'Non Staff PU').length;
+    const committed = meta.filter(p => p.liab === 'Committed').length;
+    const planned = meta.filter(p => p.liab === 'Planned').length;
+    return Object.assign(base, {
+      kpis: [
+        ['Active PUs', String(meta.length), 'After exclusions applied', 'good'],
+        ['Staff / Non-Staff', `${staff} / ${nonStaff}`, 'Classification in PU master', ''],
+        ['Committed', String(committed), 'Committed liability PUs', 'risk'],
+        ['Planned', String(planned), 'Planned / controllable PUs', 'warn']
+      ],
+      barsTitle: 'Highest Budget PUs',
+      bars: rows.slice().sort((a,b) => b.budget - a.budget).slice(0, 8),
+      actions: [
+        'PU Master BI view checks classification strength before using report filters.',
+        'Staff committed PUs are generally less flexible; planned non-staff PUs are better for control review.',
+        'GST heads PU-72 to PU-75 and PU-98 recoveries remain excluded from operational display.',
+        'Click a PU row below to open the existing detailed PU drill-down.'
+      ],
+      focusRows: rows.slice().sort((a,b) => b.budget - a.budget).slice(0, 6)
+    });
+  }
+
+  if (tab === 'smhdetail') {
+    const smhRows = filteredSMHRowsForBI();
+    const smhTotals = makeDetailTotal(smhRows);
+    const balance = smhTotals.budget - smhTotals.actualTill;
+    const util = smhTotals.budget ? (smhTotals.actualTill / smhTotals.budget) * 100 : 0;
+    const deptGroups = aggregateDetailRows(smhRows, 'dept').sort((a,b) => b.actualTill - a.actualTill);
+    const noExp = smhRows.filter(r => isSMHBudgetNoExpense(r)).sort((a,b) => b.budget - a.budget);
+    const overRows = smhRows.filter(r => (Number(r.actualTill)||0) > (Number(r.budget)||0)).sort((a,b) => (b.actualTill-b.budget) - (a.actualTill-a.budget));
+    return Object.assign(base, {
+      kpis: [
+        ['Dept SMH Budget', detailCr(smhTotals.budget), `${smhRows.length} detail rows`, 'good'],
+        ['Actual Till Date', detailCr(smhTotals.actualTill), `${util.toFixed(1)}% utilised`, util >= 85 ? 'risk' : 'good'],
+        ['Balance', detailCr(balance), balance < 0 ? 'Over spent' : 'Budget minus actual', balance < 0 ? 'danger' : 'good'],
+        ['No Expense Lines', String(noExp.length), 'Budget available, no expense', 'warn']
+      ],
+      barsTitle: 'Department Actual Share',
+      bars: deptGroups.slice(0, 8).map(r => ({_displayValue: detailCr(r.actualTill), dept:r.deptName, code:r.deptCode, actualTill:r.actualTill, budget:r.budget})),
+      actions: [
+        overRows[0] ? `Highest SMH overrun: ${overRows[0].deptCode} ${overRows[0].deptName}, PU-${overRows[0].puCode}.` : 'No SMH line has crossed budget in the selected view.',
+        noExp[0] ? `Largest budget-with-no-expense line: ${noExp[0].deptCode} ${noExp[0].deptName}, PU-${noExp[0].puCode}.` : 'No budget-with-no-expense SMH line in selected filters.',
+        'Use Classic Table when department > demand > PU line-by-line checking is required.',
+        'BI-AI view is for officer-level signal reading; it follows the same current filters.'
+      ],
+      focusRows: overRows.slice(0, 6).map(r => ({label:`${r.deptCode} ${r.deptName}`, desc:`${r.smh} | PU-${r.puCode} ${r.puName}`, value:detailCr((r.actualTill||0)-(r.budget||0)), cls:'danger'}))
+    });
+  }
+
+  if (tab === 'bpanalysis') {
+    const bpRows = typeof getFilteredBPRows === 'function' ? getFilteredBPRows() : [];
+    const excess = bpRows.filter(r => r.variance > 0).sort((a,b) => b.variance - a.variance);
+    const saving = bpRows.filter(r => r.variance < 0).sort((a,b) => Math.abs(b.variance) - Math.abs(a.variance));
+    const bpTotals = bpRows.reduce((t,r) => { t.budget += r.budget; t.bp += r.bp; t.actual += r.actualTill; t.var += r.variance; return t; }, {budget:0,bp:0,actual:0,var:0});
+    return Object.assign(base, {
+      kpis: [
+        ['Budget Grant', textCr(bpTotals.budget), 'Selected PU set', 'good'],
+        ['BP Value', textCr(bpTotals.bp), 'BG / 12 x completed months', ''],
+        ['Actual Till Date', textCr(bpTotals.actual), 'Against BP', bpTotals.actual > bpTotals.bp ? 'risk' : 'good'],
+        ['Excess / Saving', signedCr(bpTotals.var), bpTotals.var > 0 ? 'Excess vs BP' : 'Saving vs BP', bpTotals.var > 0 ? 'danger' : 'good']
+      ],
+      barsTitle: 'BP Excess / Saving Signals',
+      bars: excess.concat(saving).slice(0, 8).map(r => Object.assign({_displayValue:signedCr(r.variance)}, r)),
+      actions: [
+        excess[0] ? `Top BP excess: PU-${excess[0].pu.code} by ${textCr(excess[0].variance)}.` : 'No BP excess in selected view.',
+        saving[0] ? `Top BP saving: PU-${saving[0].pu.code} by ${textCr(Math.abs(saving[0].variance))}.` : 'No BP saving signal in selected view.',
+        'BP view treats only completed months as proportionate base.',
+        'Use this to decide early saving/excess review before AR/REA stage.'
+      ],
+      focusRows: excess.concat(saving).slice(0, 6)
+    });
+  }
+
+  if (tab === 'budgetcontrol') {
+    const control = typeof getFilteredBudgetControlRows === 'function' ? getFilteredBudgetControlRows() : bcRows;
+    const ask = control.filter(r => r.askAmount > 0).sort((a,b) => b.askAmount - a.askAmount);
+    const surrender = control.filter(r => r.surrenderAmount > 0).sort((a,b) => b.surrenderAmount - a.surrenderAmount);
+    const ct = control.reduce((t,r) => { t.ceiling += r.ceiling; t.actual += r.actualTill; t.projected += r.projectedRequirement; t.ask += r.askAmount; t.surrender += r.surrenderAmount; return t; }, {ceiling:0,actual:0,projected:0,ask:0,surrender:0});
+    return Object.assign(base, {
+      kpis: [
+        ['Current Ceiling', textCr(ct.ceiling), isRGActive() ? 'RG active' : 'BG/BE ceiling', 'good'],
+        ['Projected Need', textCr(ct.projected), 'Till-date projection', ct.projected > ct.ceiling ? 'risk' : 'good'],
+        ['Amount to Ask', textCr(ct.ask), 'Excess above ceiling', ct.ask ? 'danger' : 'good'],
+        ['Possible Surrender', textCr(ct.surrender), 'Verify pending bills', 'warn']
+      ],
+      barsTitle: 'Ask / Surrender Action Board',
+      bars: ask.concat(surrender).slice(0, 8).map(r => Object.assign({_displayValue:r.askAmount ? textCr(r.askAmount) : textCr(r.surrenderAmount), _barValue: r.askAmount || r.surrenderAmount}, r)),
+      actions: [
+        ask[0] ? `Top ask case: PU-${ask[0].pu.code} ${ask[0].pu.desc} needs ${textCr(ask[0].askAmount)}.` : 'No additional grant case in selected control filters.',
+        surrender[0] ? `Top surrender candidate: PU-${surrender[0].pu.code} ${surrender[0].pu.desc} ${textCr(surrender[0].surrenderAmount)}.` : 'No surrender candidate in selected control filters.',
+        'Budget Control BI view follows Indian Railways BG > AR > REA > RG > FME > FG flow.',
+        'Final ask/surrender should be vetted against pending bills and committed liabilities.'
+      ],
+      focusRows: ask.concat(surrender).slice(0, 6)
+    });
+  }
+
+  if (tab === 'trend' || tab === 'aitrend' || tab === 'monthwise') {
+    const {cur, actualMonths} = getMonthStatus();
+    return Object.assign(base, {
+      kpis: [
+        ['Current Month', `${cur.label} ${cur.year}`, 'Running month detected', ''],
+        ['Completed Months', String(actualMonths.length), 'Used for trend/BP reading', 'good'],
+        ['Actual Till Date', textCr(totals.actual), `${totals.util.toFixed(1)}% utilisation`, totals.util >= 85 ? 'risk' : 'good'],
+        ['Top Util PU', topUtil[0] ? `PU-${topUtil[0].pu.code}` : 'NA', topUtil[0] ? `${topUtil[0].utilPct.toFixed(1)}%` : 'No data', 'risk']
+      ],
+      barsTitle: 'Current Trend Watch',
+      actions: [
+        'BI-AI view gives the officer reading; use Graphs tab Classic View for detailed chart inspection.',
+        topUtil[0] ? `Highest utilisation is PU-${topUtil[0].pu.code} at ${topUtil[0].utilPct.toFixed(1)}%.` : 'No utilisation signal available.',
+        over[0] ? `Overspend trend exists in PU-${over[0].pu.code}; compare CY vs PY before proposal.` : 'No over-budget trend signal in current view.',
+        'Trend notes use current portal totals and uploaded month-wise data.'
+      ]
+    });
+  }
+
+  if (tab === 'remarks') {
+    return Object.assign(base, {
+      kpis: [
+        ['Data Year', 'FY 2026-27', 'Current year basis', 'good'],
+        ['Previous Year', 'FY 2025-26', 'Trend comparison basis', ''],
+        ['Excluded GST PUs', '72-75', 'Operational display skip', 'warn'],
+        ['Recovery PU', '98', 'Excluded from expense view', 'warn']
+      ],
+      barsTitle: 'Source Rule Highlights',
+      actions: [
+        'Budget Available and Month-wise Actuals feed the main financial tables.',
+        'Dept SMH files feed the Department > Demand > PU report.',
+        'Department 00, PU-98 recoveries and GST PU-72 to PU-75 are excluded from normal operational view.',
+        'Use Remarks Classic Table for exact source-file naming and rule register.'
+      ]
+    });
+  }
+  return base;
+}
+
+function renderBIView() {
+  const panel = document.getElementById('biViewPanel');
+  if (!panel) return;
+  const tab = activeTabName();
+  document.body.classList.toggle('bi-view-active', reportViewMode === 'bi');
+  panel.hidden = reportViewMode !== 'bi';
+  if (reportViewMode !== 'bi') return;
+  const {title, sub} = currentReportTitle(tab);
+  const data = biDataForCurrentReport(tab);
+  const focus = (data.focusRows || []).map(r => {
+    if (r.label) return `<div class="bi-focus ${r.cls || ''}"><strong>${htmlSafe(r.label)}</strong><span>${htmlSafe(r.desc || '')}</span><b>${htmlSafe(r.value || '')}</b></div>`;
+    const value = r.over ? `Over ${textCr(Math.abs(r.balance))}` : r.noExpense ? `No expense ${textCr(r.budget)}` : r.askAmount ? `Ask ${textCr(r.askAmount)}` : r.surrenderAmount ? `Surrender ${textCr(r.surrenderAmount)}` : r.variance !== undefined ? signedCr(r.variance) : `${(r.utilPct || 0).toFixed(1)}%`;
+    return `<button type="button" class="bi-focus ${r.over || r.askAmount || (r.variance > 0) ? 'danger' : r.noExpense ? 'warn' : ''}" onclick="${r.pu ? `openPUDetail('${r.pu.code}')` : ''}">
+      <strong>${r.pu ? `PU-${htmlSafe(r.pu.code)} ${htmlSafe(r.pu.desc)}` : htmlSafe(r.status || r.label || 'Signal')}</strong>
+      <span>${htmlSafe(r.remark || r.label || r.status || 'Current report signal')}</span>
+      <b>${htmlSafe(value)}</b>
+    </button>`;
+  }).join('') || '<div class="bi-empty">No priority focus item for the selected filters.</div>';
+  panel.innerHTML = `
+    <div class="bi-head">
+      <div>
+        <div class="bi-eyebrow">BI-AI Report View</div>
+        <div class="bi-title">${htmlSafe(title)}</div>
+        <div class="bi-sub">${htmlSafe(sub)} - visual reading of the same active report and filters.</div>
+      </div>
+      <button type="button" class="bi-classic-btn" onclick="setReportViewMode('classic')">Back to Classic Table</button>
+    </div>
+    <div class="bi-kpi-grid">${data.kpis.map(k => biKpi(k[0], k[1], k[2], k[3])).join('')}</div>
+    <div class="bi-layout">
+      <div class="bi-card bi-wide">
+        <div class="bi-card-title">${htmlSafe(data.barsTitle || 'Report Signals')}</div>
+        <div class="bi-bar-list">${biBars(data.bars || [], data.bars && data.bars[0] && data.bars[0].actualTill !== undefined ? 'actualTill' : data.bars && data.bars[0] && data.bars[0].variance !== undefined ? 'variance' : data.bars && data.bars[0] && data.bars[0].askAmount !== undefined ? (data.bars[0].askAmount ? 'askAmount' : 'surrenderAmount') : 'utilPct', r => r.dept ? `${r.code} ${r.dept}` : r.pu ? `PU-${r.pu.code} ${r.pu.desc}` : r.label || 'Signal', r => r.pu ? `${r.pu.puType || ''} ${r.pu.liab || ''}` : r.budget !== undefined ? `Budget ${detailCr ? detailCr(r.budget) : textCr(r.budget)}` : '', r => (r.over || r.askAmount || r.variance > 0) ? 'danger' : r.noExpense ? 'warn' : '')}</div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-card-title">AI-Style Officer Notes</div>
+        <ul class="bi-note-list">${(data.actions || []).map(x => `<li>${htmlSafe(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="bi-card bi-wide">
+        <div class="bi-card-title">Priority Focus</div>
+        <div class="bi-focus-grid">${focus}</div>
+      </div>
+    </div>`;
+}
+
+function setReportViewMode(mode) {
+  reportViewMode = mode === 'bi' ? 'bi' : 'classic';
+  try { sessionStorage.setItem(REPORT_VIEW_MODE_KEY, reportViewMode); } catch(e) {}
+  document.querySelectorAll('[data-report-view-mode]').forEach(btn => {
+    const active = btn.dataset.reportViewMode === reportViewMode;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  renderBIView();
+}
+
+function refreshBIViewSoon() {
+  if (reportViewMode === 'bi') setTimeout(renderBIView, 80);
+}
+
+function initReportViewMode() {
+  try { reportViewMode = sessionStorage.getItem(REPORT_VIEW_MODE_KEY) || 'classic'; } catch(e) { reportViewMode = 'classic'; }
+  document.querySelectorAll('[data-report-view-mode]').forEach(btn => {
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => setReportViewMode(btn.dataset.reportViewMode));
+  });
+  setReportViewMode(reportViewMode);
+}
+
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // LIABILITY TABLE
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1136,6 +1507,7 @@ function renderBPAnalysis() {
   if (title) title.textContent = `PU-wise Budget Proportionate Position - ${rows.length} PU(s) shown`;
   if (!rows.length) {
     body.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#607080;padding:16px">No PU found for selected filters.</td></tr>';
+    refreshBIViewSoon();
     return;
   }
   const rowHtml = rows
@@ -1169,6 +1541,7 @@ function renderBPAnalysis() {
     <td>${totals.variance >= 0 ? 'Net Excess' : 'Net Saving'}</td>
     <td class="bp-remark">Calculated on selected filters only.</td>
   </tr>`;
+  refreshBIViewSoon();
 }
 
 function budgetControlStage() {
@@ -1361,6 +1734,7 @@ function renderBudgetControl() {
   if (title) title.textContent = `PU-wise Ask / Surrender Control Register - ${rows.length} PU(s) shown`;
   if (!rows.length) {
     body.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#607080;padding:16px">No PU found for selected Budget Control filters.</td></tr>';
+    refreshBIViewSoon();
     return;
   }
   const rowHtml = rows.map(r => `<tr class="${r.cls}">
@@ -1389,6 +1763,7 @@ function renderBudgetControl() {
     <td class="bc-remark">Ask and surrender are based on current till-date projection. Final proposal should be vetted against committed liabilities and pending bills.</td>
   </tr>`;
   setTimeout(applyMobileTableLabels, 50);
+  refreshBIViewSoon();
 }
 
 function setBudgetControlAction(action) {
@@ -1495,10 +1870,11 @@ function handleTopFilterChange(sourceLabel) {
   }
   renderAll();
   if (tab === 'smhdetail' && typeof renderSMHDetail === 'function') renderSMHDetail();
+  refreshBIViewSoon();
 }
 
 // Tabs and report menu
-const TAB_IDS = ['summary','liability','monthwise','pumaster','trend','aitrend','bpanalysis','budgetcontrol','smhdetail','remarks','upload'];
+const TAB_IDS = ['summary','liability','smhdetail','pumaster','monthwise','bpanalysis','budgetcontrol','trend','aitrend','remarks','upload'];
 
 function syncReportNavigation(name) {
   document.querySelectorAll('[data-report-tab]').forEach(btn => {
@@ -1567,13 +1943,13 @@ function initDashboardDock() {
 const REPORT_LABELS = {
   summary:['Summary','Main points'],
   liability:['Main Report','Revenue Liability'],
-  monthwise:['Month-wise','Actuals and projection'],
-  trend:['Graphs','Trend Analysis Graphs'],
-  aitrend:['AI Summary','PU risk remarks'],
-  bpanalysis:['BP Analysis','Budget Proportionate'],
-  budgetcontrol:['Budget Control','Saving/excess action'],
   smhdetail:['Dept SMH','Department SMH details'],
   pumaster:['PU Master','Code reference'],
+  monthwise:['Month-wise','Actuals and projection'],
+  bpanalysis:['BP Analysis','Budget Proportionate'],
+  budgetcontrol:['Budget Control','Saving/excess action'],
+  trend:['Graphs','Trend Analysis Graphs'],
+  aitrend:['AI Summary','PU risk remarks'],
   remarks:['Remarks','Sources and rules'],
   upload:['Upload','Admin data update']
 };
@@ -1659,6 +2035,7 @@ function renderRiskSpotlight() {
 function currentViewSnapshot() {
   return {
     tab: activeTabName(),
+    mode: reportViewMode,
     top:{
       type:(document.getElementById('typeFilter') || {}).value || 'all',
       liab:(document.getElementById('liabFilter') || {}).value || 'all',
@@ -1694,6 +2071,7 @@ function applyViewSnapshot(view) {
     const map = {bpStatusFilter:view.bp.status, bpTypeFilter:view.bp.type, bpLiabilityFilter:view.bp.liability};
     Object.entries(map).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.value = value; });
   }
+  if (view.mode) setReportViewMode(view.mode);
   switchTab(view.tab || 'liability');
   setTimeout(() => {
     renderAll();
@@ -2045,6 +2423,7 @@ function switchTab(name) {
   if(name==='upload') renderCurDataGrid();
   if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
   setTimeout(applyMobileTableLabels, 140);
+  setTimeout(renderBIView, 160);
 }
 
 window.jumpReport = jumpReport;
@@ -2173,6 +2552,7 @@ function renderAITrendSummary() {
   }
   if (!items.length) {
     wrap.innerHTML = '<div class="ai-pu-card risk-ok"><ul class="ai-bullets"><li>No high-risk or watch-list PU found for the selected scope.</li></ul></div>';
+    refreshBIViewSoon();
     return;
   }
   wrap.innerHTML = items.map(item => {
@@ -2426,6 +2806,7 @@ function renderSMHDetail() {
   const data = window.DETAIL_SMH_DATA;
   if (!data || !Array.isArray(data.rows)) {
     body.innerHTML = '<tr><td colspan="10">Detailed SMH data file not loaded.</td></tr>';
+    refreshBIViewSoon();
     return;
   }
   initSMHDetailFilters();
@@ -2480,10 +2861,12 @@ function renderSMHDetail() {
       : '<th>Util%</th><th>Status</th><th>BP Status</th><th>BP Remark</th>') + '</tr>';
   if (!rows.length) {
     body.innerHTML = '<tr><td colspan="10">No rows found for selected filters.</td></tr>';
+    refreshBIViewSoon();
     return;
   }
   if (mode === 'report') {
     body.innerHTML = renderSMHReportRows(rows, visibleMonthKeys);
+    refreshBIViewSoon();
     return;
   }
   body.innerHTML = grouped.map(r => {
@@ -2508,10 +2891,12 @@ function renderSMHDetail() {
       <td class="bp-remark">${htmlSafe(bp.remark)}</td>
     </tr>`;
   }).join('');
+  refreshBIViewSoon();
   } catch (err) {
     console.error('SMH detail render failed', err);
     head.innerHTML = '<tr><th>Department</th><th>Demand</th><th>Primary Unit (PU)</th><th>Status</th></tr>';
     body.innerHTML = `<tr><td colspan="4" style="color:#9B0000;font-weight:700;padding:14px">Could not render Dept SMH Analysis: ${htmlSafe(err.message || err)}</td></tr>`;
+    refreshBIViewSoon();
   }
 }
 
@@ -4236,6 +4621,7 @@ function renderRemarks() {
       <td>${htmlSafe(reason)}</td>
     </tr>`;
   }).join('');
+  refreshBIViewSoon();
 }
 
 
@@ -4419,6 +4805,7 @@ function renderTrend(){
         '</tr>';
     }).join('');
   }
+  refreshBIViewSoon();
 }
 
 function renderMonthwise() {
@@ -4524,6 +4911,7 @@ function renderAll() {
   initReportMenuButtons();
   initDashboardDock();
   initSmartTools();
+  initReportViewMode();
   renderCards();
   renderJuneBars();
   renderSummaryPage();
@@ -4533,6 +4921,7 @@ function renderAll() {
   renderBPAnalysis();
   renderBudgetControl();
   renderRemarks();
+  renderBIView();
   document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'BG_ISL';
   const {cur:_cur}=getMonthStatus();
   const _cmb=document.getElementById('curMonBadge'); if(_cmb) _cmb.textContent=_cur.label+' '+_cur.year;
