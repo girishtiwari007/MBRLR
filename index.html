@@ -9,23 +9,23 @@
 <meta http-equiv="Expires" content="0">
 <meta name="portal-build" content="rlp-mbd-2026-07-03-v2.1.1">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260713-demand-dept">
+<link rel="stylesheet" href="assets/css/main.css?v=20260713-data-refresh">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
 <body>
 
 <!-- LOGIN OVERLAY -->
-<div id="loginOverlay">
+<div id="loginOverlay" class="hidden">
   <div class="login-box">
     <div class="login-emblem">NR</div>
     <div class="login-badge">NORTHERN RAILWAY</div>
-    <div class="login-title">REVENUE LIABILITY PORTAL</div>
-    <div class="login-sub">Moradabad Division  -  Financial Authority Dashboard<br>Please sign in to continue</div>
-    <div class="login-field">
+    <div class="login-title" id="loginTitle">UPLOAD ADMIN ACCESS</div>
+    <div class="login-sub" id="loginSub">Portal is open for viewing.<br>Enter ADMIN password only for data upload.</div>
+    <div class="login-field" id="loginUserField" style="display:none">
       <label>User ID</label>
       <div class="login-inp-wrap">
-        <input class="login-inp" type="text" id="loginUser" placeholder="Enter User ID" autocomplete="off"
+        <input class="login-inp" type="text" id="loginUser" value="ADMIN" placeholder="Enter User ID" autocomplete="off"
           onkeydown="if(event.key==='Enter')document.getElementById('loginPwd').focus()">
       </div>
     </div>
@@ -37,7 +37,8 @@
         <span class="login-eye" onclick="var i=document.getElementById('loginPwd');i.type=i.type==='password'?'text':'password'">Show</span>
       </div>
     </div>
-    <button class="login-btn" onclick="doLogin()">SIGN IN</button>
+    <button class="login-btn" onclick="doLogin()">UNLOCK UPLOAD</button>
+    <button class="login-cancel" type="button" onclick="closeUploadLogin()">CANCEL</button>
     <div class="login-err" id="loginErr"></div>
     <div style="font-size:9px;color:#A0B8D0;margin-top:16px">For Official Use Only  -  FY 2026-27</div>
   </div>
@@ -63,7 +64,7 @@
   </div>
   <div class="hdr-r">
     <span class="fy-badge">FY 2026-27</span>
-    <span class="as-on" id="asOnLabel">As on: 29-Jun-2026</span>
+    <span class="as-on" id="asOnLabel">As on: 13-Jul-2026 10:50</span>
   </div>
 </div>
 
@@ -111,7 +112,7 @@
     <button class="report-menu-btn" type="button" data-report-tab="remarks" aria-pressed="false">
       <span>Remarks</span><small>Sources and rules</small><em>NEW</em>
     </button>
-    <button class="report-menu-btn" type="button" data-report-tab="upload" id="uploadMenuBtn" aria-pressed="false" style="display:none">
+    <button class="report-menu-btn" type="button" data-report-tab="upload" id="uploadMenuBtn" aria-pressed="false">
       <span>Upload</span><small>Admin data update</small>
     </button>
   </div>
@@ -134,6 +135,10 @@
     <select class="fsel wide" id="activityFilter" onchange="handleTopFilterChange('Activity filter')">
       <option value="all">All Activity</option>
       <option value="budget-no-exp">Budget Available, No Expenses</option>
+    </select>
+    <select class="fsel important-filter" id="puFocusFilter" onchange="handleTopFilterChange('PU Focus filter')">
+      <option value="all">All PUs</option>
+      <option value="important">Important PUs only</option>
     </select>
     <span class="util-filter">
       <label for="utilPctFilter">Util %</label>
@@ -255,7 +260,7 @@
   <div class="tab" onclick="switchTab('trend')">Trend Analysis Graphs</div>
   <div class="tab" onclick="switchTab('aitrend')">AI Trend Analysis Summary</div>
   <div class="tab" onclick="switchTab('remarks')">Remarks / Clarification</div>
-  <div class="tab" id="uploadTab" onclick="switchTab('upload')" style="display:none">Data Upload</div>
+  <div class="tab" id="uploadTab" onclick="switchTab('upload')">Data Upload</div>
 </div>
 <div class="bi-view-panel" id="biViewPanel" hidden></div>
 <!-- TAB: SUMMARY -->
@@ -764,9 +769,21 @@
         <select class="trend-sel" id="smhCodeFilter" onchange="renderSMHDetail()">
           <option value="all">All Demand</option>
         </select>
-        <select class="trend-sel" id="smhPUFilter" onchange="renderSMHDetail()">
-          <option value="all">All PU</option>
-        </select>
+        <details class="bp-pu-drawer smh-pu-drawer" id="smhPUDrawer">
+          <summary><span>PU Selection</span><strong id="smhPUCount">All selected</strong></summary>
+          <div class="bp-check-head">
+            <label class="bp-check-all">
+              <input type="checkbox" id="smhPUAll" checked onchange="onSMHPUAllToggle(this.checked)">
+              <span>All PUs</span>
+            </label>
+            <span class="bp-count" id="smhPUCountInline">All selected</span>
+          </div>
+          <div class="bp-check-list" id="smhPUFilter"></div>
+          <div class="bp-filter-actions">
+            <button type="button" onclick="setSMHPUSelection('all')">Select All</button>
+            <button type="button" onclick="setSMHPUSelection('clear')">Clear PU Selection</button>
+          </div>
+        </details>
         <select class="trend-sel" id="smhViewMode" onchange="renderSMHDetail()">
           <option value="report">Report Format</option>
           <option value="dept">Department Summary</option>
@@ -874,7 +891,7 @@
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260713-demand-dept"></script>
+<script src="assets/js/app.js?v=20260713-data-refresh"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>

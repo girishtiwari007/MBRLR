@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260713-demand-dept';
+const ASSET_VERSION = '20260713-data-refresh';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -51,10 +51,9 @@ function initPopup() {
 
 // â”€â”€ LOGIN SYSTEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const AUTH_DIGESTS = Object.freeze({
-  MB: '511c501d71fc3274085c2210ba4bf794d925db384614cac2ff0726816a354b75',
-  ITCENTRE: '3bf748dccad2d317e16250586b69eb809f2cb4418b5a2882d5fd35c69cf6a3eb',
   ADMIN: 'b8824be5a97f2673f084e8d91336ffa24752344e361e9f25655e70aeeb12d104'
 });
+let _pendingUploadAfterLogin = false;
 
 async function sha256Hex(value) {
   const bytes = new TextEncoder().encode(value);
@@ -63,43 +62,57 @@ async function sha256Hex(value) {
 }
 
 async function doLogin() {
-  const user = document.getElementById('loginUser').value.trim().toUpperCase();
+  const user = 'ADMIN';
   const pwd  = document.getElementById('loginPwd').value;
   const err  = document.getElementById('loginErr');
-  if (!AUTH_DIGESTS[user]) {
-    err.textContent = 'User ID not found. Contact administrator.';
-    setTimeout(()=>err.textContent='', 3000);
-    return;
-  }
   const digest = await sha256Hex(`${user}:${pwd}`);
   if (AUTH_DIGESTS[user] !== digest) {
-    err.textContent = 'Incorrect password. Please try again.';
+    err.textContent = 'Incorrect ADMIN password. Upload access not allowed.';
     document.getElementById('loginPwd').value = '';
     setTimeout(()=>err.textContent='', 3000);
     return;
   }
-  sessionStorage.setItem('rlp_auth', user);
-  document.getElementById('loginOverlay').classList.add('hidden');
-  if (user === 'ADMIN') {
-    document.getElementById('uploadTab').style.display = '';
-    const uploadMenuBtn = document.getElementById('uploadMenuBtn');
-    if (uploadMenuBtn) uploadMenuBtn.style.display = '';
+  sessionStorage.setItem('rlp_upload_admin', '1');
+  const shouldOpenUpload = _pendingUploadAfterLogin;
+  _pendingUploadAfterLogin = false;
+  closeUploadLogin();
+  if (shouldOpenUpload) {
+    switchTab('upload');
   }
-  renderAll(); // Re-render after login to ensure tables are populated
-  setTimeout(()=>{addDualScroll();attachPUPopup();},100);
 }
 
 function restoreLoginSession() {
-  const user = sessionStorage.getItem('rlp_auth');
-  if (!user || !AUTH_DIGESTS[user]) return;
   const overlay = document.getElementById('loginOverlay');
   if (overlay) overlay.classList.add('hidden');
-  if (user === 'ADMIN') {
-    const uploadTab = document.getElementById('uploadTab');
-    if (uploadTab) uploadTab.style.display = '';
-    const uploadMenuBtn = document.getElementById('uploadMenuBtn');
-    if (uploadMenuBtn) uploadMenuBtn.style.display = '';
-  }
+  const uploadTab = document.getElementById('uploadTab');
+  if (uploadTab) uploadTab.style.display = '';
+  const uploadMenuBtn = document.getElementById('uploadMenuBtn');
+  if (uploadMenuBtn) uploadMenuBtn.style.display = '';
+}
+
+function isUploadAdminUnlocked() {
+  return sessionStorage.getItem('rlp_upload_admin') === '1';
+}
+
+function requestUploadAdmin() {
+  _pendingUploadAfterLogin = true;
+  const overlay = document.getElementById('loginOverlay');
+  const pwd = document.getElementById('loginPwd');
+  const err = document.getElementById('loginErr');
+  if (err) err.textContent = '';
+  if (pwd) pwd.value = '';
+  if (overlay) overlay.classList.remove('hidden');
+  setTimeout(() => { if (pwd) pwd.focus(); }, 60);
+}
+
+function closeUploadLogin() {
+  _pendingUploadAfterLogin = false;
+  const overlay = document.getElementById('loginOverlay');
+  const pwd = document.getElementById('loginPwd');
+  const err = document.getElementById('loginErr');
+  if (overlay) overlay.classList.add('hidden');
+  if (pwd) pwd.value = '';
+  if (err) err.textContent = '';
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -172,11 +185,21 @@ const PU_META = [
 ];
 
 const SKIPPED_DISPLAY_PUS = new Set(['72','73','74','75']);
+const IMPORTANT_PUS = new Set(['27','28','30','32','60']);
 function normPUCode(code) {
   return String(code == null ? '' : code).trim().padStart(2, '0');
 }
 function isSkippedDisplayPU(code) {
   return SKIPPED_DISPLAY_PUS.has(normPUCode(code));
+}
+function isImportantPU(code) {
+  return IMPORTANT_PUS.has(normPUCode(code));
+}
+function puFocusMode() {
+  return (document.getElementById('puFocusFilter') || {}).value || 'all';
+}
+function passesPUFocus(code) {
+  return puFocusMode() !== 'important' || isImportantPU(code);
 }
 function isActiveDisplayPU(pu) {
   return !!pu && !pu.isNeg && !isSkippedDisplayPU(pu.code);
@@ -186,13 +209,13 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'Pre-loaded Budget Available file (CY static portal data)', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'Pre-loaded Month-wise Actuals file (CY static portal data)', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU Wise 2026-2027 Budget.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU Wise Month Wise 2026-2027 Actual.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'Department / SMH Budget Available', fy:'2026-2027', source:'BudgetReport - 03-07-2026 15-17-44-SMH wise Budget.xls', used:'DEPT-Demand Wise'},
-  smhMonthCY: {label:'Department / SMH Month-wise Actuals', fy:'2026-2027', source:'BudgetReport - 03-07-2026 15-45-38 SMH Month Wise.xls', used:'DEPT-Demand Wise'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'SMH Wise 2026-2027 Budget.xls + DEMAND AND SMH.xlsx', used:'Demand / SMH Summary', remarks:'OBA = BG_ISL; BP = BG_ISL / 12 x completed actual months; AE = actuals up to JUN 2026. Demand 12N/10N Suspense Heads is shown separately and not netted from main total.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'SMH-DEMAND Wise PU wise Dept wise Month Wise 2026-2027 Budget.xls', used:'DEPT-Demand Wise'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'SMH-DEMAND Wise PU wise Dept wise Month Wise 2026-2027 Actual.xls', used:'DEPT-Demand Wise'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'SMH-DEMAND Wise 2026-2027 Budget.xls + SMH-DEMAND WISE 2026-2027 ACTUAL.xls', used:'Demand / SMH Summary', remarks:'OBA = BG_ISL; BP = BG_ISL / 12 x completed actual months; AE = actuals up to JUL 2026 till-date. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -385,9 +408,9 @@ let _pendingMonthPY  = null;
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 let _uploadedMonthIdx = null; // latest completed month detected from uploaded CY month-wise file
 let _latestActualMonthIdx = null;
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-07-02T15:12:25+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-07-13T10:50:45+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-07-03-v2.1.1';
+const RLP_BUILD_ID = 'rlp-mbd-2026-07-13-data-refresh';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 
 function formatAsOnDate(d) {
@@ -572,11 +595,12 @@ function isBudgetNoExpense(code) {
   return c.budget > 0 && Math.abs(c.totalCommitted || 0) === 0;
 }
 function getRowClass(pu) {
-  if (pu.isNeg) return 'neg-row';
-  if (isBudgetNoExpense(pu.code)) return 'no-exp-row';
-  if (pu.puType==='Staff PU' && pu.liab==='Committed') return 'cs-row';
-  if (pu.liab==='Committed') return 'co-row';
-  return 'pl-row';
+  const focusClass = isImportantPU(pu.code) ? ' important-pu-row' : '';
+  if (pu.isNeg) return 'neg-row' + focusClass;
+  if (isBudgetNoExpense(pu.code)) return 'no-exp-row' + focusClass;
+  if (pu.puType==='Staff PU' && pu.liab==='Committed') return 'cs-row' + focusClass;
+  if (pu.liab==='Committed') return 'co-row' + focusClass;
+  return 'pl-row' + focusClass;
 }
 function puBadge(t) {
   if (t.includes('Staff PU') && !t.includes('Non')) return `<span class="badge b-staff">Staff PU</span>`;
@@ -600,6 +624,7 @@ function getFiltered() {
   const uvRaw = document.getElementById('utilPctFilter') ? document.getElementById('utilPctFilter').value : '';
   const uv = uvRaw === '' ? null : Number(uvRaw);
   return activePUMeta().filter(pu => {
+    if (!passesPUFocus(pu.code)) return false;
     if (tf !== 'all') {
       if (tf === 'Staff'     && pu.puType !== 'Staff PU')     return false;
       if (tf === 'Non Staff' && pu.puType !== 'Non Staff PU') return false;
@@ -959,13 +984,14 @@ function filteredSMHRowsForBI() {
   if (!data || !Array.isArray(data.rows)) return [];
   const dept = (document.getElementById('smhDeptFilter') || {}).value || 'all';
   const smh = (document.getElementById('smhCodeFilter') || {}).value || 'all';
-  const puFilter = (document.getElementById('smhPUFilter') || {}).value || 'all';
+  const selectedPUs = smhSelectedCodes();
   const activityFilter = (document.getElementById('activityFilter') || {}).value || 'all';
   return data.rows.filter(r =>
     !isSkippedDisplayPU(r.puCode) &&
+    passesPUFocus(r.puCode) &&
     (dept === 'all' || r.deptCode === dept) &&
     (smh === 'all' || r.smh === smh) &&
-    (puFilter === 'all' || r.puCode === puFilter) &&
+    (selectedPUs.includes('all') || selectedPUs.includes(r.puCode)) &&
     (activityFilter !== 'budget-no-exp' || isSMHBudgetNoExpense(r))
   );
 }
@@ -1554,6 +1580,7 @@ function getFilteredBPRows() {
   const typeFilter = (document.getElementById('bpTypeFilter') || {}).value || 'all';
   const liabilityFilter = (document.getElementById('bpLiabilityFilter') || {}).value || 'all';
   return buildBPRows().filter(row => {
+    if (!passesPUFocus(row.pu.code)) return false;
     if (!selected.includes('all') && selected.length === 0) return false;
     if (!selected.includes('all') && !selected.includes(row.pu.code)) return false;
     if (typeFilter !== 'all' && row.pu.puType !== typeFilter) return false;
@@ -1606,7 +1633,7 @@ function renderBPAnalysis() {
     .sort((a,b) => Math.abs(b.variance) - Math.abs(a.variance))
     .map(r => {
       const cls = r.overFullBudget ? 'bp-over' : r.noExpense ? 'bp-noexp' : r.variance > 0 ? 'bp-excess' : r.variance < 0 ? 'bp-saving' : '';
-      return `<tr class="${cls}">
+      return `<tr class="${cls}${isImportantPU(r.pu.code) ? ' important-pu-row' : ''}">
         <td class="puc puc-link" onclick="openPUDetail('${r.pu.code}')">${r.pu.code}</td>
         <td class="desc">${htmlSafe(r.pu.desc)}</td>
         <td>${htmlSafe(r.pu.puType)}</td>
@@ -1740,6 +1767,7 @@ function getFilteredBudgetControlRows() {
   const impact = (document.getElementById('bcImpactFilter') || {}).value || 'all';
   const minImpact = impact === 'all' ? 0 : Number(impact) * 100;
   return buildBudgetControlRows().filter(row => {
+    if (!passesPUFocus(row.pu.code)) return false;
     if (action !== 'all' && row.key !== action) return false;
     if (type !== 'all' && row.pu.puType !== type) return false;
     if (liability !== 'all' && row.pu.liab !== liability) return false;
@@ -1829,7 +1857,7 @@ function renderBudgetControl() {
     refreshBIViewSoon();
     return;
   }
-  const rowHtml = rows.map(r => `<tr class="${r.cls}">
+  const rowHtml = rows.map(r => `<tr class="${r.cls}${isImportantPU(r.pu.code) ? ' important-pu-row' : ''}">
     <td class="puc puc-link" onclick="openPUDetail('${r.pu.code}')">${htmlSafe(r.pu.code)}</td>
     <td class="desc">${htmlSafe(r.pu.desc)}</td>
     <td class="n">${textCr(r.ceiling)}</td>
@@ -1885,10 +1913,12 @@ function showFilterAlert(message) {
 }
 
 function resetTopFilters() {
+  const keepPUFocus = (document.getElementById('puFocusFilter') || {}).value || 'all';
   const defaults = {
     typeFilter: 'all',
     liabFilter: 'all',
     activityFilter: 'all',
+    puFocusFilter: keepPUFocus,
     utilCompare: 'all',
     utilPctFilter: ''
   };
@@ -1917,10 +1947,11 @@ function resetAITrendFilters() {
 }
 
 function resetSMHFilters() {
-  ['smhDeptFilter','smhCodeFilter','smhPUFilter'].forEach(id => {
+  ['smhDeptFilter','smhCodeFilter'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = 'all';
   });
+  setSMHPUSelection('all', true);
   const mode = document.getElementById('smhViewMode');
   if (mode) mode.value = 'report';
 }
@@ -1954,7 +1985,7 @@ function resetFiltersForNavigation() {
 
 function handleTopFilterChange(sourceLabel) {
   const tab = activeTabName();
-  const supported = ['liability','monthwise','pumaster','smhdetail'];
+  const supported = ['liability','monthwise','pumaster','smhdetail','bpanalysis','budgetcontrol','trend','aitrend','summary'];
   if (!supported.includes(tab)) {
     resetTopFilters();
     showFilterAlert(`${sourceLabel || 'This filter'} is not used on the current tab. Please use this page's own filters.`);
@@ -1962,6 +1993,10 @@ function handleTopFilterChange(sourceLabel) {
   }
   renderAll();
   if (tab === 'smhdetail' && typeof renderSMHDetail === 'function') renderSMHDetail();
+  if (tab === 'bpanalysis' && typeof renderBPAnalysis === 'function') renderBPAnalysis();
+  if (tab === 'budgetcontrol' && typeof renderBudgetControl === 'function') renderBudgetControl();
+  if (tab === 'trend' && typeof renderTrend === 'function') renderTrend();
+  if (tab === 'aitrend' && typeof renderAITrendSummary === 'function') renderAITrendSummary();
   refreshBIViewSoon();
 }
 
@@ -2133,13 +2168,14 @@ function currentViewSnapshot() {
       type:(document.getElementById('typeFilter') || {}).value || 'all',
       liab:(document.getElementById('liabFilter') || {}).value || 'all',
       activity:(document.getElementById('activityFilter') || {}).value || 'all',
+      puFocus:(document.getElementById('puFocusFilter') || {}).value || 'all',
       utilCompare:(document.getElementById('utilCompare') || {}).value || 'all',
       utilPct:(document.getElementById('utilPctFilter') || {}).value || ''
     },
     smh:{
       dept:(document.getElementById('smhDeptFilter') || {}).value || 'all',
       demand:(document.getElementById('smhCodeFilter') || {}).value || 'all',
-      pu:(document.getElementById('smhPUFilter') || {}).value || 'all',
+      pu:smhSelectedCodes(),
       mode:(document.getElementById('smhViewMode') || {}).value || 'report'
     },
     bp:{
@@ -2153,12 +2189,14 @@ function currentViewSnapshot() {
 function applyViewSnapshot(view) {
   if (!view) return;
   if (view.top) {
-    const map = {typeFilter:view.top.type, liabFilter:view.top.liab, activityFilter:view.top.activity, utilCompare:view.top.utilCompare, utilPctFilter:view.top.utilPct};
+    const map = {typeFilter:view.top.type || 'all', liabFilter:view.top.liab || 'all', activityFilter:view.top.activity || 'all', puFocusFilter:view.top.puFocus || 'all', utilCompare:view.top.utilCompare || 'all', utilPctFilter:view.top.utilPct || ''};
     Object.entries(map).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.value = value; });
   }
   if (view.smh) {
-    const map = {smhDeptFilter:view.smh.dept, smhCodeFilter:view.smh.demand, smhPUFilter:view.smh.pu, smhViewMode:view.smh.mode};
+    const map = {smhDeptFilter:view.smh.dept, smhCodeFilter:view.smh.demand, smhViewMode:view.smh.mode};
     Object.entries(map).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.value = value; });
+    initSMHDetailFilters();
+    applySMHPUSelection(view.smh.pu || view.smh.puCodes || ['all']);
   }
   if (view.bp) {
     const map = {bpStatusFilter:view.bp.status, bpTypeFilter:view.bp.type, bpLiabilityFilter:view.bp.liability};
@@ -2497,6 +2535,10 @@ function initSmartTools() {
 }
 
 function switchTab(name) {
+  if (name === 'upload' && !isUploadAdminUnlocked()) {
+    requestUploadAdmin();
+    return;
+  }
   if (name !== activeTabName()) resetFiltersForNavigation();
   if(name==='summary'){setTimeout(renderSummaryPage,80);}
   if(name==='trend'){setTimeout(renderTrend,80);}
@@ -2578,7 +2620,7 @@ function buildAITrendItems() {
   const compareMonthKeys = FY_MONTHS.slice(0, cur.idx + 1);
   const compareMonthLabels = FY_MONTH_LABELS.slice(0, cur.idx + 1);
 
-  return PU_META.filter(includeInAITrendSummary).map(pu => {
+  return PU_META.filter(pu => includeInAITrendSummary(pu) && passesPUFocus(pu.code)).map(pu => {
     const md = MONTH[pu.code] || {};
     const py = MONTH_PY[pu.code] || {};
     const cv = compute(pu.code);
@@ -2781,12 +2823,69 @@ function detailBPStatus(rowOrTotal) {
   return {bp, variance, status, remark, monthCount};
 }
 
+function smhSelectedCodes() {
+  const all = document.getElementById('smhPUAll');
+  if (!all) return ['all'];
+  if (all.checked) return ['all'];
+  return Array.from(document.querySelectorAll('#smhPUFilter .smh-pu-check:checked')).map(o => o.value);
+}
+
+function updateSMHPUSelectionCount() {
+  const all = document.getElementById('smhPUAll');
+  const count = document.getElementById('smhPUCount');
+  const inline = document.getElementById('smhPUCountInline');
+  const checks = Array.from(document.querySelectorAll('#smhPUFilter .smh-pu-check'));
+  const label = all && all.checked
+    ? 'All selected'
+    : `${checks.filter(ch => ch.checked).length || 'No'} selected`;
+  if (count) count.textContent = label;
+  if (inline) inline.textContent = label;
+}
+
+function onSMHPUAllToggle(checked) {
+  document.querySelectorAll('#smhPUFilter .smh-pu-check').forEach(ch => {
+    ch.checked = false;
+  });
+  updateSMHPUSelectionCount();
+  renderSMHDetail();
+}
+
+function onSMHPUChange() {
+  const all = document.getElementById('smhPUAll');
+  if (all) all.checked = false;
+  updateSMHPUSelectionCount();
+  renderSMHDetail();
+}
+
+function setSMHPUSelection(mode, silent) {
+  const all = document.getElementById('smhPUAll');
+  const checks = Array.from(document.querySelectorAll('#smhPUFilter .smh-pu-check'));
+  if (all) all.checked = mode === 'all';
+  checks.forEach(ch => {
+    ch.checked = false;
+  });
+  updateSMHPUSelectionCount();
+  if (!silent) renderSMHDetail();
+}
+
+function applySMHPUSelection(value) {
+  const values = Array.isArray(value) ? value : [value || 'all'];
+  const all = document.getElementById('smhPUAll');
+  const checks = Array.from(document.querySelectorAll('#smhPUFilter .smh-pu-check'));
+  const useAll = values.includes('all') || !values.length;
+  if (all) all.checked = useAll;
+  checks.forEach(ch => {
+    ch.checked = !useAll && values.includes(ch.value);
+  });
+  updateSMHPUSelectionCount();
+}
+
 function initSMHDetailFilters() {
   const data = window.DETAIL_SMH_DATA;
   const deptSel = document.getElementById('smhDeptFilter');
   const smhSel = document.getElementById('smhCodeFilter');
-  const puSel = document.getElementById('smhPUFilter');
-  if (!data || !deptSel || !smhSel || !puSel || deptSel.dataset.ready === 'yes') return;
+  const puList = document.getElementById('smhPUFilter');
+  if (!data || !deptSel || !smhSel || !puList || deptSel.dataset.ready === 'yes') return;
   const detailRows = data.rows.filter(r => !isSkippedDisplayPU(r.puCode));
   const depts = [...new Map(detailRows.map(r => [r.deptCode + '|' + r.deptName, r])).values()]
     .sort((a,b) => String(a.deptCode).localeCompare(String(b.deptCode), undefined, {numeric:true}));
@@ -2797,9 +2896,12 @@ function initSMHDetailFilters() {
     smhs.map(s => `<option value="${htmlSafe(s)}">${htmlSafe(s)}</option>`).join('');
   const pus = [...new Map(detailRows.map(r => [r.puCode + '|' + r.puName, r])).values()]
     .sort((a,b) => String(a.puCode).localeCompare(String(b.puCode), undefined, {numeric:true}));
-  puSel.innerHTML = '<option value="all">All PU</option>' +
-    pus.map(r => `<option value="${htmlSafe(r.puCode)}">PU-${htmlSafe(r.puCode)} - ${htmlSafe(r.puName)}</option>`).join('');
+  puList.innerHTML = pus.map(r => `<label class="bp-check-item">
+      <input type="checkbox" class="smh-pu-check" value="${htmlSafe(r.puCode)}" onchange="onSMHPUChange()">
+      <span><strong>PU-${htmlSafe(r.puCode)}</strong> ${htmlSafe(r.puName)}</span>
+    </label>`).join('');
   deptSel.dataset.ready = 'yes';
+  updateSMHPUSelectionCount();
 }
 
 function aggregateDetailRows(rows, mode) {
@@ -2861,7 +2963,7 @@ function renderSMHReportRows(rows, monthKeys) {
         const bal = r.budget - r.actualTill;
         const noExpCls = isSMHBudgetNoExpense(r) ? ' no-exp-row' : '';
         const bp = detailBPStatus(r);
-        html += `<tr class="pu-row${noExpCls}">
+        html += `<tr class="pu-row${noExpCls}${isImportantPU(r.puCode) ? ' important-pu-row' : ''}">
           <td></td>
           <td></td>
           <td>PU - ${htmlSafe(r.puCode)} - ${htmlSafe(r.puName)}</td>
@@ -2924,7 +3026,7 @@ function renderSMHDetail() {
   initSMHDetailFilters();
   const dept = (document.getElementById('smhDeptFilter') || {}).value || 'all';
   const smh = (document.getElementById('smhCodeFilter') || {}).value || 'all';
-  const puFilter = (document.getElementById('smhPUFilter') || {}).value || 'all';
+  const selectedPUs = smhSelectedCodes();
   const activityFilter = (document.getElementById('activityFilter') || {}).value || 'all';
   const mode = (document.getElementById('smhViewMode') || {}).value || 'report';
   const monthKeys = data.monthKeys || [];
@@ -2935,9 +3037,10 @@ function renderSMHDetail() {
   const visibleMonthKeys = monthKeys.slice(0, Math.min(4, lastActualIdx + 1));
   const rows = data.rows.filter(r =>
     !isSkippedDisplayPU(r.puCode) &&
+    passesPUFocus(r.puCode) &&
     (dept === 'all' || r.deptCode === dept) &&
     (smh === 'all' || r.smh === smh) &&
-    (puFilter === 'all' || r.puCode === puFilter) &&
+    (selectedPUs.includes('all') || selectedPUs.includes(r.puCode)) &&
     (activityFilter !== 'budget-no-exp' || isSMHBudgetNoExpense(r))
   );
   const grouped = aggregateDetailRows(rows, mode === 'report' ? 'pu' : mode);
@@ -3025,7 +3128,7 @@ function renderSMHDetail() {
     const bal = r.budget - r.actualTill;
     const noExp = isSMHBudgetNoExpense(r);
     const bp = detailBPStatus(r);
-    const rowClass = (mode === 'dept' ? 'dept-row' : mode === 'smh' ? 'smh-row' : 'pu-row') + (noExp ? ' no-exp-row' : '');
+    const rowClass = (mode === 'dept' ? 'dept-row' : mode === 'smh' ? 'smh-row' : 'pu-row') + (noExp ? ' no-exp-row' : '') + (mode === 'pu' && isImportantPU(r.puCode) ? ' important-pu-row' : '');
     const first = `${htmlSafe(r.deptCode)} - ${htmlSafe(r.deptName)}`;
     const second = mode === 'dept' ? 'All Demand' : htmlSafe(r.smh);
     const third = mode === 'pu' ? `PU - ${htmlSafe(r.puCode)} - ${htmlSafe(r.puName)}` : (mode === 'smh' ? 'Sub-total' : 'Department Total');
@@ -3577,7 +3680,7 @@ async function downloadExcel() {
 
 
 function reportRowsForActivePUs() {
-  return activePUMeta().map(pu => {
+  return activePUMeta().filter(pu => passesPUFocus(pu.code)).map(pu => {
     const cv = compute(pu.code);
     const budget = cv.budget || 0;
     const actual = cv.totalCommitted || 0;
@@ -4492,12 +4595,21 @@ function dzDrag(e,type){ e.preventDefault(); const el=document.getElementById('d
 function dzLeave(type){ const el=document.getElementById('dz-'+type); if(el) el.classList.remove('drag-over'); }
 function dzDrop(e,type){
   e.preventDefault(); dzLeave(type);
+  if (!isUploadAdminUnlocked()) {
+    requestUploadAdmin();
+    return;
+  }
   const file = e.dataTransfer.files[0];
   const parts=type.split('-'), t=parts.slice(0,-1).join('-') || parts[0], yr=(parts[parts.length-1]==='py')?'py':'cy';
   if(file) parseUpload(file, t, yr);
 }
 
 function handleFileEx(e, type, year) {
+  if (!isUploadAdminUnlocked()) {
+    if (e && e.target) e.target.value = '';
+    requestUploadAdmin();
+    return;
+  }
   const file = e.target.files[0];
   if(file) parseUpload(file, type, year||'cy');
 }
@@ -4634,6 +4746,10 @@ function rebuildSMHDetailTotals() {
 }
 
 function parseUpload(file, type, year) {
+  if (!isUploadAdminUnlocked()) {
+    requestUploadAdmin();
+    return;
+  }
   year = year || 'cy';
   const fileTimestamp = uploadFileTimestamp(file);
   const dzId = type + '-' + year;
@@ -4769,6 +4885,10 @@ function renderUploadLog() {
 }
 
 function applyUploads() {
+  if (!isUploadAdminUnlocked()) {
+    requestUploadAdmin();
+    return;
+  }
   let monthChanged = false;
   const hadCYUpdate = !!(_pendingBudget || _pendingMonth);
   const hadSMHUpdate = !!(_pendingSMHBudget || _pendingSMHMonth);
@@ -4955,8 +5075,8 @@ let _tCharts={};
 function _dC(id){if(_tCharts[id]){_tCharts[id].destroy();delete _tCharts[id];}}
 function _mC(id,cfg){_dC(id);const ctx=document.getElementById(id);if(!ctx)return;_tCharts[id]=new Chart(ctx,cfg);return _tCharts[id];}
 
-const FOCUS_PUS=['27','28','30','32','60','99'];
-const FOCUS_DESC={'27':'Materials from stock','28':'Materials-Dir. purchase','30':'Cost Of Elec. Energy/Traction Energy Procurement','32':'Contractual payments','60':'Fuel/Power','99':'Other Expenses/Misc'};
+const FOCUS_PUS = Array.from(IMPORTANT_PUS);
+const FOCUS_DESC={'27':'Materials from stock','28':'Materials-Dir. purchase','30':'Cost Of Elec. Energy/Traction Energy Procurement','32':'Contractual payments','60':'Fuel/Power'};
 
 function renderTrend(){
   if(!window.Chart)return;
@@ -4973,7 +5093,7 @@ function renderTrend(){
   const actualDoneIdxs = monthStatus.actualMonths.map(m => MK.indexOf(m)).filter(i => i >= 0);
   if (!actualDoneIdxs.includes(CUR_IDX)) actualDoneIdxs.push(CUR_IDX);
   const ML_S=['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
-  const activePUs=activePUMeta();
+  const activePUs=activePUMeta().filter(p => passesPUFocus(p.code));
   const trendSelectedCodes = useBPSelection ? bpSelectedCodes() : (puSel === 'ALL' ? ['all'] : [puSel]);
   const puList=trendSelectedCodes.includes('all')
     ? activePUs
