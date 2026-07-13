@@ -2511,7 +2511,8 @@ function openOfficerBriefPDF() {
     small{display:block;font-size:10px;color:#496276;line-height:1.35}
     .sec{margin-top:12px;border:1px solid #D8E5F2;border-radius:8px;overflow:hidden}
     .sec h2{background:#1A3A6A;color:#DDEEFF;font-size:12px;padding:8px 10px}
-    table{width:100%;border-collapse:collapse;font-size:10px}
+    table{width:100%;border-collapse:collapse;font-size:10px;font-family:"Times New Roman",Times,serif}
+    table th,table td{font-family:"Times New Roman",Times,serif}
     th{background:#2474B8;color:#fff;text-align:left;padding:7px;border:1px solid #B8D0E8}
     td{padding:7px;border:1px solid #D2E0EF;vertical-align:top;line-height:1.35}
     .foot{text-align:center;font-size:9px;color:#607080;padding:10px;border-top:1px solid #D8E5F2}
@@ -3411,7 +3412,7 @@ async function downloadExcel() {
   // â”€â”€ Style helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function mkStyle(opts={}) {
     return {
-      font:   { name:'Calibri', sz: opts.sz||10, bold:!!opts.bold, color:{rgb: opts.fc||'000000'} },
+      font:   { name:opts.name||'Times New Roman', sz: opts.sz||10, bold:!!opts.bold, color:{rgb: opts.fc||'000000'} },
       fill:   opts.bg ? {patternType:'solid', fgColor:{rgb:opts.bg}} : undefined,
       border: opts.border ? {
         top:{style:'thin',color:{rgb:'B8C8E0'}}, bottom:{style:'thin',color:{rgb:'B8C8E0'}},
@@ -3421,7 +3422,9 @@ async function downloadExcel() {
     };
   }
 
-  function addSheet(wb, sheetName, titleRow, subRow, headers, dataRows, colWidths) {
+  function addSheet(wb, sheetName, titleRow, subRow, headers, dataRows, colWidths, sheetOpts={}) {
+    const sheetFontName = sheetOpts.fontName || 'Times New Roman';
+    const textCols = new Set(sheetOpts.textCols || [1, 2]);
     if (useExcelJS) {
       const ws = wb.addWorksheet(sheetName, {
         views: [{state:'frozen', ySplit:4}],
@@ -3443,7 +3446,7 @@ async function downloadExcel() {
         right:{style:'thin', color:{argb:'FFB8C8E0'}}
       };
       const fill = color => ({type:'pattern', pattern:'solid', fgColor:{argb:'FF' + color}});
-      const font = (color, bold=false, size=10) => ({name:'Calibri', size, bold, color:{argb:'FF' + color}});
+      const font = (color, bold=false, size=10) => ({name:sheetFontName, size, bold, color:{argb:'FF' + color}});
 
       ws.getRow(1).height = 24;
       ws.getRow(1).eachCell(cell => {
@@ -3467,6 +3470,7 @@ async function downloadExcel() {
 
       dataRows.forEach((rowData, idx) => {
         const row = ws.getRow(idx + 5);
+        if (sheetOpts.dataRowHeight) row.height = sheetOpts.dataRowHeight;
         let bg = 'FFFFFF';
         if (rowData) {
           const label = String(rowData[0] || '');
@@ -3481,7 +3485,7 @@ async function downloadExcel() {
           cell.fill = fill(bg);
           cell.border = border;
           cell.font = font(rowData && rowData._tot ? '0A1628' : '1A2433', !!(rowData && rowData._tot), 10);
-          cell.alignment = {horizontal: colNumber > 2 ? 'right' : 'left', vertical:'middle', wrapText:true};
+          cell.alignment = {horizontal: textCols.has(colNumber) ? 'left' : 'right', vertical:'middle', wrapText:true};
           if (typeof cell.value === 'number') cell.numFmt = '#,##0';
           if (typeof cell.value === 'number' && cell.value < 0) cell.font = font('B00020', true, 10);
           const text = String(cell.value || '').toUpperCase();
@@ -3536,7 +3540,7 @@ async function downloadExcel() {
               else if (rowData._co) bg='FFF8E8';
               else if (rowData._tot) bg='E8EFF8';
             }
-            ws[addr].s = mkStyle({bg, border:true, h: C>1?'right':'left'});
+            ws[addr].s = mkStyle({bg, border:true, h: textCols.has(C+1)?'left':'right', name:sheetFontName, wrap:true});
           }
         }
       }
@@ -3831,7 +3835,7 @@ async function downloadExcel() {
       dRows.push(sRow);
     });
     addSheet(wb,'Demand SMH Summary',HDR_TITLE,`Demand / SMH Wise | ${dData.note || 'Figures in Rs thousands'}`,dHeaders,dRows,
-      [16,34,14,16,14,14,10,18,14]);
+      [18,42,14,14,14,15,10,18,14], {fontName:'Times New Roman', textCols:[1,2], dataRowHeight:28});
   }
 
   // Sheet 9: Sources / Remarks / Upload confirmation
@@ -4193,7 +4197,7 @@ async function downloadPDFReport() {
     doc.setFillColor(10, 22, 40);
     doc.rect(0, 0, pageW, 44, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('times', 'bold');
     doc.setFontSize(13);
     doc.text(title, margin, 27);
     doc.setTextColor(201, 168, 76);
@@ -4216,8 +4220,8 @@ async function downloadPDFReport() {
     const mergedOpts = Object.assign({
       theme:'grid',
       margin:{left:margin, right:margin},
-      styles:{fontSize:8, cellPadding:3, lineColor:[190,205,225], lineWidth:.4, overflow:'linebreak'},
-      headStyles:{fillColor:[26,58,106], textColor:[255,255,255], fontStyle:'bold'},
+      styles:{font:'times', fontSize:8, cellPadding:3, lineColor:[190,205,225], lineWidth:.4, overflow:'linebreak'},
+      headStyles:{fillColor:[26,58,106], textColor:[255,255,255], fontStyle:'bold', font:'times'},
       alternateRowStyles:{fillColor:[246,250,254]},
       didParseCell: data => {
         const first = Array.isArray(data.row.raw) ? String(data.row.raw[0] || '') : '';
@@ -4248,12 +4252,12 @@ async function downloadPDFReport() {
 
   addPage('Revenue Liability Report - Executive Summary');
   doc.setTextColor(10, 22, 40);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('times', 'bold');
   doc.setFontSize(22);
   doc.text('Revenue Liability Portal', margin, 96);
   doc.setFontSize(14);
   doc.text('Moradabad Division / Northern Railway', margin, 120);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('times', 'normal');
   doc.setFontSize(10);
   doc.text(`Financial Year 2026-27 | Current Month: ${cur.label} ${cur.year} | Actual months: ${actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ')}`, margin, 145);
   doc.text(`Budget basis: ${isRGActive() ? 'RG Active' : 'RG not active - using BG_ISL'} | Excluded: PU-72, 73, 74, 75 GST heads and PU-98 recoveries from normal expenditure view.`, margin, 162);
@@ -4439,8 +4443,19 @@ async function downloadPDFReport() {
       body:demandAnnexure
         .concat([['Total','', detailCr(demandTotals.oba), detailCr(demandTotals.bp), detailCr(demandTotals.ae), signedCr(demandTotals.variation), detailNum(demandTotals.bpPct) + '%', detailCr(demandTotals.budgetRemaining), detailNum(demandTotals.obaUtil) + '%']])
         .concat(demandSuspenseAnnexure),
-      styles:{fontSize:7.3, cellPadding:2.5, overflow:'linebreak'},
-      columnStyles:{1:{cellWidth:170},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'},8:{halign:'right'}}
+      styles:{font:'times', fontSize:8, cellPadding:2.5, overflow:'linebreak', minCellHeight:14},
+      headStyles:{fillColor:[26,58,106], textColor:[255,255,255], fontStyle:'bold', font:'times', fontSize:8},
+      columnStyles:{
+        0:{cellWidth:82},
+        1:{cellWidth:190},
+        2:{cellWidth:70, halign:'right'},
+        3:{cellWidth:70, halign:'right'},
+        4:{cellWidth:70, halign:'right'},
+        5:{cellWidth:74, halign:'right'},
+        6:{cellWidth:48, halign:'right'},
+        7:{cellWidth:92, halign:'right'},
+        8:{cellWidth:64, halign:'right'}
+      }
     });
   }
 
@@ -4511,7 +4526,7 @@ function openPUDetail(code) {
     return `<tr style="background:${bg}">
       <td style="padding:7px 12px;font-weight:700;color:#0A1628;border-bottom:1px solid #E8EFF8">${lbl} ${i<=8?2026:2027}</td>
       <td style="padding:7px 12px;color:${tagCol};font-size:10px;border-bottom:1px solid #E8EFF8"><em>${tag}</em></td>
-      <td style="padding:7px 12px;text-align:right;font-family:monospace;border-bottom:1px solid #E8EFF8">${val?val.toLocaleString('en-IN'):'-'}</td>
+      <td style="padding:7px 12px;text-align:right;font-family:'Times New Roman',Times,serif;border-bottom:1px solid #E8EFF8">${val?val.toLocaleString('en-IN'):'-'}</td>
       <td style="padding:7px 12px;text-align:right;font-weight:600;border-bottom:1px solid #E8EFF8">${valCr} Cr</td>
       <td style="padding:7px 20px;border-bottom:1px solid #E8EFF8">
         <div style="background:#E8EFF8;border-radius:3px;height:10px;min-width:120px;overflow:hidden">
@@ -4536,7 +4551,7 @@ function openPUDetail(code) {
     ['Actuals Till Date (Budget Report)', b.actuals_till||0, '#607080'],
   ].map(([lbl,val,col]) => `<tr>
     <td style="padding:7px 14px;color:#4A6A90;border-bottom:1px solid #EEF2F8;width:55%">${lbl}</td>
-    <td style="padding:7px 14px;text-align:right;font-family:monospace;border-bottom:1px solid #EEF2F8;font-weight:600;color:${col}">${val?(val<0?'('+Math.abs(Math.round(val)).toLocaleString('en-IN')+')':Math.round(val).toLocaleString('en-IN')):'-'}</td>
+    <td style="padding:7px 14px;text-align:right;font-family:'Times New Roman',Times,serif;border-bottom:1px solid #EEF2F8;font-weight:600;color:${col}">${val?(val<0?'('+Math.abs(Math.round(val)).toLocaleString('en-IN')+')':Math.round(val).toLocaleString('en-IN')):'-'}</td>
     <td style="padding:7px 14px;text-align:right;border-bottom:1px solid #EEF2F8;color:${col};font-weight:700">${fCr(val)}</td>
   </tr>`).join('');
 
@@ -4584,7 +4599,8 @@ function openPUDetail(code) {
   .ring-row:last-child{border-bottom:none}
   .ring-row .lbl{color:#607080}
   .ring-row .val{font-weight:700;color:#0A1628}
-  table.data-tbl{width:100%;border-collapse:collapse}
+  table.data-tbl{width:100%;border-collapse:collapse;font-family:'Times New Roman',Times,serif}
+  table.data-tbl th,table.data-tbl td{font-family:'Times New Roman',Times,serif}
   table.data-tbl thead tr{background:#1A3A6A}
   table.data-tbl thead th{padding:8px 12px;color:#B8D0F0;font-size:10px;font-weight:600;text-align:left;letter-spacing:.3px;text-transform:uppercase}
   table.data-tbl thead th.r{text-align:right}
@@ -4783,14 +4799,14 @@ function showPUPopup(e,code){
       <div style="flex:1;background:#EDF1F7;border-radius:2px;height:7px;overflow:hidden">
         <div style="width:${Math.min(100,vals[i]/maxV*100)}%;height:100%;background:${i===2?'#F4A932':'#1C3A5E'};border-radius:2px"></div>
       </div>
-      <div style="font-size:8px;width:55px;text-align:right;font-family:monospace">${vals[i]?vals[i].toLocaleString('en-IN'):'-'}</div>
+      <div style="font-size:8px;width:55px;text-align:right;font-family:'Times New Roman',Times,serif">${vals[i]?vals[i].toLocaleString('en-IN'):'-'}</div>
     </div>`).join('');
   const projBar=`<div style="display:flex;align-items:center;gap:6px">
     <div style="font-size:8px;color:#607080;width:36px">Proj</div>
     <div style="flex:1;background:#EDF1F7;border-radius:2px;height:7px;overflow:hidden">
       <div style="width:${Math.min(100,cv.projPerMonth/maxV*100)}%;height:100%;background:#0FBCB0;border-radius:2px"></div>
     </div>
-    <div style="font-size:8px;width:55px;text-align:right;font-family:monospace">${cv.projPerMonth>0?Math.round(cv.projPerMonth).toLocaleString('en-IN'):'-'}</div>
+    <div style="font-size:8px;width:55px;text-align:right;font-family:'Times New Roman',Times,serif">${cv.projPerMonth>0?Math.round(cv.projPerMonth).toLocaleString('en-IN'):'-'}</div>
   </div>`;
   const typeCol = pu.puType.includes('Staff PU')&&!pu.puType.includes('Non')?'#1A7A4A':pu.puType.includes('Contractual')?'#C07000':'#1C3A5E';
   _pp.innerHTML=`
@@ -5136,7 +5152,7 @@ function renderUploadLog() {
   tbody.innerHTML = _uploadHistory.map(e=>`
     <tr>
       <td><strong>${e.fileType}</strong></td>
-      <td style="font-family:monospace;font-size:9px">${e.filename}</td>
+      <td style="font-family:'Times New Roman',Times,serif;font-size:9px">${e.filename}</td>
       <td>${e.at}</td>
       <td>${e.monthDetected||'<span style="color:#aaa">N/A</span>'}</td>
       <td>${e.puCount} PUs</td>
