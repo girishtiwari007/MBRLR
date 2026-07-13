@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260710-biview';
+const ASSET_VERSION = '20260713-demand-dept';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -190,8 +190,9 @@ const SOURCE_REGISTER = {
   monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'Pre-loaded Month-wise Actuals file (CY static portal data)', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'Department / SMH Budget Available', fy:'2026-2027', source:'BudgetReport - 03-07-2026 15-17-44-SMH wise Budget.xls', used:'Dept SMH Analysis'},
-  smhMonthCY: {label:'Department / SMH Month-wise Actuals', fy:'2026-2027', source:'BudgetReport - 03-07-2026 15-45-38 SMH Month Wise.xls', used:'Dept SMH Analysis'}
+  smhBudgetCY: {label:'Department / SMH Budget Available', fy:'2026-2027', source:'BudgetReport - 03-07-2026 15-17-44-SMH wise Budget.xls', used:'DEPT-Demand Wise'},
+  smhMonthCY: {label:'Department / SMH Month-wise Actuals', fy:'2026-2027', source:'BudgetReport - 03-07-2026 15-45-38 SMH Month Wise.xls', used:'DEPT-Demand Wise'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'SMH Wise 2026-2027 Budget.xls + DEMAND AND SMH.xlsx', used:'Demand / SMH Summary', remarks:'OBA = BG_ISL; BP = BG_ISL / 12 x completed actual months; AE = actuals up to JUN 2026. Demand 12N/10N Suspense Heads is shown separately and not netted from main total.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -895,6 +896,64 @@ function biBars(rows, valueKey, labelFn, noteFn, clsFn) {
   }).join('') || '<div class="bi-empty">No rows available for this view.</div>';
 }
 
+function biMonthlyPattern() {
+  const active = activePUMeta();
+  const {cur} = getMonthStatus();
+  const values = FY_MONTHS.map(m => active.reduce((s, pu) => s + (((MONTH[pu.code] || {})[m]) || 0), 0));
+  const max = Math.max(1, ...values);
+  return FY_MONTHS.map((m, idx) => {
+    const val = values[idx] || 0;
+    const pct = Math.max(3, Math.min(100, (val / max) * 100));
+    const isCur = idx === cur.idx;
+    const isFuture = idx > cur.idx;
+    return `<span class="${isCur ? 'current' : isFuture ? 'future' : ''}" style="height:${pct}%"><em>${FY_MONTH_LABELS[idx].slice(0,3)}</em></span>`;
+  }).join('');
+}
+
+function biVisualWidgets(tab, data) {
+  const rows = reportRowsForActivePUs();
+  const totals = rows.reduce((t, r) => {
+    t.budget += r.budget;
+    t.actual += r.actual;
+    t.staff += r.pu.puType === 'Staff PU' ? r.actual : 0;
+    t.nonStaff += r.pu.puType === 'Non Staff PU' ? r.actual : 0;
+    return t;
+  }, {budget:0, actual:0, staff:0, nonStaff:0});
+  const util = totals.budget ? (totals.actual / totals.budget) * 100 : 0;
+  const utilClamp = Math.max(0, Math.min(100, util));
+  const over = rows.filter(r => r.over).length;
+  const noExp = rows.filter(r => r.noExpense).length;
+  const controlRows = typeof buildBudgetControlRows === 'function' ? buildBudgetControlRows() : [];
+  const ask = controlRows.reduce((s, r) => s + (r.askAmount || 0), 0);
+  const surrender = controlRows.reduce((s, r) => s + (r.surrenderAmount || 0), 0);
+  const totalMix = Math.max(1, ask + surrender);
+  const staffShare = totals.actual ? (totals.staff / totals.actual) * 100 : 0;
+  const nonStaffShare = Math.max(0, 100 - staffShare);
+  return `
+    <div class="bi-visual-strip">
+      <div class="bi-widget gauge">
+        <div class="bi-widget-label">Utilisation Gauge</div>
+        <div class="bi-donut" style="--p:${utilClamp.toFixed(1)}"><strong>${util.toFixed(1)}%</strong><span>Budget used</span></div>
+      </div>
+      <div class="bi-widget pattern">
+        <div class="bi-widget-label">Monthly Actual Pattern</div>
+        <div class="bi-month-bars">${biMonthlyPattern()}</div>
+      </div>
+      <div class="bi-widget mix">
+        <div class="bi-widget-label">Control Mix</div>
+        <div class="bi-mix-row"><span>Ask</span><div><i class="ask" style="width:${Math.min(100,(ask/totalMix)*100)}%"></i></div><b>${textCr(ask)}</b></div>
+        <div class="bi-mix-row"><span>Surrender</span><div><i class="surrender" style="width:${Math.min(100,(surrender/totalMix)*100)}%"></i></div><b>${textCr(surrender)}</b></div>
+        <div class="bi-alert-line">${over} over-budget PU(s), ${noExp} no-expense PU(s)</div>
+      </div>
+      <div class="bi-widget mix">
+        <div class="bi-widget-label">Staff vs Non-Staff Actual</div>
+        <div class="bi-mix-row"><span>Staff</span><div><i class="staff" style="width:${staffShare.toFixed(1)}%"></i></div><b>${staffShare.toFixed(1)}%</b></div>
+        <div class="bi-mix-row"><span>Non-Staff</span><div><i class="nonstaff" style="width:${nonStaffShare.toFixed(1)}%"></i></div><b>${nonStaffShare.toFixed(1)}%</b></div>
+        <div class="bi-alert-line">${htmlSafe((currentReportTitle(tab) || {}).title || 'Report')} visual reading</div>
+      </div>
+    </div>`;
+}
+
 function filteredSMHRowsForBI() {
   const data = window.DETAIL_SMH_DATA;
   if (!data || !Array.isArray(data.rows)) return [];
@@ -979,7 +1038,7 @@ function biDataForCurrentReport(tab) {
     const overRows = smhRows.filter(r => (Number(r.actualTill)||0) > (Number(r.budget)||0)).sort((a,b) => (b.actualTill-b.budget) - (a.actualTill-a.budget));
     return Object.assign(base, {
       kpis: [
-        ['Dept SMH Budget', detailCr(smhTotals.budget), `${smhRows.length} detail rows`, 'good'],
+        ['DEPT-Demand Budget', detailCr(smhTotals.budget), `${smhRows.length} detail rows`, 'good'],
         ['Actual Till Date', detailCr(smhTotals.actualTill), `${util.toFixed(1)}% utilised`, util >= 85 ? 'risk' : 'good'],
         ['Balance', detailCr(balance), balance < 0 ? 'Over spent' : 'Budget minus actual', balance < 0 ? 'danger' : 'good'],
         ['No Expense Lines', String(noExp.length), 'Budget available, no expense', 'warn']
@@ -989,10 +1048,42 @@ function biDataForCurrentReport(tab) {
       actions: [
         overRows[0] ? `Highest SMH overrun: ${overRows[0].deptCode} ${overRows[0].deptName}, PU-${overRows[0].puCode}.` : 'No SMH line has crossed budget in the selected view.',
         noExp[0] ? `Largest budget-with-no-expense line: ${noExp[0].deptCode} ${noExp[0].deptName}, PU-${noExp[0].puCode}.` : 'No budget-with-no-expense SMH line in selected filters.',
-        'Use Classic Table when department > demand > PU line-by-line checking is required.',
+        'Use Classic Table when DEPT > Demand > PU line-by-line checking is required.',
         'BI-AI view is for officer-level signal reading; it follows the same current filters.'
       ],
       focusRows: overRows.slice(0, 6).map(r => ({label:`${r.deptCode} ${r.deptName}`, desc:`${r.smh} | PU-${r.puCode} ${r.puName}`, value:detailCr((r.actualTill||0)-(r.budget||0)), cls:'danger'}))
+    });
+  }
+
+  if (tab === 'demandsmh') {
+    const dRows = demandSMHOperationalRows();
+    const dTotals = demandSMHTotals();
+    const dSuspense = demandSMHSuspenseRows()[0];
+    const excess = dRows.filter(r => (Number(r.variation) || 0) > 0).sort((a,b) => b.variation - a.variation);
+    const saving = dRows.filter(r => (Number(r.variation) || 0) < 0).sort((a,b) => Math.abs(b.variation) - Math.abs(a.variation));
+    const highUtil = dRows.slice().sort((a,b) => (Number(b.bpPct) || 0) - (Number(a.bpPct) || 0));
+    return Object.assign(base, {
+      kpis: [
+        ['OBA / BG_ISL', detailCr(dTotals.oba), 'Current year original budget allocation', 'good'],
+        ['BP Value', detailCr(dTotals.bp), 'BG / 12 x completed months', ''],
+        ['AE up to JUN', detailCr(dTotals.ae), `${dTotals.bpPct}% of BP`, dTotals.bpPct >= 100 ? 'risk' : 'good'],
+        ['Budget Remaining', detailCr(dTotals.budgetRemaining), `${dTotals.obaUtil}% OBA utilised`, dTotals.budgetRemaining < 0 ? 'danger' : 'good']
+      ],
+      barsTitle: 'Demand / SMH BP Utilisation',
+      bars: highUtil.slice(0, 8).map(r => ({label:demandSMHLabel(r), dept:r.dept, utilPct:Number(r.bpPct)||0, _displayValue:`${detailNum(r.bpPct)}%`, _barValue:Math.abs(Number(r.bpPct)||0)})),
+      actions: [
+        excess[0] ? `Highest excess against BP: ${demandSMHLabel(excess[0])} by ${detailCr(excess[0].variation)}.` : 'No excess against BP in Demand / SMH summary.',
+        saving[0] ? `Largest saving against BP: ${demandSMHLabel(saving[0])} by ${detailCr(Math.abs(saving[0].variation))}.` : 'No saving against BP in Demand / SMH summary.',
+        'OBA is taken from BG_ISL 2026-2027 in the SMH-wise budget file.',
+        'AE uses ACTUALS UPTO JUN 2026 because July is the running month.',
+        dSuspense ? `${demandSMHLabel(dSuspense)} Suspense Heads is separately calculated: AE ${detailCr(dSuspense.ae)}.` : 'Suspense Heads row is kept outside main Demand / SMH total.'
+      ],
+      focusRows: excess.concat(saving).slice(0, 6).map(r => ({
+        label:demandSMHLabel(r),
+        desc:r.dept,
+        value:signedCr(r.variation),
+        cls:(Number(r.variation)||0) > 0 ? 'danger' : ''
+      }))
     });
   }
 
@@ -1074,7 +1165,7 @@ function biDataForCurrentReport(tab) {
       barsTitle: 'Source Rule Highlights',
       actions: [
         'Budget Available and Month-wise Actuals feed the main financial tables.',
-        'Dept SMH files feed the Department > Demand > PU report.',
+        'DEPT-Demand files feed the Department > Demand > PU report.',
         'Department 00, PU-98 recoveries and GST PU-72 to PU-75 are excluded from normal operational view.',
         'Use Remarks Classic Table for exact source-file naming and rule register.'
       ]
@@ -1111,6 +1202,7 @@ function renderBIView() {
       <button type="button" class="bi-classic-btn" onclick="setReportViewMode('classic')">Back to Classic Table</button>
     </div>
     <div class="bi-kpi-grid">${data.kpis.map(k => biKpi(k[0], k[1], k[2], k[3])).join('')}</div>
+    ${biVisualWidgets(tab, data)}
     <div class="bi-layout">
       <div class="bi-card bi-wide">
         <div class="bi-card-title">${htmlSafe(data.barsTitle || 'Report Signals')}</div>
@@ -1874,7 +1966,7 @@ function handleTopFilterChange(sourceLabel) {
 }
 
 // Tabs and report menu
-const TAB_IDS = ['summary','liability','smhdetail','pumaster','monthwise','bpanalysis','budgetcontrol','trend','aitrend','remarks','upload'];
+const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','trend','aitrend','remarks','upload'];
 
 function syncReportNavigation(name) {
   document.querySelectorAll('[data-report-tab]').forEach(btn => {
@@ -1943,7 +2035,8 @@ function initDashboardDock() {
 const REPORT_LABELS = {
   summary:['Summary','Main points'],
   liability:['Main Report','Revenue Liability'],
-  smhdetail:['Dept SMH','Department SMH details'],
+  smhdetail:['DEPT-Demand','Department > Demand details'],
+  demandsmh:['Demand SMH','Demand / SMH grant summary'],
   pumaster:['PU Master','Code reference'],
   monthwise:['Month-wise','Actuals and projection'],
   bpanalysis:['BP Analysis','Budget Proportionate'],
@@ -2410,6 +2503,7 @@ function switchTab(name) {
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
   if(name==='bpanalysis'){setTimeout(renderBPAnalysis,80);}
   if(name==='budgetcontrol'){setTimeout(renderBudgetControl,80);}
+  if(name==='demandsmh'){setTimeout(renderDemandSMHSummary,80);}
   if(name==='remarks'){setTimeout(renderRemarks,80);}
   document.querySelectorAll('.tab').forEach((t,i) => {
     t.classList.toggle('active', TAB_IDS[i]===name);
@@ -2647,6 +2741,24 @@ function noExpenseStatus(flag) {
   return flag ? 'Budget Available, No Expenses' : '';
 }
 
+function detailStatusText(rowOrTotal) {
+  const budget = Number(rowOrTotal.budget) || 0;
+  const actualTill = Number(rowOrTotal.actualTill) || 0;
+  if (budget > 0 && Math.abs(actualTill) === 0) return 'Budget Available, No Expenses';
+  if (budget === 0 && Math.abs(actualTill) !== 0) return 'No Budget, Expense Booked';
+  if (budget - actualTill < 0) return 'Over Budget';
+  return 'Within Budget';
+}
+
+function smhDemandCode(smhValue) {
+  const raw = String(smhValue || '').trim();
+  const code = (raw.match(/SMH\s*-\s*(.+)$/i) || [])[1] || raw.replace(/^SMH\s*/i, '').replace(/^-/, '').trim();
+  const norm = code.trim().toUpperCase();
+  const match = demandSMHRows().find(r => String(r.smh || '').trim().toUpperCase() === norm);
+  const demand = match ? String(match.demand || '').trim().replace(/^Demand\s*/i, '') : '';
+  return demand ? `DEMAND ${demand}/SMH-${norm}` : `SMH-${norm}`;
+}
+
 function detailBPStatus(rowOrTotal) {
   const {actualMonths} = getMonthStatus();
   const monthCount = actualMonths.length;
@@ -2839,7 +2951,7 @@ function renderSMHDetail() {
       ['Actual Till Date', detailCr(totals.actualTill), util.toFixed(1) + '% utilised'],
       ['Balance', detailCr(balance), balance < 0 ? 'Over spent' : 'Budget minus actual'],
       ['Month Actuals', detailCr(visibleMonthKeys.reduce((s,m)=>s+(totals.months[m]||0),0)), `${monthLabels[0]} to ${monthLabels[visibleMonthKeys.length - 1]}`],
-      ['Rows', (mode === 'report' ? rows.length : grouped.length).toLocaleString('en-IN'), mode === 'report' ? 'PU lines in report' : 'summary groups']
+      ['Rows', (mode === 'report' ? rows.length : grouped.length).toLocaleString('en-IN'), mode === 'smh' ? 'Demand/SMH + Department groups' : mode === 'report' ? 'PU lines in report' : 'summary groups']
     ].map(([l,v,s]) => `<div class="smh-kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join('');
   }
   const title = document.getElementById('smhTableTitle');
@@ -2849,14 +2961,18 @@ function renderSMHDetail() {
       : mode === 'dept'
         ? 'Department Summary - Budget vs Expenditure'
         : mode === 'smh'
-          ? 'Department + Demand Summary - Budget vs Expenditure'
+          ? 'Demand wise Summary - DEMAND/SMH and Department month-wise actuals 2026-2027'
           : 'Department > Demand > PU Detail - Budget vs Expenditure';
   }
-  const leftHeaders = '<th>Department</th><th>Demand</th><th>Primary Unit (PU)</th>';
+  const leftHeaders = mode === 'smh'
+    ? '<th>Demand/SMH</th><th>Department</th>'
+    : '<th>Department</th><th>Demand</th><th>Primary Unit (PU)</th>';
   head.innerHTML = `<tr>${leftHeaders}<th>Budget<br>2026-27</th>` +
     monthLabels.slice(0,visibleMonthKeys.length).map(l => `<th>${htmlSafe(l.replace(' 2026',''))}<br>Actual</th>`).join('') +
     '<th>Exp. Total</th><th>Balance<br>(Budget-Exp)</th>' +
-    (mode === 'report'
+    (mode === 'smh'
+      ? '<th>Status</th><th>BP Status</th>'
+      : mode === 'report'
       ? '<th>Status</th><th>BP Status</th><th>BP Remark</th>'
       : '<th>Util%</th><th>Status</th><th>BP Status</th><th>BP Remark</th>') + '</tr>';
   if (!rows.length) {
@@ -2864,8 +2980,44 @@ function renderSMHDetail() {
     refreshBIViewSoon();
     return;
   }
+  if (mode === 'smh') {
+    const sortedRows = grouped.slice().sort((a,b) =>
+      String(a.smh).localeCompare(String(b.smh), undefined, {numeric:true}) ||
+      String(a.deptCode).localeCompare(String(b.deptCode), undefined, {numeric:true})
+    );
+    const totalBP = detailBPStatus(totals);
+    const totalRow = `<tr class="dept-total">
+      <td>Total</td>
+      <td>All Departments</td>
+      <td>${detailNum(totals.budget)}</td>
+      ${visibleMonthKeys.map(m => `<td>${detailNum(totals.months[m] || 0)}</td>`).join('')}
+      <td><strong>${detailNum(totals.actualTill)}</strong></td>
+      <td class="${detailBalanceClass(balance, totals.budget)}">${detailNum(balance)}</td>
+      <td>${htmlSafe(detailStatusText(totals))}</td>
+      <td><span class="bp-status ${totalBP.variance > 0 ? 'bp-excess' : totalBP.variance < 0 ? 'bp-saving' : ''}">${htmlSafe(totalBP.status)}</span></td>
+    </tr>`;
+    body.innerHTML = sortedRows.map(r => {
+      const bal = r.budget - r.actualTill;
+      const noExp = isSMHBudgetNoExpense(r);
+      const bp = detailBPStatus(r);
+      return `<tr class="pu-row${noExp ? ' no-exp-row' : ''}">
+        <td>${htmlSafe(smhDemandCode(r.smh))}</td>
+        <td>${htmlSafe(r.deptCode)} - ${htmlSafe(r.deptName)}</td>
+        <td>${detailNum(r.budget)}</td>
+        ${visibleMonthKeys.map(m => `<td>${detailNum((r.months || {})[m] || 0)}</td>`).join('')}
+        <td><strong>${detailNum(r.actualTill)}</strong></td>
+        <td class="${detailBalanceClass(bal, r.budget)}">${detailNum(bal)}</td>
+        <td class="no-exp-status">${htmlSafe(detailStatusText(r))}</td>
+        <td><span class="bp-status ${bp.variance > 0 ? 'bp-excess' : bp.variance < 0 ? 'bp-saving' : ''}">${htmlSafe(bp.status)}</span></td>
+      </tr>`;
+    }).join('') + totalRow;
+    setTimeout(applyMobileTableLabels, 40);
+    refreshBIViewSoon();
+    return;
+  }
   if (mode === 'report') {
     body.innerHTML = renderSMHReportRows(rows, visibleMonthKeys);
+    setTimeout(applyMobileTableLabels, 40);
     refreshBIViewSoon();
     return;
   }
@@ -2891,13 +3043,125 @@ function renderSMHDetail() {
       <td class="bp-remark">${htmlSafe(bp.remark)}</td>
     </tr>`;
   }).join('');
+  setTimeout(applyMobileTableLabels, 40);
   refreshBIViewSoon();
   } catch (err) {
     console.error('SMH detail render failed', err);
     head.innerHTML = '<tr><th>Department</th><th>Demand</th><th>Primary Unit (PU)</th><th>Status</th></tr>';
-    body.innerHTML = `<tr><td colspan="4" style="color:#9B0000;font-weight:700;padding:14px">Could not render Dept SMH Analysis: ${htmlSafe(err.message || err)}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="4" style="color:#9B0000;font-weight:700;padding:14px">Could not render DEPT-Demand Wise report: ${htmlSafe(err.message || err)}</td></tr>`;
     refreshBIViewSoon();
   }
+}
+
+function demandSMHData() {
+  return window.DEMAND_SMH_SUMMARY_DATA || {rows:[], totals:{}, completedMonths:0};
+}
+
+function demandSMHRows() {
+  const data = demandSMHData();
+  return Array.isArray(data.rows) ? data.rows : [];
+}
+
+function isDemandSMHSuspense(row) {
+  return !!row && (String(row.smh || '').toUpperCase() === '10N' || String(row.demand || '').toUpperCase().includes('12N/10N'));
+}
+
+function demandSMHOperationalRows() {
+  return demandSMHRows().filter(r => !isDemandSMHSuspense(r));
+}
+
+function demandSMHSuspenseRows() {
+  return demandSMHRows().filter(isDemandSMHSuspense);
+}
+
+function demandSMHTotals() {
+  const data = demandSMHData();
+  if (data.totals) return data.totals;
+  const rows = demandSMHOperationalRows();
+  const totals = rows.reduce((t, r) => {
+    t.oba += Number(r.oba) || 0;
+    t.ae += Number(r.ae) || 0;
+    t.budgetRemaining += Number(r.budgetRemaining) || 0;
+    return t;
+  }, {oba:0, ae:0, budgetRemaining:0});
+  totals.bp = Math.round(totals.oba / 12 * (Number(data.completedMonths) || 3));
+  totals.variation = totals.ae - totals.bp;
+  totals.bpPct = totals.bp ? Math.round((totals.ae / totals.bp) * 100) : 0;
+  totals.obaUtil = totals.oba ? Math.round((totals.ae / totals.oba) * 100) : 0;
+  return totals;
+}
+
+function demandSMHLabel(row) {
+  if (!row) return '';
+  if (String(row.demand || '').toLowerCase().includes('demand')) return row.demand;
+  return `Demand ${row.demand}/${row.smh}`;
+}
+
+function renderDemandSMHSummary() {
+  const body = document.getElementById('demandSmhBody');
+  if (!body) return;
+  const data = demandSMHData();
+  const rows = demandSMHOperationalRows();
+  const suspenseRows = demandSMHSuspenseRows();
+  const totals = demandSMHTotals();
+  const meta = document.getElementById('demandSmhMeta');
+  if (meta) meta.textContent = `Current year Demand / SMH grant summary for FY ${data.fy || '2026-2027'}; BP uses ${data.completedMonths || 3} completed actual months. Demand 12N/10N Suspense Heads is separately calculated.`;
+  const source = document.getElementById('demandSmhSource');
+  if (source) source.textContent = `Source: ${data.sourceBudget || 'SMH Wise Budget'} | Code: ${data.sourceCode || 'DEMAND AND SMH'} | AE as on ${data.asOn || 'JUN 2026'} | Suspense kept separate`;
+  const kpis = document.getElementById('demandSmhKpis');
+  if (kpis) {
+    kpis.innerHTML = [
+      ['OBA / BG_ISL', detailCr(totals.oba), `${detailNum(totals.oba)} in Rs'000s`],
+      ['BP Value', detailCr(totals.bp), `BG / 12 x ${data.completedMonths || 3} months`],
+      ['Actual Expenditure', detailCr(totals.ae), `AE up to ${data.asOn || 'JUN 2026'}`],
+      ['Variation vs BP', detailCr(totals.variation), totals.variation > 0 ? 'Excess against proportionate budget' : 'Saving against proportionate budget'],
+      ['OBA Utilized', `${totals.obaUtil}%`, 'Actual as percentage of OBA'],
+      ['Suspense Separate', suspenseRows[0] ? detailCr(suspenseRows[0].ae) : '0.00 Cr', 'Demand 12N/10N not netted in main total']
+    ].map(([l,v,s]) => `<div class="demand-smh-kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${htmlSafe(s)}</div></div>`).join('');
+  }
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:18px">Demand / SMH summary data file not loaded.</td></tr>';
+    refreshBIViewSoon();
+    return;
+  }
+  const rowHtml = rows.map(r => {
+    const riskCls = (Number(r.bpPct) || 0) >= 150 || (Number(r.budgetRemaining) || 0) < 0 ? ' high' : (Number(r.bpPct) || 0) >= 115 ? ' watch' : '';
+    return `<tr class="demand-smh-row${riskCls}">
+      <td><strong>${htmlSafe(demandSMHLabel(r))}</strong></td>
+      <td><strong>${htmlSafe(r.dept)}</strong><span>${htmlSafe(r.description || '')}</span></td>
+      <td>${detailNum(r.oba)}</td>
+      <td>${detailNum(r.bp)}</td>
+      <td>${detailNum(r.ae)}</td>
+      <td class="${(Number(r.variation)||0) >= 0 ? 'dsmh-excess' : 'dsmh-saving'}">${detailNum(r.variation)}</td>
+      <td class="${(Number(r.bpPct)||0) >= 150 || (Number(r.bpPct)||0) < 0 ? 'dsmh-red' : ''}">${detailNum(r.bpPct)}</td>
+      <td class="${(Number(r.budgetRemaining)||0) < 0 ? 'dsmh-red' : ''}">${detailNum(r.budgetRemaining)}</td>
+      <td class="${(Number(r.obaUtil)||0) >= 45 || (Number(r.obaUtil)||0) < 0 ? 'dsmh-red' : ''}">${detailNum(r.obaUtil)}</td>
+    </tr>`;
+  }).join('');
+  const suspenseHtml = suspenseRows.map(r => `<tr class="demand-smh-suspense">
+      <td><strong>Separate: ${htmlSafe(demandSMHLabel(r))}</strong></td>
+      <td><strong>${htmlSafe(r.dept)}</strong><span>Separately calculated - not included in main total</span></td>
+      <td>${detailNum(r.oba)}</td>
+      <td>${detailNum(r.bp)}</td>
+      <td>${detailNum(r.ae)}</td>
+      <td class="dsmh-excess">${detailNum(r.variation)}</td>
+      <td class="dsmh-red">${detailNum(r.bpPct)}</td>
+      <td class="dsmh-red">${detailNum(r.budgetRemaining)}</td>
+      <td class="dsmh-red">${detailNum(r.obaUtil)}</td>
+    </tr>`).join('');
+  body.innerHTML = rowHtml + `<tr class="demand-smh-total">
+    <td>Total</td>
+    <td></td>
+    <td>${detailNum(totals.oba)}</td>
+    <td>${detailNum(totals.bp)}</td>
+    <td>${detailNum(totals.ae)}</td>
+    <td>${detailNum(totals.variation)}</td>
+    <td>${detailNum(totals.bpPct)}</td>
+    <td>${detailNum(totals.budgetRemaining)}</td>
+    <td>${detailNum(totals.obaUtil)}</td>
+  </tr>${suspenseHtml}`;
+  setTimeout(applyMobileTableLabels, 40);
+  refreshBIViewSoon();
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -3199,7 +3463,7 @@ async function downloadExcel() {
   addSheet(wb,'Budget Proportionate',HDR_TITLE,'BP = Budget Grant / 12 x completed actual months; running month is excluded',bpHdrs,bpRows,
     [8,26,14,14,18,14,20,20,18,12,18,36]);
 
-  // Sheet 6: Dept SMH Analysis - visible report style, no internal raw JSON
+  // Sheet 6: DEPT-Demand Wise - visible report style, no internal raw JSON
   if (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) {
     const smhData = window.DETAIL_SMH_DATA;
     const smhExportRows = smhData.rows.filter(r => !isSkippedDisplayPU(r.puCode));
@@ -3268,8 +3532,31 @@ async function downloadExcel() {
       deptTotalRow._tot = true;
       smhRows.push(deptTotalRow);
     });
-    addSheet(wb,'Dept SMH Analysis',HDR_TITLE,'Department > Demand > Primary Unit - Budget vs Expenditure',smhHeaders,smhRows,
+    addSheet(wb,'DEPT-Demand Wise',HDR_TITLE,'Department > Demand > Primary Unit - Budget vs Expenditure',smhHeaders,smhRows,
       [18,14,32,16].concat(smhVisibleMonths.map(()=>14)).concat([16,18,28,18,36]));
+  }
+
+  // Sheet 7: Demand / SMH grant summary
+  if (window.DEMAND_SMH_SUMMARY_DATA && Array.isArray(window.DEMAND_SMH_SUMMARY_DATA.rows)) {
+    const dData = demandSMHData();
+    const dTotals = demandSMHTotals();
+    const dSuspenseRows = demandSMHSuspenseRows();
+    const dHeaders = ['Demand / SMH','DEPT','OBA',"BP (BG/12 x months)",'AE','Variation','% BP','Budget Remaining','% OBA Utilized'];
+    const dRows = demandSMHOperationalRows().map(r => {
+      const row = [demandSMHLabel(r), r.dept, r.oba, r.bp, r.ae, r.variation, r.bpPct, r.budgetRemaining, r.obaUtil];
+      if ((Number(r.bpPct) || 0) >= 150 || (Number(r.budgetRemaining) || 0) < 0) row._noexp = true;
+      return row;
+    });
+    const dTotalRow = ['Total','', dTotals.oba, dTotals.bp, dTotals.ae, dTotals.variation, dTotals.bpPct, dTotals.budgetRemaining, dTotals.obaUtil];
+    dTotalRow._tot = true;
+    dRows.push(dTotalRow);
+    dSuspenseRows.forEach(r => {
+      const sRow = [`Separate: ${demandSMHLabel(r)}`, `${r.dept} - separately calculated, not netted in main total`, r.oba, r.bp, r.ae, r.variation, r.bpPct, r.budgetRemaining, r.obaUtil];
+      sRow._noexp = true;
+      dRows.push(sRow);
+    });
+    addSheet(wb,'Demand SMH Summary',HDR_TITLE,`Demand / SMH Wise | ${dData.note || 'Figures in Rs thousands'}`,dHeaders,dRows,
+      [16,34,14,16,14,14,10,18,14]);
   }
 
   const fileDate = new Date().toISOString().slice(0,10);
@@ -3559,6 +3846,31 @@ async function downloadPDFReport() {
     .sort((a,b) => (Number(b.budget) || 0) - (Number(a.budget) || 0))
     .slice(0, 80)
     .map(r => [`${r.deptCode} - ${r.deptName}`, r.smh, `PU-${r.puCode} - ${r.puName}`, detailCr(r.budget), 'Budget available but no actual expense booked']);
+  const demandRows = demandSMHOperationalRows();
+  const demandSuspenseRows = demandSMHSuspenseRows();
+  const demandTotals = demandSMHTotals();
+  const demandAnnexure = demandRows.map(r => [
+    demandSMHLabel(r),
+    r.dept,
+    detailCr(r.oba),
+    detailCr(r.bp),
+    detailCr(r.ae),
+    signedCr(r.variation),
+    detailNum(r.bpPct) + '%',
+    detailCr(r.budgetRemaining),
+    detailNum(r.obaUtil) + '%'
+  ]);
+  const demandSuspenseAnnexure = demandSuspenseRows.map(r => [
+    `Separate: ${demandSMHLabel(r)}`,
+    `${r.dept} - separately calculated, not netted in main total`,
+    detailCr(r.oba),
+    detailCr(r.bp),
+    detailCr(r.ae),
+    signedCr(r.variation),
+    detailNum(r.bpPct) + '%',
+    detailCr(r.budgetRemaining),
+    detailNum(r.obaUtil) + '%'
+  ]);
 
   function header(title) {
     doc.setFillColor(10, 22, 40);
@@ -3631,7 +3943,7 @@ async function downloadPDFReport() {
     startY: doc.lastAutoTable.finalY + 18,
     pageTitle:'Revenue Liability Report - Executive Summary',
     head:[['Coverage Area','Current Position','Officer Note']],
-    body:portalSummaryRows,
+    body:portalSummaryRows.concat([['Demand / SMH Summary', `${demandRows.length} grant rows + Suspense separate`, `OBA ${detailCr(demandTotals.oba)}, AE ${detailCr(demandTotals.ae)}, BP utilisation ${detailNum(demandTotals.bpPct)}%. Demand 12N/10N Suspense Heads is separately calculated.`]]),
     columnStyles:{2:{cellWidth:360}}
   });
 
@@ -3727,17 +4039,17 @@ async function downloadPDFReport() {
     columnStyles:{2:{cellWidth:440}}
   });
 
-  addPage('Revenue Liability Report - Department / SMH Summary');
+  addPage('Revenue Liability Report - DEPT-Demand Summary');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - Department / SMH Summary',
+    pageTitle:'Revenue Liability Report - DEPT-Demand Summary',
     head:[['Department','Budget','Actual','Balance']],
     body:smhDept.map(r => [r.name, detailCr(r.budget), detailCr(r.actual), detailCr(r.balance)]),
     columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'}}
   });
   autoTable({
     startY: doc.lastAutoTable.finalY + 16,
-    pageTitle:'Revenue Liability Report - Department / SMH Summary',
+    pageTitle:'Revenue Liability Report - DEPT-Demand Summary',
     head:[['Department','Demand','Primary Unit','Budget','Actual','Balance','Status','BP Status']],
     body:smhDetailAnnexure,
     styles:{fontSize:6.8, cellPadding:2.2, overflow:'linebreak'},
@@ -3752,6 +4064,20 @@ async function downloadPDFReport() {
       body:smhNoExpenseAnnexure,
       styles:{fontSize:7.5, cellPadding:3, overflow:'linebreak'},
       columnStyles:{2:{cellWidth:260},3:{halign:'right'},4:{cellWidth:230}}
+    });
+  }
+
+  if (demandAnnexure.length) {
+    addPage('Revenue Liability Report - Demand / SMH Grant Summary');
+    autoTable({
+      startY: 58,
+      pageTitle:'Revenue Liability Report - Demand / SMH Grant Summary',
+      head:[['Demand / SMH','DEPT','OBA','BP','AE','Variation','% BP','Budget Remaining','% OBA Utilized']],
+      body:demandAnnexure
+        .concat([['Total','', detailCr(demandTotals.oba), detailCr(demandTotals.bp), detailCr(demandTotals.ae), signedCr(demandTotals.variation), detailNum(demandTotals.bpPct) + '%', detailCr(demandTotals.budgetRemaining), detailNum(demandTotals.obaUtil) + '%']])
+        .concat(demandSuspenseAnnexure),
+      styles:{fontSize:7.3, cellPadding:2.5, overflow:'linebreak'},
+      columnStyles:{1:{cellWidth:170},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'},8:{halign:'right'}}
     });
   }
 
@@ -4594,7 +4920,7 @@ function renderRemarks() {
 
   const aiSkipCodes = staffCommitted.map(pu => `PU-${pu.code}`).join(', ');
   ruleBody.innerHTML = [
-    ['Department skip from IPAS detail file', 'DEPARTMENTCODE = 00', 'Dept SMH Analysis import/parsing', 'Department 00 rows are treated as non-operational/control rows and are not included in detail display.'],
+    ['Department skip from IPAS detail file', 'DEPARTMENTCODE = 00', 'DEPT-Demand Wise import/parsing', 'Department 00 rows are treated as non-operational/control rows and are not included in detail display.'],
     ['Credit / recovery skip', 'PU-98 Credit or Recoveries', 'All normal budget/expense display; kept separately for recovery reference/export', 'Recoveries are negative/credit nature and are not mixed with expenditure analysis.'],
     ['GST PU display skip', 'PU-72 CGST, PU-73 SGST, PU-74 UTGST, PU-75 IGST', 'All visible tabs/tables and analysis pages', 'These are tax adjustment heads and are excluded from operational expenditure view.'],
     ['AI Trend committed staff skip', aiSkipCodes, 'AI Trend Analysis Summary only', 'Staff committed liability is regular payroll type spending, so AI Trend focuses on controllable/non-committed pressure.'],
@@ -4918,6 +5244,7 @@ function renderAll() {
   renderLiability();
   renderMonthwise();
   renderPUMaster();
+  renderDemandSMHSummary();
   renderBPAnalysis();
   renderBudgetControl();
   renderRemarks();
