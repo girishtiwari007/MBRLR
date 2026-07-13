@@ -412,6 +412,11 @@ const DEFAULT_DATA_AS_ON_DATE = new Date('2026-07-13T10:50:45+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
 const RLP_BUILD_ID = 'rlp-mbd-2026-07-13-data-refresh';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
+const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
+const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
+let _uploadConfirmHistory = [];
+let _pyUploadMeta = null;
+let _pyUploadMode = false;
 
 function formatAsOnDate(d) {
   const dt = d instanceof Date && !isNaN(d) ? d : DEFAULT_DATA_AS_ON_DATE;
@@ -459,6 +464,104 @@ function loadCYUploadState() {
   } catch (err) {
     console.warn('Could not clear saved upload state', err);
   }
+}
+
+function indianDateTime(value) {
+  const dt = value instanceof Date ? value : new Date(value || Date.now());
+  if (!(dt instanceof Date) || isNaN(dt)) return '';
+  return dt.toLocaleString('en-IN', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+function loadUploadConfirmHistory() {
+  try {
+    _uploadConfirmHistory = JSON.parse(localStorage.getItem(RLP_UPLOAD_CONFIRM_KEY) || '[]').slice(0, 2);
+  } catch (err) {
+    _uploadConfirmHistory = [];
+  }
+}
+
+function saveUploadConfirmHistory() {
+  try {
+    localStorage.setItem(RLP_UPLOAD_CONFIRM_KEY, JSON.stringify(_uploadConfirmHistory.slice(0, 2)));
+  } catch (err) {
+    console.warn('Could not save upload confirmation history', err);
+  }
+}
+
+function addUploadConfirmation(entry) {
+  _uploadConfirmHistory.unshift({
+    at: new Date().toISOString(),
+    label: entry.label || 'Upload confirmed',
+    detail: entry.detail || '',
+    files: entry.files || ''
+  });
+  _uploadConfirmHistory = _uploadConfirmHistory.slice(0, 2);
+  saveUploadConfirmHistory();
+  renderUploadConfirmHistory();
+}
+
+function savePYUploadState(meta) {
+  try {
+    _pyUploadMeta = {...meta, confirmedAt: new Date().toISOString()};
+    localStorage.setItem(RLP_PY_UPLOAD_STATE_KEY, JSON.stringify({
+      meta:_pyUploadMeta,
+      budget:BUDGET_PY,
+      month:MONTH_PY
+    }));
+  } catch (err) {
+    console.warn('Could not save previous year upload state', err);
+  }
+}
+
+function loadPYUploadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(RLP_PY_UPLOAD_STATE_KEY) || 'null');
+    if (!saved) return;
+    if (saved.budget && typeof saved.budget === 'object') BUDGET_PY = saved.budget;
+    if (saved.month && typeof saved.month === 'object') MONTH_PY = saved.month;
+    _pyUploadMeta = saved.meta || null;
+    if (_pyUploadMeta) {
+      SOURCE_REGISTER.budgetPY.source = _pyUploadMeta.budgetFile || SOURCE_REGISTER.budgetPY.source;
+      SOURCE_REGISTER.monthPY.source = _pyUploadMeta.monthFile || SOURCE_REGISTER.monthPY.source;
+      SOURCE_REGISTER.budgetPY.remarks = `Previous year data restored from browser storage; confirmed ${indianDateTime(_pyUploadMeta.confirmedAt)}.`;
+      SOURCE_REGISTER.monthPY.remarks = SOURCE_REGISTER.budgetPY.remarks;
+    }
+  } catch (err) {
+    console.warn('Could not load previous year upload state', err);
+  }
+}
+
+function setPYUpdateMode(enabled) {
+  _pyUploadMode = !!enabled;
+  const panel = document.getElementById('pyUploadPanel');
+  const yes = document.getElementById('pyYesBtn');
+  const no = document.getElementById('pyNoBtn');
+  if (panel) panel.style.display = _pyUploadMode ? 'grid' : 'none';
+  if (yes) yes.classList.toggle('active', _pyUploadMode);
+  if (no) no.classList.toggle('active', !_pyUploadMode);
+}
+
+function renderUploadConfirmHistory() {
+  const wrap = document.getElementById('uploadConfirmHistory');
+  if (wrap) {
+    wrap.innerHTML = _uploadConfirmHistory.length
+      ? _uploadConfirmHistory.map(item => `<div class="upload-confirm-item">
+          <strong>${htmlSafe(item.label)} - ${htmlSafe(indianDateTime(item.at))}</strong>
+          <span>${htmlSafe(item.detail || '')}${item.files ? '<br>' + htmlSafe(item.files) : ''}</span>
+        </div>`).join('')
+      : '<div class="upload-confirm-empty">No upload confirmed in this browser yet.</div>';
+  }
+  const pyStatus = document.getElementById('pyUploadStatus');
+  if (pyStatus) {
+    pyStatus.textContent = _pyUploadMeta
+      ? `Stored PY data confirmed ${indianDateTime(_pyUploadMeta.confirmedAt)}`
+      : 'OK Pre-loaded from static file';
+  }
+}
+
+function loadUploadAdminState() {
+  loadPYUploadState();
+  loadUploadConfirmHistory();
 }
 
 function getCurrentFYMonth() {
@@ -2084,7 +2187,6 @@ const REPORT_LABELS = {
 
 function smartSearchItems() {
   const reportItems = Object.entries(REPORT_LABELS)
-    .filter(([key]) => key !== 'upload' || ((document.getElementById('uploadMenuBtn') || {}).style || {}).display !== 'none')
     .map(([key, val]) => ({type:'report', key, title:val[0], sub:val[1]}));
   const puItems = activePUMeta().map(pu => ({
     type:'pu',
@@ -4891,7 +4993,16 @@ function applyUploads() {
   }
   let monthChanged = false;
   const hadCYUpdate = !!(_pendingBudget || _pendingMonth);
+  const hadPYUpdate = !!(_pendingBudgetPY || _pendingMonthPY);
   const hadSMHUpdate = !!(_pendingSMHBudget || _pendingSMHMonth);
+  const pendingNames = {
+    cyBudget:_pendingBudget && _pendingBudget.filename,
+    cyMonth:_pendingMonth && _pendingMonth.filename,
+    pyBudget:_pendingBudgetPY && _pendingBudgetPY.filename,
+    pyMonth:_pendingMonthPY && _pendingMonthPY.filename,
+    smhBudget:_pendingSMHBudget && _pendingSMHBudget.filename,
+    smhMonth:_pendingSMHMonth && _pendingSMHMonth.filename
+  };
 
   // â”€â”€ Apply budget data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if(_pendingBudget) {
@@ -4919,10 +5030,12 @@ function applyUploads() {
   // â”€â”€ Re-render everything â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if(_pendingBudgetPY){
     Object.entries(_pendingBudgetPY.data).forEach(([c,v])=>{ BUDGET_PY[c]={bg_isl:v.bg_isl,rg:v.rg,actuals_till:v.actuals_till}; });
+    SOURCE_REGISTER.budgetPY.source = _pendingBudgetPY.filename || SOURCE_REGISTER.budgetPY.source;
     _pendingBudgetPY=null;
   }
   if(_pendingMonthPY){
     Object.entries(_pendingMonthPY.data).forEach(([c,v])=>{ MONTH_PY[c]=v; });
+    SOURCE_REGISTER.monthPY.source = _pendingMonthPY.filename || SOURCE_REGISTER.monthPY.source;
     _pendingMonthPY=null;
   }
   if(_pendingSMHBudget || _pendingSMHMonth) {
@@ -4952,8 +5065,30 @@ function applyUploads() {
     initSMHDetailFilters();
   }
   if(hadCYUpdate) saveCYUploadState();
+  if(hadPYUpdate) {
+    savePYUploadState({
+      budgetFile:pendingNames.pyBudget || SOURCE_REGISTER.budgetPY.source,
+      monthFile:pendingNames.pyMonth || SOURCE_REGISTER.monthPY.source
+    });
+    SOURCE_REGISTER.budgetPY.remarks = `Previous year data uploaded and confirmed ${indianDateTime(_pyUploadMeta && _pyUploadMeta.confirmedAt)}.`;
+    SOURCE_REGISTER.monthPY.remarks = SOURCE_REGISTER.budgetPY.remarks;
+    setPYUpdateMode(false);
+  }
+  if(hadCYUpdate || hadPYUpdate || hadSMHUpdate) {
+    const parts = [];
+    if (hadCYUpdate) parts.push('CY PU data');
+    if (hadSMHUpdate) parts.push('CY DEPT-Demand detail');
+    if (hadPYUpdate) parts.push('PY comparison data');
+    const files = Object.values(pendingNames).filter(Boolean).join(' | ');
+    addUploadConfirmation({
+      label:'Confirmed upload',
+      detail:parts.join(', ') || 'Portal data refreshed',
+      files
+    });
+  }
   renderAll();
   renderCurDataGrid();
+  renderUploadConfirmHistory();
   renderRemarks();
   renderUploadLog();
   if(typeof renderTrend==='function') renderTrend();
@@ -4990,6 +5125,8 @@ function renderCurDataGrid() {
   const dataSource = _uploadedMonthIdx !== null
     ? `Uploaded file (${FY_MONTH_LABELS[_uploadedMonthIdx]} ${_uploadedMonthIdx<=8?2026:2027})`
     : 'Pre-loaded (JUN 2026)';
+  const lastConfirm = _uploadConfirmHistory[0] ? indianDateTime(_uploadConfirmHistory[0].at) : 'Not confirmed this browser';
+  const pySource = _pyUploadMeta ? `Stored PY (${indianDateTime(_pyUploadMeta.confirmedAt)})` : 'Pre-loaded PY static';
   grid.innerHTML=`
     <div class="cdb-item"><div class="cdb-lbl">Data Source</div><div class="cdb-val" style="font-size:10px">${dataSource}</div></div>
     <div class="cdb-item"><div class="cdb-lbl">Current Month</div><div class="cdb-val" style="color:#1A4E9A">${cur.label} ${cur.year}</div></div>
@@ -4997,7 +5134,10 @@ function renderCurDataGrid() {
     <div class="cdb-item"><div class="cdb-lbl">Committed Till Date</div><div class="cdb-val" style="color:#1A7A4A">${(totC*1000/10000000).toFixed(0)} Cr</div></div>
     <div class="cdb-item"><div class="cdb-lbl">Remaining Months</div><div class="cdb-val">${futureMonths.length}</div></div>
     <div class="cdb-item"><div class="cdb-lbl">Budget Mode</div><div class="cdb-val" style="font-size:10px">${isRGActive()?'OK RG Active':'BG_ISL'}</div></div>
+    <div class="cdb-item"><div class="cdb-lbl">PY Source</div><div class="cdb-val" style="font-size:10px">${htmlSafe(pySource)}</div></div>
+    <div class="cdb-item"><div class="cdb-lbl">Last Confirm</div><div class="cdb-val" style="font-size:10px">${htmlSafe(lastConfirm)}</div></div>
   `;
+  renderUploadConfirmHistory();
 }
 
 function renderRemarks() {
@@ -5424,9 +5564,11 @@ function applyMobileTableLabels() {
 initPortalTheme();
 initBlockStyle();
 loadCYUploadState();
+loadUploadAdminState();
 initSMHDetailFilters();
 restoreLoginSession();
 renderAll();
+renderUploadConfirmHistory();
 setTimeout(renderSMHDetail, 120);
 (function(){
   const sel=document.getElementById('trendPUSelect'); if(!sel) return;

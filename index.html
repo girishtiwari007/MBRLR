@@ -396,7 +396,15 @@
       </div>
       <div class="upload-lock">ADMIN ACCESS ONLY</div>
     </div>
-    <div class="cur-data-box"><h4>Currently Loaded Data Snapshot</h4><div class="cdb-grid" id="curDataGrid"></div></div>
+    <div class="upload-top-grid">
+      <div class="cur-data-box"><h4>Currently Loaded Data Snapshot</h4><div class="cdb-grid" id="curDataGrid"></div></div>
+      <div class="upload-confirm-box">
+        <h4>Last Upload Confirmations</h4>
+        <div class="upload-confirm-list" id="uploadConfirmHistory">
+          <div class="upload-confirm-empty">No upload confirmed in this browser yet.</div>
+        </div>
+      </div>
+    </div>
 
     <div style="margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:8px">
       <span style="background:#1C3A5E;color:#C9A84C;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">FY 2026-27 - CURRENT YEAR</span>
@@ -455,11 +463,16 @@
       </div>
     </div>
 
-    <div style="margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid #607080;display:flex;align-items:center;gap:8px">
+    <div style="margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid #607080;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span style="background:#394A5E;color:#A8C0D8;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">FY 2025-26 - PREVIOUS YEAR (for Trend Comparison)</span>
-      <span style="font-size:9px;color:#1A7A4A;font-weight:700">OK Pre-loaded from static file</span>
+      <span style="font-size:9px;color:#1A7A4A;font-weight:700" id="pyUploadStatus">OK Pre-loaded from static file</span>
+      <div class="py-update-choice">
+        <span>PY data changed?</span>
+        <button type="button" class="active" id="pyNoBtn" onclick="setPYUpdateMode(false)">No</button>
+        <button type="button" id="pyYesBtn" onclick="setPYUpdateMode(true)">Yes, upload</button>
+      </div>
     </div>
-    <div class="upload-cards" style="margin-top:10px">
+    <div class="upload-cards py-upload-panel" id="pyUploadPanel" style="margin-top:10px;display:none">
       <div class="upload-card" style="border-top:3px solid #607080">
         <h3>Budget Available - PY 2025-26</h3>
         <p>Re-upload previous year budget if needed.<br>Currently pre-loaded from 27-Jun-2026 file.</p>
