@@ -3472,6 +3472,7 @@ async function downloadExcel() {
           const label = String(rowData[0] || '');
           if (label === '98' || rowData._neg) bg = 'FFE8E8';
           else if (rowData._noexp) bg = 'FFF4C2';
+          else if (rowData._important) bg = 'FFF8D8';
           else if (rowData._cs) bg = 'E8FAF0';
           else if (rowData._co) bg = 'FFF8E8';
           else if (rowData._tot) bg = 'E8EFF8';
@@ -3490,6 +3491,9 @@ async function downloadExcel() {
           if (text.includes('BUDGET AVAILABLE, NO EXPENSES')) {
             cell.fill = fill('FFF1A8');
             cell.font = font('6C4700', true, 10);
+          }
+          if (rowData && rowData._important && colNumber <= 2) {
+            cell.font = font('0E6A52', true, 10);
           }
         });
       });
@@ -3527,6 +3531,7 @@ async function downloadExcel() {
               const label = String(rowData[0]||'');
               if (label==='98') bg='FFE8E8';
               else if (rowData._noexp) bg='FFF4C2';
+              else if (rowData._important) bg='FFF8D8';
               else if (rowData._cs) bg='E8FAF0';
               else if (rowData._co) bg='FFF8E8';
               else if (rowData._tot) bg='E8EFF8';
@@ -3575,6 +3580,7 @@ async function downloadExcel() {
       cv.totalCommitted,cv.balanceBudget,Math.round(cv.projPerMonth),
       pctStr, status];
     row._noexp = isBudgetNoExpense(pu.code);
+    row._important = isImportantPU(pu.code);
     row._cs = (pu.puType==='Staff PU' && pu.liab==='Committed');
     row._co = (!row._cs && pu.liab==='Committed');
     liabRows.push(row);
@@ -3610,6 +3616,7 @@ async function downloadExcel() {
       proj,proj,proj,proj,proj,proj,proj,proj,proj,
       cv.budget,cv.totalCommitted,cv.balanceBudget,pct,status];
     row._noexp=isBudgetNoExpense(pu.code);
+    row._important = isImportantPU(pu.code);
     row._cs=(pu.puType==='Staff PU'&&pu.liab==='Committed');
     row._co=(!row._cs&&pu.liab==='Committed');
     mwRows.push(row);
@@ -3652,6 +3659,7 @@ async function downloadExcel() {
       bud.bg_isl||0,parseFloat(((bud.bg_isl||0)*1000/10000000).toFixed(2)),
       bud.actuals_till||0,cv.balanceBudget,parseFloat((cv.balanceBudget*1000/10000000).toFixed(2)),pct,status];
     row._noexp=isBudgetNoExpense(pu.code);
+    row._important = isImportantPU(pu.code);
     row._cs=(pu.puType==='Staff PU'&&pu.liab==='Committed');
     row._co=(!row._cs&&pu.liab==='Committed');
     row._neg=pu.isNeg;
@@ -3669,6 +3677,7 @@ async function downloadExcel() {
       Math.round(r.bp), Math.round(r.actualTill), Math.round(r.variance),
       r.budget ? parseFloat(r.utilPct.toFixed(1)) + '%' : '0.0%', r.status, r.remark];
     row._noexp = r.noExpense;
+    row._important = isImportantPU(r.pu.code);
     row._cs = (r.pu.puType === 'Staff PU' && r.pu.liab === 'Committed');
     row._co = (!row._cs && r.pu.liab === 'Committed');
     return row;
@@ -3686,7 +3695,49 @@ async function downloadExcel() {
   addSheet(wb,'Budget Proportionate',HDR_TITLE,'BP = Budget Grant / 12 x completed actual months; running month is excluded',bpHdrs,bpRows,
     [8,26,14,14,18,14,20,20,18,12,18,36]);
 
-  // Sheet 6: DEPT-Demand Wise - visible report style, no internal raw JSON
+  // Sheet 6: Budget Control - BG/AR/REA/RG/FME/FG action view
+  const bcRowsSource = buildBudgetControlRows();
+  const bcHdrs = ['PU','Description','Action','Ceiling',"Actual Till Date (Rs'000s)",
+    "Projected Requirement (Rs'000s)","Amount to Ask (Rs'000s)","Possible Surrender (Rs'000s)",
+    'Utilisation %','Budget Stage','Budget Control Remark'];
+  const bcRows = bcRowsSource.map(r => {
+    const row = [
+      r.pu.code,
+      r.pu.desc,
+      r.label,
+      Math.round(r.ceiling || 0),
+      Math.round(r.actualTill || 0),
+      Math.round(r.projectedRequirement || 0),
+      Math.round(r.askAmount || 0),
+      Math.round(r.surrenderAmount || 0),
+      r.ceiling ? parseFloat(r.utilPct.toFixed(1)) + '%' : (r.actualTill ? 'No Budget' : '0.0%'),
+      r.stage.askLabel,
+      r.remark
+    ];
+    row._important = isImportantPU(r.pu.code);
+    row._noexp = r.noExpense || r.key === 'ask' || r.key === 'watch';
+    row._neg = r.noBudgetSpend || r.askAmount > 0;
+    row._cs = r.key === 'surrender';
+    return row;
+  });
+  const bcTotals = bcRowsSource.reduce((t, r) => {
+    t.ceiling += Number(r.ceiling) || 0;
+    t.actual += Number(r.actualTill) || 0;
+    t.projected += Number(r.projectedRequirement) || 0;
+    t.ask += Number(r.askAmount) || 0;
+    t.surrender += Number(r.surrenderAmount) || 0;
+    return t;
+  }, {ceiling:0, actual:0, projected:0, ask:0, surrender:0});
+  const bcTotRow = ['', 'TOTAL ACTIVE PUs', '', Math.round(bcTotals.ceiling), Math.round(bcTotals.actual),
+    Math.round(bcTotals.projected), Math.round(bcTotals.ask), Math.round(bcTotals.surrender),
+    bcTotals.ceiling ? parseFloat(((bcTotals.actual / bcTotals.ceiling) * 100).toFixed(1)) + '%' : '0.0%',
+    budgetControlStage().askLabel, 'Net ask/surrender calculated from current projection rule.'];
+  bcTotRow._tot = true;
+  bcRows.push(bcTotRow);
+  addSheet(wb,'Budget Control',HDR_TITLE,'Indian Railways Budget Control - Ask / Surrender / Watch Register',bcHdrs,bcRows,
+    [8,26,18,14,18,22,18,20,12,18,42]);
+
+  // Sheet 7: DEPT-Demand Wise - visible report style, no internal raw JSON
   if (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) {
     const smhData = window.DETAIL_SMH_DATA;
     const smhExportRows = smhData.rows.filter(r => !isSkippedDisplayPU(r.puCode));
@@ -3726,6 +3777,7 @@ async function downloadExcel() {
           ].concat(smhVisibleMonths.map(m => Number((r.months || {})[m]) || 0))
            .concat([Number(r.actualTill) || 0, balance, isSMHBudgetNoExpense(r) ? 'BUDGET AVAILABLE, NO EXPENSES' : '', bp.status, bp.remark]);
           smhPuRow._noexp = isSMHBudgetNoExpense(r);
+          smhPuRow._important = isImportantPU(r.puCode);
           smhRows.push(smhPuRow);
         });
         const demandTotal = makeDetailTotal(demandRows);
@@ -3759,7 +3811,7 @@ async function downloadExcel() {
       [18,14,32,16].concat(smhVisibleMonths.map(()=>14)).concat([16,18,28,18,36]));
   }
 
-  // Sheet 7: Demand / SMH grant summary
+  // Sheet 8: Demand / SMH grant summary
   if (window.DEMAND_SMH_SUMMARY_DATA && Array.isArray(window.DEMAND_SMH_SUMMARY_DATA.rows)) {
     const dData = demandSMHData();
     const dTotals = demandSMHTotals();
@@ -3781,6 +3833,31 @@ async function downloadExcel() {
     addSheet(wb,'Demand SMH Summary',HDR_TITLE,`Demand / SMH Wise | ${dData.note || 'Figures in Rs thousands'}`,dHeaders,dRows,
       [16,34,14,16,14,14,10,18,14]);
   }
+
+  // Sheet 9: Sources / Remarks / Upload confirmation
+  const sourceHdrs = ['Area','FY / Type','Source / Date','Used In / Files','Remarks'];
+  const sourceRows = Object.values(SOURCE_REGISTER).map(s => [
+    s.label,
+    s.fy,
+    s.source,
+    s.used || '',
+    s.remarks || 'Pre-loaded / uploaded portal source'
+  ]);
+  _uploadConfirmHistory.slice(0, 2).forEach((h, idx) => {
+    sourceRows.push([
+      `Upload Confirmation ${idx + 1}`,
+      'Current browser',
+      indianDateTime(h.at),
+      h.files || '',
+      h.detail || 'Admin confirmed parsed upload data.'
+    ]);
+  });
+  sourceRows.push(['Important PU Focus','PU-27, 28, 30, 32, 60','Portal rule','All PU-wise reports','Highlighted in portal, Excel export and PDF report; available through PU focus filter.']);
+  sourceRows.push(['Excluded PU Codes','PU-72, 73, 74, 75 and PU-98','Portal rule','All normal expenditure reports','GST/tax heads and recovery PU are excluded from normal operational expenditure display.']);
+  sourceRows.push(['Upload retention','Current Year / Previous Year','Browser storage rule','Upload Centre','Current year upload is kept for this browser session. Previous year upload is kept in local browser storage until admin confirms overwrite.']);
+  sourceRows.push(['Previous Year Status','2025-2026', _pyUploadMeta ? `Uploaded and confirmed ${indianDateTime(_pyUploadMeta.confirmedAt)}` : 'Pre-loaded static file', 'Trend and PY comparison', _pyUploadMeta ? 'Admin confirmed previous year data is being used.' : 'No admin PY overwrite confirmed in this browser.']);
+  addSheet(wb,'Sources Remarks',HDR_TITLE,`As on ${formatAsOnDate(_dataAsOnDate)} | Upload confirmations, exclusions and report rules`,sourceHdrs,sourceRows,
+    [24,18,34,38,58]);
 
   const fileDate = new Date().toISOString().slice(0,10);
   if (useExcelJS) {
@@ -3987,6 +4064,10 @@ async function downloadPDFReport() {
   const noExp = noExpAll.slice(0, 18);
   const bpAll = buildBPRows().sort((a,b) => Math.abs(b.variance) - Math.abs(a.variance));
   const bpRows = bpAll.slice(0, 18);
+  const bcAll = buildBudgetControlRows();
+  const bcRows = bcAll
+    .filter(r => r.askAmount > 0 || r.surrenderAmount > 0 || r.key === 'watch' || r.key === 'noexpense')
+    .slice(0, 22);
   const aiAll = buildAITrendItems();
   const aiRows = aiAll.slice(0, 14);
   const smhRows = (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) ? window.DETAIL_SMH_DATA.rows : [];
@@ -4002,6 +4083,8 @@ async function downloadPDFReport() {
     ['PU coverage', `${rows.length} active expenditure PUs`, 'PU-72, 73, 74, 75 GST and PU-98 recovery are excluded from normal display.'],
     ['Risk coverage', `${highRiskAll.length} high/watch PUs`, 'Includes over-budget, high utilisation, no-budget spend and budget-with-no-expense cases.'],
     ['BP coverage', `${bpAll.length} PUs`, `BP uses ${actualMonths.length} completed actual month(s): ${actualMonthLabels.join(', ') || 'none'}.`],
+    ['Budget Control coverage', `${bcAll.length} active PUs`, 'Shows ask, surrender, watch and no-expense action using Indian Railways budget control sequence.'],
+    ['Important PU Focus', 'PU-27, PU-28, PU-30, PU-32, PU-60', 'These key material/contractual PUs are highlighted in portal and export reports.'],
     ['AI trend coverage', `${aiAll.length} non-staff/planned PUs`, 'Staff PU with committed liability is excluded from AI trend summary.'],
     ['SMH coverage', `${smhRows.filter(r => !isSkippedDisplayPU(r.puCode)).length} detail rows`, 'Department 00 and PU-98 recovery are excluded from SMH operational view.']
   ];
@@ -4040,6 +4123,17 @@ async function downloadPDFReport() {
     ];
   });
   const sourceRows = Object.values(SOURCE_REGISTER).map(s => [s.label, s.fy, s.source, s.used || '', s.remarks || 'Pre-loaded / uploaded portal source']);
+  _uploadConfirmHistory.slice(0, 2).forEach((h, idx) => {
+    sourceRows.push([
+      `Upload Confirmation ${idx + 1}`,
+      'Current browser',
+      indianDateTime(h.at),
+      h.files || '',
+      h.detail || 'Admin confirmed parsed upload data.'
+    ]);
+  });
+  sourceRows.push(['Important PU Focus','PU-27, 28, 30, 32, 60','All PU-wise reports','Portal / Excel / PDF','Highlighted as Key Important PUs and available through PU focus filter.']);
+  sourceRows.push(['Upload retention','CY session / PY browser storage','Upload Centre','Current browser','Current year uploads survive refresh in this session. Previous year upload is retained until admin overwrite.']);
   const exclusionRows = [
     ['Department 00', 'Skipped in detailed SMH analysis', 'Non-operational/summary department code is not mixed with department expenditure review.'],
     ['PU-98', 'Skipped from normal expenditure view', 'Credit or recoveries are shown separately and not treated as expenditure.'],
@@ -4118,14 +4212,38 @@ async function downloadPDFReport() {
     footer();
   }
   function autoTable(opts) {
-    doc.autoTable(Object.assign({
+    const callerDidParseCell = opts.didParseCell;
+    const mergedOpts = Object.assign({
       theme:'grid',
       margin:{left:margin, right:margin},
       styles:{fontSize:8, cellPadding:3, lineColor:[190,205,225], lineWidth:.4, overflow:'linebreak'},
       headStyles:{fillColor:[26,58,106], textColor:[255,255,255], fontStyle:'bold'},
       alternateRowStyles:{fillColor:[246,250,254]},
+      didParseCell: data => {
+        const first = Array.isArray(data.row.raw) ? String(data.row.raw[0] || '') : '';
+        if (data.section === 'body' && /^PU-(27|28|30|32|60)\b/.test(first)) {
+          data.cell.styles.fillColor = [255, 248, 216];
+          if (data.column.index <= 1) {
+            data.cell.styles.textColor = [14, 106, 82];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+        if (callerDidParseCell) callerDidParseCell(data);
+      },
       didDrawPage: () => { header(opts.pageTitle || 'Revenue Liability Report'); footer(); }
-    }, opts));
+    }, opts);
+    mergedOpts.didParseCell = data => {
+      const first = Array.isArray(data.row.raw) ? String(data.row.raw[0] || '') : '';
+      if (data.section === 'body' && /^PU-(27|28|30|32|60)\b/.test(first)) {
+        data.cell.styles.fillColor = [255, 248, 216];
+        if (data.column.index <= 1) {
+          data.cell.styles.textColor = [14, 106, 82];
+          data.cell.styles.fontStyle = 'bold';
+        }
+      }
+      if (callerDidParseCell) callerDidParseCell(data);
+    };
+    doc.autoTable(mergedOpts);
   }
 
   addPage('Revenue Liability Report - Executive Summary');
@@ -4213,6 +4331,28 @@ async function downloadPDFReport() {
     head:[['PU','AI Trend / Liability Remark']],
     body:aiRows.map(r => ['PU-' + r.pu.code, `${r.risk.toUpperCase()}: CY as-on ${textCr(r.cyTotalAsOn)} vs PY ${textCr(r.pyTotalAsOn)}; balance ${textCr(r.cv.balanceBudget)}; utilisation ${r.utilPct.toFixed(1)}%.`]),
     columnStyles:{1:{cellWidth:620}}
+  });
+
+  addPage('Revenue Liability Report - Budget Control');
+  autoTable({
+    startY: 58,
+    pageTitle:'Revenue Liability Report - Budget Control',
+    head:[['PU','Description','Action','Ceiling','Actual','Projected','Ask','Surrender','Util %','Budget Stage','Remark']],
+    body:bcRows.map(r => [
+      'PU-' + r.pu.code,
+      r.pu.desc,
+      r.label,
+      textCr(r.ceiling),
+      textCr(r.actualTill),
+      textCr(r.projectedRequirement),
+      r.askAmount ? textCr(r.askAmount) : '-',
+      r.surrenderAmount ? textCr(r.surrenderAmount) : '-',
+      r.ceiling ? r.utilPct.toFixed(1) + '%' : (r.actualTill ? 'No Budget' : '0.0%'),
+      r.stage.askLabel,
+      r.remark
+    ]),
+    styles:{fontSize:7.2, cellPadding:2.5, overflow:'linebreak'},
+    columnStyles:{1:{cellWidth:125},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'},10:{cellWidth:190}}
   });
 
   addPage('Revenue Liability Report - PU-wise Liability Annexure');
