@@ -441,6 +441,15 @@ function latestUploadTimestamp(...items) {
 function saveCYUploadState() {
   try {
     clearStoredUploadState();
+    sessionStorage.setItem(RLP_UPLOAD_STATE_KEY, JSON.stringify({
+      budget:BUDGET,
+      month:MONTH,
+      detail:window.DETAIL_SMH_DATA || null,
+      uploadedMonthIdx:_uploadedMonthIdx,
+      latestActualMonthIdx:_latestActualMonthIdx,
+      dataAsOn:_dataAsOnDate instanceof Date ? _dataAsOnDate.toISOString() : new Date().toISOString(),
+      savedAt:new Date().toISOString()
+    }));
   } catch (err) {
     console.warn('Could not clear upload state', err);
   }
@@ -461,6 +470,14 @@ function clearStoredUploadState() {
 function loadCYUploadState() {
   try {
     clearStoredUploadState();
+    const saved = JSON.parse(sessionStorage.getItem(RLP_UPLOAD_STATE_KEY) || 'null');
+    if (!saved) return;
+    if (saved.budget && typeof saved.budget === 'object') BUDGET = saved.budget;
+    if (saved.month && typeof saved.month === 'object') MONTH = saved.month;
+    if (saved.detail && Array.isArray(saved.detail.rows)) window.DETAIL_SMH_DATA = saved.detail;
+    _uploadedMonthIdx = saved.uploadedMonthIdx ?? null;
+    _latestActualMonthIdx = saved.latestActualMonthIdx ?? null;
+    if (saved.dataAsOn) _dataAsOnDate = new Date(saved.dataAsOn);
   } catch (err) {
     console.warn('Could not clear saved upload state', err);
   }
@@ -547,7 +564,8 @@ function renderUploadConfirmHistory() {
     wrap.innerHTML = _uploadConfirmHistory.length
       ? _uploadConfirmHistory.map(item => `<div class="upload-confirm-item">
           <strong>${htmlSafe(item.label)} - ${htmlSafe(indianDateTime(item.at))}</strong>
-          <span>${htmlSafe(item.detail || '')}${item.files ? '<br>' + htmlSafe(item.files) : ''}</span>
+          <span>${htmlSafe(item.detail || '')}</span>
+          ${item.files ? `<span>${htmlSafe(item.files)}</span>` : ''}
         </div>`).join('')
       : '<div class="upload-confirm-empty">No upload confirmed in this browser yet.</div>';
   }
@@ -5003,6 +5021,9 @@ function applyUploads() {
     smhBudget:_pendingSMHBudget && _pendingSMHBudget.filename,
     smhMonth:_pendingSMHMonth && _pendingSMHMonth.filename
   };
+  if (hadCYUpdate || hadPYUpdate || hadSMHUpdate) {
+    _dataAsOnDate = new Date();
+  }
 
   // â”€â”€ Apply budget data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if(_pendingBudget) {
@@ -5022,7 +5043,6 @@ function applyUploads() {
     });
     _uploadedMonthIdx = _pendingMonth.detectedMonthIdx;
     _latestActualMonthIdx = _pendingMonth.detectedMonthIdx;
-    _dataAsOnDate = new Date();
     monthChanged = true;
     _pendingMonth=null;
   }
@@ -5064,7 +5084,7 @@ function applyUploads() {
     if (deptSel) delete deptSel.dataset.ready;
     initSMHDetailFilters();
   }
-  if(hadCYUpdate) saveCYUploadState();
+  if(hadCYUpdate || hadSMHUpdate) saveCYUploadState();
   if(hadPYUpdate) {
     savePYUploadState({
       budgetFile:pendingNames.pyBudget || SOURCE_REGISTER.budgetPY.source,
@@ -5105,11 +5125,11 @@ function applyUploads() {
     btn.disabled=true; // reset - need new upload to enable again
   },3000);
 
-  if(monthChanged){
+  if(hadCYUpdate || hadPYUpdate || hadSMHUpdate){
     // Show confirmation banner at top
     const banner=document.createElement('div');
     banner.style.cssText='position:fixed;top:70px;right:20px;z-index:9998;background:#1A7A4A;color:#fff;padding:10px 18px;border-radius:8px;font-size:11px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.2)';
-    banner.textContent='OK Data applied - current month auto-updated from uploaded file';
+    banner.textContent=monthChanged ? 'OK Data applied - current month auto-updated from uploaded file' : 'OK Data applied - portal timestamp updated';
     document.body.appendChild(banner);
     setTimeout(()=>banner.remove(),4000);
   }
