@@ -1,4 +1,4 @@
-﻿// â”€â”€ POPUP ELEMENT
+// ── POPUP ELEMENT
 let _pp = null;
 let _ppTimer = null;
 const PORTAL_THEMES = Object.freeze({
@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260714-admin-panel-2';
+const ASSET_VERSION = '20260714-mbrlr-fetch-sync-1';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -49,7 +49,7 @@ function initPopup() {
   _pp.addEventListener('mouseleave', hidePUPopup);
 }
 
-// â”€â”€ LOGIN SYSTEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── LOGIN SYSTEM ─────────────────────────────────────────────
 const AUTH_DIGESTS = Object.freeze({
   ADMIN: 'b8824be5a97f2673f084e8d91336ffa24752344e361e9f25655e70aeeb12d104'
 });
@@ -137,9 +137,9 @@ function closeUploadLogin() {
   if (err) err.textContent = '';
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 // MASTER DATA - from uploaded files (figures in Rs '000s)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 
 const PU_META = [
   {code:'01',desc:'Sal/Wag',puType:'Staff PU',liab:'Committed',isNeg:false},
@@ -425,9 +425,9 @@ let MONTH_PY = {
 let _pendingBudgetPY = null;
 let _pendingMonthPY  = null;
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // CURRENT MONTH DETECTION (auto from date)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 let _uploadedMonthIdx = null; // latest completed month detected from uploaded CY month-wise file
 let _latestActualMonthIdx = null;
 const DEFAULT_DATA_AS_ON_DATE = new Date('2026-07-13T10:50:45+05:30');
@@ -467,6 +467,7 @@ function saveCYUploadState() {
       budget:BUDGET,
       month:MONTH,
       detail:window.DETAIL_SMH_DATA || null,
+      demandSmh:window.DEMAND_SMH_SUMMARY_DATA || null,
       uploadedMonthIdx:_uploadedMonthIdx,
       latestActualMonthIdx:_latestActualMonthIdx,
       dataAsOn:_dataAsOnDate instanceof Date ? _dataAsOnDate.toISOString() : new Date().toISOString(),
@@ -497,6 +498,7 @@ function loadCYUploadState() {
     if (saved.budget && typeof saved.budget === 'object') BUDGET = saved.budget;
     if (saved.month && typeof saved.month === 'object') MONTH = saved.month;
     if (saved.detail && Array.isArray(saved.detail.rows)) window.DETAIL_SMH_DATA = saved.detail;
+    if (saved.demandSmh && Array.isArray(saved.demandSmh.rows)) window.DEMAND_SMH_SUMMARY_DATA = saved.demandSmh;
     _uploadedMonthIdx = saved.uploadedMonthIdx ?? null;
     _latestActualMonthIdx = saved.latestActualMonthIdx ?? null;
     if (saved.dataAsOn) _dataAsOnDate = new Date(saved.dataAsOn);
@@ -628,9 +630,9 @@ function getMonthStatus() {
   return {cur, pastMonths, actualMonths, latestActual, curMonthKey, futureMonths};
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // COMPUTE LIABILITY PER PU
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function isRGActive() {
   return Object.values(BUDGET).some(b => b.rg && b.rg !== 0);
 }
@@ -647,9 +649,9 @@ function compute(code) {
   const budget = getBudget(code);
   const isNeg  = (PU_META.find(p=>p.code===code)||{}).isNeg || false;
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══════════════════════════════════════════════════════════
   // VERIFIED FORMULA - Budget balances exactly across 12 months
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ──────────────────────────────────────────────────────────
   // Budget = APR_actual + MAY_actual + JUN_total + JUL_projx9
   // where:
   //   JUN_total      = proj_per_month  (one equal share of remaining)
@@ -657,7 +659,7 @@ function compute(code) {
   //   proj_per_month = (Budget - pastActuals) / (1 + futureMonths.length)
   //
   // CHECK: APR + MAY + projx10 = Budget OK
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══════════════════════════════════════════════════════════
 
   // Past months actuals (completed months before current)
   const pastActuals  = pastMonths.reduce((s,m) => s + (md[m]||0), 0);
@@ -710,9 +712,9 @@ function compute(code) {
           utilisedPct, utilisedFlag, remMonthCount: futureMonths.length};
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // FORMATTING HELPERS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function fmtT(n) { // Rs'000s display with commas
   if (n===null||n===undefined||isNaN(n)||n===0) return '<span style="color:#aaa">-</span>';
   const abs = Math.abs(Math.round(n));
@@ -756,9 +758,9 @@ function liabBadge(l) {
   return `<span class="badge b-pl">Planned</span>`;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // FILTER HELPERS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function getFiltered() {
   const tf = document.getElementById('typeFilter').value;
   const lf = document.getElementById('liabFilter').value;
@@ -784,9 +786,9 @@ function getFiltered() {
   });
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // SUMMARY CARDS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function renderCards() {
   const pus = activePUMeta();
   let totB=0, totC=0, totBal=0;
@@ -813,9 +815,9 @@ function renderCards() {
   document.getElementById('rgNote').textContent = isRGActive() ? 'RG Active' : 'RG not active - using BG_ISL';
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // JUNE (CURRENT MONTH) PROGRESS BARS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function renderLiabilityHeader() {
   const {cur, pastMonths, futureMonths} = getMonthStatus();
   const topPast = pastMonths.map(m => {
@@ -1413,9 +1415,9 @@ function initReportViewMode() {
   setReportViewMode(reportViewMode);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // LIABILITY TABLE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function renderLiability() {
   const pus = getFiltered();
   const {cur, pastMonths} = getMonthStatus();
@@ -1477,9 +1479,9 @@ function renderLiability() {
   document.getElementById('liab-tbody').innerHTML = rows;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // MONTH WISE TABLE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function renderMonthwise() {
   const pus = getFiltered();
   const {pastMonths, curMonthKey, futureMonths, cur} = getMonthStatus();
@@ -1542,9 +1544,9 @@ function renderMonthwise() {
   document.getElementById('mw-tbody').innerHTML = rows;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // RECOVERY PAGE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function renderRecovery() {
   const pu = PU_META.find(p=>p.code==='98');
   const c = compute('98');
@@ -1605,9 +1607,9 @@ function renderRecovery() {
     </tr>`;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // PU MASTER TABLE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 function renderPUMaster() {
   const pus = getFiltered();
   let rows = '';
@@ -3886,12 +3888,12 @@ function renderDemandSMHSummary() {
   refreshBIViewSoon();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 // EXCEL DOWNLOAD using SheetJS CDN
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // EXCEL DOWNLOAD
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════
 async function downloadExcel() {
   document.body.dataset.exportStatus = 'excel-started';
   try {
@@ -3907,7 +3909,7 @@ async function downloadExcel() {
   const HDR_SUB   = "Northern Railway  |  Financial Authority Dashboard  |  All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees";
   const {cur} = getMonthStatus();
 
-  // â”€â”€ Style helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Style helpers ─────────────────────────────────────────
   function mkStyle(opts={}) {
     return {
       font:   { name:opts.name||'Times New Roman', sz: opts.sz||10, bold:!!opts.bold, color:{rgb: opts.fc||'000000'} },
@@ -4054,7 +4056,7 @@ async function downloadExcel() {
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
   }
 
-  // â”€â”€ Sheet 1: LIABILITY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sheet 1: LIABILITY ────────────────────────────────────
   const liabHdrs = ['PU','Description','PU Type','Liability Type',
     'Budget (Rs\'000s)','Budget (Rs Cr)',
     'APR Actual (Rs\'000s)','APR (Rs Cr)',
@@ -4100,7 +4102,7 @@ async function downloadExcel() {
   addSheet(wb,'Revenue Liability',HDR_TITLE,HDR_SUB,liabHdrs,liabRows,
     [6,24,14,12,14,10,14,10,14,10,14,14,14,10,15,14,14,10,16]);
 
-  // â”€â”€ Sheet 2: MONTH WISE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sheet 2: MONTH WISE ───────────────────────────────────
   const mwHdrs=['PU','Description',
     'APR Actual','MAY Actual',
     cur.label+' till date exp',cur.label+' Remaining',cur.label+' Total',
@@ -4132,7 +4134,7 @@ async function downloadExcel() {
   addSheet(wb,'Month Wise',HDR_TITLE,HDR_SUB,mwHdrs,mwRows,
     [6,24,12,12,14,14,12,10,10,10,10,10,10,10,10,10,14,14,12,10,28]);
 
-  // â”€â”€ Sheet 3: RECOVERIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sheet 3: RECOVERIES ───────────────────────────────────
   const r98=compute('98'); const m98=MONTH['98']||{};
   const recHdrs=['PU','Description','Budget (Rs\'000s)','Budget (Rs Cr)',
     'APR Actual','MAY Actual',cur.label+' till date exp',cur.label+' Remaining',
@@ -4147,7 +4149,7 @@ async function downloadExcel() {
   addSheet(wb,'Recoveries PU-98',HDR_TITLE,HDR_SUB,recHdrs,recRows,
     [6,24,14,12,12,12,14,14,15,14,12,10]);
 
-  // â”€â”€ Sheet 4: PU MASTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sheet 4: PU MASTER ────────────────────────────────────
   const pmHdrs=['PU Code','Description','Type of PU','Type of Liability',
     'BG_ISL Budget (Rs\'000s)','Budget (Rs Cr)','Actuals Till Date (Rs\'000s)','Remaining Budget (Rs\'000s)','Remaining Budget (Rs Cr)','% Utilised','Status'];
   const pmRows=[];
@@ -4985,7 +4987,7 @@ function initExportButtons() {
 }
 
 
-// â”€â”€ PU DETAIL PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── PU DETAIL PAGE ───────────────────────────────────────────
 function openPUDetail(code) {
   const pu   = PU_META.find(p => p.code === code);
   if (!pu) return;
@@ -4994,7 +4996,7 @@ function openPUDetail(code) {
   const b    = BUDGET[code] || {};
   const {futureMonths, cur} = getMonthStatus();
 
-  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Helpers ──────────────────────────────────────────────
   function fCr(n)  { if(!n||n===0) return '-'; return (Math.abs(n)*1000/10000000).toFixed(2)+' Cr'; }
   function fT(n)   { if(!n||n===0) return '-'; return (n<0?'('+Math.abs(Math.round(n)).toLocaleString('en-IN')+')':Math.round(n).toLocaleString('en-IN'))+' Rs\'000s'; }
   function pctStr(cv) {
@@ -5008,7 +5010,7 @@ function openPUDetail(code) {
   const typeCol = pu.puType.includes('Staff PU')&&!pu.puType.includes('Non')?'#1A7A4A':
                   pu.puType.includes('Contractual')?'#9A5A00':'#1C3A5E';
 
-  // â”€â”€ All 12 FY months â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── All 12 FY months ──────────────────────────────────────
   const FY_LABELS=['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
   const FY_KEYS  =['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
   const curIdx   = FY_KEYS.indexOf(cur.key);
@@ -5036,7 +5038,7 @@ function openPUDetail(code) {
     </tr>`;
   }).join('');
 
-  // â”€â”€ Budget breakdown rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Budget breakdown rows ────────────────────────────────
   const summaryRows = [
     ['BG_ISL Budget', b.bg_isl||0, '#0A1628'],
     ['Revised Grant (RG)', b.rg||0, '#1C3A5E'],
@@ -5055,7 +5057,7 @@ function openPUDetail(code) {
     <td style="padding:7px 14px;text-align:right;border-bottom:1px solid #EEF2F8;color:${col};font-weight:700">${fCr(val)}</td>
   </tr>`).join('');
 
-  // â”€â”€ Build full HTML page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Build full HTML page ──────────────────────────────────
   const pctVal = cv.utilisedPct!==null ? Math.min(100,Math.abs(cv.utilisedPct)) : 0;
   const ringCol = cv.utilisedFlag==='over'||cv.utilisedFlag==='no-budget'?'#CC0000':
                   cv.utilisedPct>85?'#E85D04':cv.utilisedPct>60?'#C07000':'#1A7A4A';
@@ -5229,7 +5231,7 @@ function openPUDetail(code) {
   w.document.close();
 }
 
-// â”€â”€ Event delegation: one listener on document covers all tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Event delegation: one listener on document covers all tables ──────────
 document.addEventListener('mouseover', function(e){
   // Don't re-trigger if mouse moves within the popup itself
   if (e.target.closest('#puPopup')) return;
@@ -5356,14 +5358,121 @@ function attachPUPopup(){
   // (listeners are only added once)
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════════════════════════════════════════
 // UPLOAD TAB - File parsing, auto-sense, apply
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════════════════════════════════════════
 
+let _syncedBudgetManifest = null;
+let _syncedBudgetRoleFiles = [];
+const SYNCED_BUDGET_ROLE_MAP = Object.freeze({
+  'pu-budget.xls': {type:'budget', year:'cy', label:'Budget Available CY'},
+  'pu-month-actual.xls': {type:'month', year:'cy', label:'Month-wise Actual CY'},
+  'pu-dept-demand-smh-budget.xls': {type:'smhbudget', year:'cy', label:'Dept / SMH Budget CY'},
+  'pu-dept-demand-smh-actual.xls': {type:'smhmonth', year:'cy', label:'Dept / SMH Actual CY'},
+  'demand-smh-budget.xls': {type:'demandsmhbudget', year:'cy', label:'Demand / SMH Budget CY'},
+  'demand-smh-actual.xls': {type:'demandsmhactual', year:'cy', label:'Demand / SMH Actual CY'}
+});
+function setSyncedStatus(message, state){
+  const el = document.getElementById('syncedDataStatus');
+  if(!el) return;
+  el.className = 'synced-status' + (state ? ' ' + state : '');
+  el.textContent = message;
+}
+function syncedFileRows(manifest){
+  const rows = [];
+  ['sourceFiles','processedFiles','frFiles'].forEach(group => {
+    (manifest[group] || []).forEach(file => rows.push({...file, group}));
+  });
+  return rows;
+}
+function syncedSelectedSet(manifest){
+  return new Set((manifest.selectedTargets || (manifest.copied || []).map(item => item.target)).filter(Boolean));
+}
+function renderSyncedDataList(manifest){
+  const box = document.getElementById('syncedDataList');
+  if(!box) return;
+  const selected = syncedSelectedSet(manifest);
+  const rows = syncedFileRows(manifest).filter(file => !selected.size || selected.has(file.targetPath));
+  if(!rows.length){
+    box.innerHTML = '<div class="upload-confirm-empty">No synced files found in manifest.</div>';
+    return;
+  }
+  box.innerHTML = `<table><thead><tr><th>Use</th><th>File</th><th>Synced Path</th><th>Modified</th><th>Status</th></tr></thead><tbody>${rows.map(file => {
+    const role = SYNCED_BUDGET_ROLE_MAP[file.name];
+    const canParse = !!role;
+    return `<tr><td>${role ? `<span class="synced-role">${role.label}</span>` : '<span style="color:#8AAAC8">Reference</span>'}</td><td><strong>${file.name}</strong></td><td><code>${file.targetPath}</code></td><td>${file.modifiedAt || '-'}</td><td>${canParse ? '<span class="log-dot ok"></span>Ready to parse' : 'Fetched for reference'}</td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+async function fetchSyncedBudgetData(){
+  if(!isUploadAdminUnlocked()){
+    requestUploadAdmin('upload');
+    return;
+  }
+  setSyncedStatus('Fetching MB-BUDGET sync manifest...', 'warn');
+  const btn = document.getElementById('senseSyncedBtn');
+  if(btn) btn.disabled = true;
+  try{
+    const response = await fetch(`data/mb-budget-sync/sync-manifest.json?v=${Date.now()}`, {cache:'no-store'});
+    if(!response.ok) throw new Error('No sync-manifest.json found. First sync selected files from MB-BUDGET Admin Portal.');
+    const manifest = await response.json();
+    _syncedBudgetManifest = manifest;
+    const selected = syncedSelectedSet(manifest);
+    _syncedBudgetRoleFiles = syncedFileRows(manifest).filter(file => SYNCED_BUDGET_ROLE_MAP[file.name] && (!selected.size || selected.has(file.targetPath)));
+    renderSyncedDataList(manifest);
+    const syncedAt = manifest.syncedAt || manifest.generatedAt || 'unknown time';
+    const year = manifest.financialYear || 'current year';
+    const note = _syncedBudgetRoleFiles.length
+      ? `Fetched ${_syncedBudgetRoleFiles.length} parse-ready file(s) for ${year}. Last sync: ${syncedAt}. Review, tick Manual OK if required, then Sense / Parse.`
+      : `Manifest fetched for ${year}, but no parse-ready XLS files are selected in sync. Sync raw current-year source files from MB-BUDGET.`;
+    setSyncedStatus(note, _syncedBudgetRoleFiles.length ? 'ok' : 'warn');
+    if(btn) btn.disabled = !_syncedBudgetRoleFiles.length;
+  }catch(error){
+    _syncedBudgetManifest = null;
+    _syncedBudgetRoleFiles = [];
+    renderSyncedDataList({sourceFiles:[],processedFiles:[],frFiles:[]});
+    setSyncedStatus(error.message || 'Unable to fetch synced data.', 'err');
+  }
+}
+async function senseAndParseSyncedData(){
+  if(!isUploadAdminUnlocked()){
+    requestUploadAdmin('upload');
+    return;
+  }
+  if(!_syncedBudgetRoleFiles.length){
+    setSyncedStatus('Fetch synced data first, then sense/parse.', 'warn');
+    return;
+  }
+  const manualOk = document.getElementById('syncedManualOk');
+  if(manualOk && !manualOk.checked){
+    setSyncedStatus('Review fetched file list and tick Manual OK after review before parsing.', 'warn');
+    return;
+  }
+  setSyncedStatus(`Parsing ${_syncedBudgetRoleFiles.length} synced file(s) through existing upload logic...`, 'warn');
+  for(const fileInfo of _syncedBudgetRoleFiles){
+    const role = SYNCED_BUDGET_ROLE_MAP[fileInfo.name];
+    try{
+      const response = await fetch(`${fileInfo.targetPath}?v=${Date.now()}`, {cache:'no-store'});
+      if(!response.ok) throw new Error(`Cannot fetch ${fileInfo.targetPath}`);
+      const blob = await response.blob();
+      const file = new File([blob], `Synced-${fileInfo.name}`, {type: blob.type || 'application/vnd.ms-excel', lastModified: Date.now()});
+      parseUpload(file, role.type, role.year);
+    }catch(error){
+      setDZState(`${role.type}-${role.year}`, 'error', error.message || 'Synced file fetch failed');
+    }
+  }
+  const btn = document.getElementById('applyBtn');
+  if(btn){
+    btn.disabled = false;
+    btn.textContent = 'OK Apply Synced Parsed Data & Refresh Portal';
+  }
+  setSyncedStatus('Synced files sent to parser. Check green upload cards, then click OK Apply to refresh portal.', 'ok');
+}
 let _pendingBudget = null;  // parsed budget data waiting to apply
 let _pendingMonth  = null;  // parsed month data waiting to apply
 let _pendingSMHBudget = null;
 let _pendingSMHMonth = null;
+let _pendingDemandSMHBudget = null;
+let _pendingDemandSMHActual = null;
 let _uploadHistory = [];    // log entries
 
 // Drag-and-drop helpers
@@ -5402,7 +5511,7 @@ function setDZState(type, state, msg) {
   else { icon.textContent='...'; stat.className='dz-status'; }
   stat.textContent = msg||'';
   // Enable apply button if at least one pending
-  document.getElementById('applyBtn').disabled = !(_pendingBudget || _pendingMonth || _pendingSMHBudget || _pendingSMHMonth);
+  document.getElementById('applyBtn').disabled = !(_pendingBudget || _pendingMonth || _pendingSMHBudget || _pendingSMHMonth || _pendingDemandSMHBudget || _pendingDemandSMHActual || _pendingBudgetPY || _pendingMonthPY);
 }
 
 function smhEmptyMonths() {
@@ -5521,6 +5630,185 @@ function rebuildSMHDetailTotals() {
   data.totals = totals;
 }
 
+function demandSummaryNorm(value) {
+  return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+}
+
+function demandSummaryUpper(value) {
+  return demandSummaryNorm(value).toUpperCase();
+}
+
+function demandSummaryNumber(value) {
+  const n = Number(String(value == null ? '' : value).replace(/,/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function normalizeDemandCode(value) {
+  const raw = demandSummaryUpper(value);
+  if (!raw) return '';
+  if (raw.includes('12N') || raw.includes('10N')) return '12N/10N';
+  const demandMatch = raw.match(/DEMAND\s*(\d{1,2})/);
+  const plain = raw.match(/^(\d{1,2})$/);
+  const slash = raw.match(/(\d{1,2})\s*\/\s*(\d{1,2}|10N)/);
+  const code = (demandMatch && demandMatch[1]) || (plain && plain[1]) || (slash && slash[1]) || '';
+  return code ? code.padStart(2, '0') : '';
+}
+
+function normalizeSMHCode(value) {
+  const raw = demandSummaryUpper(value);
+  if (!raw) return '';
+  if (raw.includes('10N')) return '10N';
+  const smhMatch = raw.match(/SMH\s*-?\s*(\d{1,2}|10N)/);
+  const grantMatch = raw.match(/GRANT\s*-?\s*(\d{1,2}|10N)/);
+  const slash = raw.match(/(\d{1,2})\s*\/\s*(\d{1,2}|10N)/);
+  const plain = raw.match(/^(\d{1,2})$/);
+  const code = (smhMatch && smhMatch[1]) || (grantMatch && grantMatch[1]) || (slash && slash[2]) || (plain && plain[1]) || '';
+  return code ? (code.toUpperCase() === '10N' ? '10N' : code.padStart(2, '0')) : '';
+}
+
+function demandSmhMetaFor(demand, smh) {
+  const baseRows = demandSMHRows();
+  const byBoth = baseRows.find(r => String(r.demand || '').trim().toUpperCase() === String(demand || '').trim().toUpperCase() && String(r.smh || '').trim().toUpperCase() === String(smh || '').trim().toUpperCase());
+  const bySmh = byBoth || baseRows.find(r => String(r.smh || '').trim().toUpperCase() === String(smh || '').trim().toUpperCase());
+  return {
+    dept: bySmh && bySmh.dept ? bySmh.dept : '',
+    description: bySmh && bySmh.description ? bySmh.description : ''
+  };
+}
+
+function findDemandSummaryHeader(rows, kind) {
+  const limit = Math.min(rows.length, 18);
+  for (let i = 0; i < limit; i++) {
+    const row = rows[i] || [];
+    const joined = row.map(demandSummaryUpper).join(' | ');
+    const hasDemand = joined.includes('DEMAND') || joined.includes('SMH') || joined.includes('GRANT');
+    const hasBudget = joined.includes('OBA') || joined.includes('BG_ISL') || joined.includes('BG ISL') || joined.includes('BUDGET');
+    const hasActual = joined.includes('AE') || joined.includes('ACTUAL') || joined.includes('EXP');
+    if (hasDemand && (kind === 'budget' ? hasBudget : hasActual)) return i;
+  }
+  return -1;
+}
+
+function parseDemandSMHSummaryUpload(rows, kind) {
+  const hr = findDemandSummaryHeader(rows, kind);
+  if (hr < 0) throw new Error(kind === 'budget' ? 'Cannot find Demand/SMH budget header.' : 'Cannot find Demand/SMH actual header.');
+  const hdr = (rows[hr] || []).map(demandSummaryUpper);
+  const demandC = hdr.findIndex(h => h.includes('DEMAND') && !h.includes('/'));
+  const smhC = hdr.findIndex(h => h.includes('SMH') || h.includes('GRANT'));
+  const comboC = hdr.findIndex(h => h.includes('DEMAND') && (h.includes('SMH') || h.includes('/')));
+  const deptC = hdr.findIndex(h => h === 'DEPT' || h.includes('DEPARTMENT'));
+  let valueC = -1;
+  if (kind === 'budget') {
+    valueC = hdr.findIndex(h => h.includes('OBA') || h.includes('BG_ISL') || h.includes('BG ISL'));
+    if (valueC < 0) valueC = hdr.findIndex(h => h.includes('BUDGET') && !h.includes('REMAIN') && !h.includes('BALANCE') && !h.includes('BP'));
+  } else {
+    valueC = hdr.findIndex(h => h === 'AE' || h.includes('TILL DATE') || h.includes('EXP. TOTAL') || h.includes('EXP TOTAL') || (h.includes('ACTUAL') && h.includes('TOTAL')));
+    if (valueC < 0) valueC = hdr.findIndex(h => h.includes('ACTUALS') || h.includes('ACTUAL') || h.includes('EXPENDITURE'));
+  }
+  if (valueC < 0) throw new Error(kind === 'budget' ? 'Cannot map OBA/BG_ISL/Budget column.' : 'Cannot map AE/Actual/Exp column.');
+
+  const map = {};
+  let n = 0;
+  for (let i = hr + 1; i < rows.length; i++) {
+    const row = rows[i] || [];
+    const rowText = row.map(demandSummaryUpper).join(' ');
+    if (!rowText || /^TOTAL\b/.test(rowText) || rowText.includes('GRAND TOTAL')) continue;
+    const comboVal = comboC >= 0 ? row[comboC] : row[0];
+    let demand = normalizeDemandCode(demandC >= 0 ? row[demandC] : comboVal);
+    let smh = normalizeSMHCode(smhC >= 0 ? row[smhC] : comboVal);
+    if (!smh && row.length > 1) smh = normalizeSMHCode(row[1]);
+    if (!demand && smh) demand = demandNumberForSMH(smh) || '';
+    if (!demand || !smh) continue;
+    const key = `${demand}|${smh}`;
+    const meta = demandSmhMetaFor(demand, smh);
+    const deptText = deptC >= 0 ? demandSummaryNorm(row[deptC]) : '';
+    if (!map[key]) {
+      map[key] = {demand, smh, dept:deptText || meta.dept, description:meta.description, oba:0, ae:0};
+    }
+    if (deptText) map[key].dept = deptText;
+    if (!map[key].description) map[key].description = meta.description;
+    if (kind === 'budget') map[key].oba += demandSummaryNumber(row[valueC]);
+    else map[key].ae += demandSummaryNumber(row[valueC]);
+    n++;
+  }
+  if (n === 0) throw new Error('No Demand/SMH rows found in uploaded file.');
+  return {rows:Object.values(map), rowCount:n};
+}
+
+function recalcDemandSMHRows(rows, completedMonths) {
+  const months = Number(completedMonths) || 3;
+  return (rows || []).map(row => {
+    const oba = Number(row.oba) || 0;
+    const ae = Number(row.ae) || 0;
+    const bp = Math.round(oba / 12 * months);
+    const variation = Math.round(ae - bp);
+    const budgetRemaining = Math.round(oba - ae);
+    const bpPct = bp ? Math.round((ae / bp) * 100) : (ae ? 999 : 0);
+    const obaUtil = oba ? Math.round((ae / oba) * 100) : (ae ? 999 : 0);
+    return {...row, oba, ae, bp, variation, bpPct, budgetRemaining, obaUtil};
+  });
+}
+
+function rebuildDemandSMHSummaryFromUploads(budgetUpload, actualUpload) {
+  const data = demandSMHData();
+  const currentRows = demandSMHRows();
+  const map = {};
+  currentRows.forEach(r => {
+    const demand = String(r.demand || '').trim();
+    const smh = String(r.smh || '').trim().toUpperCase();
+    if (demand && smh) map[`${demand}|${smh}`] = {...r};
+  });
+  function mergeRows(upload, mode) {
+    if (!upload || !Array.isArray(upload.rows)) return;
+    upload.rows.forEach(r => {
+      const demand = String(r.demand || '').trim();
+      const smh = String(r.smh || '').trim().toUpperCase();
+      if (!demand || !smh) return;
+      const key = `${demand}|${smh}`;
+      const meta = demandSmhMetaFor(demand, smh);
+      if (!map[key]) map[key] = {demand, smh, dept:r.dept || meta.dept, description:r.description || meta.description, oba:0, ae:0};
+      if (r.dept) map[key].dept = r.dept;
+      if (r.description) map[key].description = r.description;
+      if (!map[key].dept) map[key].dept = meta.dept;
+      if (!map[key].description) map[key].description = meta.description;
+      if (mode === 'budget') map[key].oba = Number(r.oba) || 0;
+      else map[key].ae = Number(r.ae) || 0;
+    });
+  }
+  mergeRows(budgetUpload, 'budget');
+  mergeRows(actualUpload, 'actual');
+  const {latestActual} = getMonthStatus();
+  const completedMonths = (getMonthStatus().actualMonths || []).length || Number(data.completedMonths) || 3;
+  const rows = recalcDemandSMHRows(Object.values(map), completedMonths).sort((a,b) => {
+    const as = isDemandSMHSuspense(a), bs = isDemandSMHSuspense(b);
+    if (as !== bs) return as ? 1 : -1;
+    return String(a.smh).localeCompare(String(b.smh), undefined, {numeric:true});
+  });
+  const opRows = rows.filter(r => !isDemandSMHSuspense(r));
+  const totals = opRows.reduce((t, r) => {
+    t.oba += Number(r.oba) || 0;
+    t.bp += Number(r.bp) || 0;
+    t.ae += Number(r.ae) || 0;
+    t.variation += Number(r.variation) || 0;
+    t.budgetRemaining += Number(r.budgetRemaining) || 0;
+    return t;
+  }, {oba:0, bp:0, ae:0, variation:0, budgetRemaining:0});
+  totals.bpPct = totals.bp ? Math.round((totals.ae / totals.bp) * 100) : 0;
+  totals.obaUtil = totals.oba ? Math.round((totals.ae / totals.oba) * 100) : 0;
+  window.DEMAND_SMH_SUMMARY_DATA = {
+    ...data,
+    fy:data.fy || '2026-2027',
+    asOn:latestActual ? `${latestActual.label} ${latestActual.year}` : (data.asOn || 'JUL 2026'),
+    completedMonths,
+    sourceBudget:budgetUpload && budgetUpload.filename ? budgetUpload.filename : data.sourceBudget,
+    sourceActual:actualUpload && actualUpload.filename ? actualUpload.filename : data.sourceActual,
+    note:`OBA uses uploaded BG_ISL/OBA where provided. BP = OBA / 12 x ${completedMonths} completed actual months. AE uses uploaded actual summary where provided. Demand 12N/10N Suspense Heads is shown separately and is not netted from the main Demand/SMH total.`,
+    rows,
+    totals
+  };
+  return window.DEMAND_SMH_SUMMARY_DATA;
+}
+
 function parseUpload(file, type, year) {
   if (!isUploadAdminUnlocked()) {
     requestUploadAdmin();
@@ -5545,7 +5833,20 @@ function parseUpload(file, type, year) {
       }
       function findHdrRow(rows,testFn){ for(let i=0;i<Math.min(12,rows.length);i++){if(rows[i].some(c=>testFn(norm(c)))) return i;} return -1; }
 
-      if(type==='smhbudget' || type==='smhmonth') {
+      if(type==='demandsmhbudget' || type==='demandsmhactual') {
+        if (year !== 'cy') throw new Error('Demand / SMH summary upload is currently for CY 2026-27 only.');
+        const parsed = parseDemandSMHSummaryUpload(rows, type === 'demandsmhbudget' ? 'budget' : 'actual');
+        if (type === 'demandsmhbudget') {
+          _pendingDemandSMHBudget = {rows:parsed.rows, filename:file.name, rowCount:parsed.rowCount, at:new Date()};
+          setDZState(dzId,'done','Parsed '+parsed.rowCount+' Demand/SMH budget rows');
+          addLog('Demand SMH Budget CY 2026-27', file.name, parsed.rowCount, null);
+        } else {
+          _pendingDemandSMHActual = {rows:parsed.rows, filename:file.name, rowCount:parsed.rowCount, at:new Date()};
+          setDZState(dzId,'done','Parsed '+parsed.rowCount+' Demand/SMH actual rows');
+          addLog('Demand SMH Actual CY 2026-27', file.name, parsed.rowCount, getMonthStatus().latestActual ? getMonthStatus().latestActual.label : null);
+        }
+
+      } else if(type==='smhbudget' || type==='smhmonth') {
         if (year !== 'cy') throw new Error('SMH detail upload is currently for CY 2026-27 only.');
         const parsed = parseSMHDetailUpload(rows, type === 'smhbudget' ? 'budget' : 'month');
         if (type === 'smhbudget') {
@@ -5626,7 +5927,9 @@ function addLog(fileType, filename, puCount, monthDetected) {
 }
 
 function updateSourceRegisterFromUpload(fileType, filename, puCount, monthDetected) {
-  const key = fileType.includes('SMH Budget') ? 'smhBudgetCY'
+  const key = fileType.includes('Demand SMH Budget') ? 'demandSmhCY'
+    : fileType.includes('Demand SMH Actual') ? 'demandSmhCY'
+    : fileType.includes('SMH Budget') ? 'smhBudgetCY'
     : fileType.includes('SMH Month') ? 'smhMonthCY'
     : fileType.includes('Budget CY') ? 'budgetCY'
     : fileType.includes('Month Wise CY') ? 'monthCY'
@@ -5669,19 +5972,22 @@ function applyUploads() {
   const hadCYUpdate = !!(_pendingBudget || _pendingMonth);
   const hadPYUpdate = !!(_pendingBudgetPY || _pendingMonthPY);
   const hadSMHUpdate = !!(_pendingSMHBudget || _pendingSMHMonth);
+  const hadDemandSMHUpdate = !!(_pendingDemandSMHBudget || _pendingDemandSMHActual);
   const pendingNames = {
     cyBudget:_pendingBudget && _pendingBudget.filename,
     cyMonth:_pendingMonth && _pendingMonth.filename,
     pyBudget:_pendingBudgetPY && _pendingBudgetPY.filename,
     pyMonth:_pendingMonthPY && _pendingMonthPY.filename,
     smhBudget:_pendingSMHBudget && _pendingSMHBudget.filename,
-    smhMonth:_pendingSMHMonth && _pendingSMHMonth.filename
+    smhMonth:_pendingSMHMonth && _pendingSMHMonth.filename,
+    demandSmhBudget:_pendingDemandSMHBudget && _pendingDemandSMHBudget.filename,
+    demandSmhActual:_pendingDemandSMHActual && _pendingDemandSMHActual.filename
   };
-  if (hadCYUpdate || hadPYUpdate || hadSMHUpdate) {
+  if (hadCYUpdate || hadPYUpdate || hadSMHUpdate || hadDemandSMHUpdate) {
     _dataAsOnDate = new Date();
   }
 
-  // â”€â”€ Apply budget data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Apply budget data ──────────────────────────────────────
   if(_pendingBudget) {
     Object.entries(_pendingBudget.data).forEach(([code,vals])=>{
       if(!BUDGET[code]) BUDGET[code]={bg_isl:0,rg:0,actuals_till:0};
@@ -5692,7 +5998,7 @@ function applyUploads() {
     _pendingBudget=null;
   }
 
-  // â”€â”€ Apply month data + override current month detection â”€â”€â”€â”€
+  // ── Apply month data + override current month detection ────
   if(_pendingMonth) {
     Object.entries(_pendingMonth.data).forEach(([code,vals])=>{
       MONTH[code]=vals;
@@ -5703,7 +6009,7 @@ function applyUploads() {
     _pendingMonth=null;
   }
 
-  // â”€â”€ Re-render everything â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Re-render everything ───────────────────────────────────
   if(_pendingBudgetPY){
     Object.entries(_pendingBudgetPY.data).forEach(([c,v])=>{ BUDGET_PY[c]={bg_isl:v.bg_isl,rg:v.rg,actuals_till:v.actuals_till}; });
     SOURCE_REGISTER.budgetPY.source = _pendingBudgetPY.filename || SOURCE_REGISTER.budgetPY.source;
@@ -5740,7 +6046,20 @@ function applyUploads() {
     if (deptSel) delete deptSel.dataset.ready;
     initSMHDetailFilters();
   }
-  if(hadCYUpdate || hadSMHUpdate) saveCYUploadState();
+  if(_pendingDemandSMHBudget || _pendingDemandSMHActual) {
+    const budgetUpload = _pendingDemandSMHBudget;
+    const actualUpload = _pendingDemandSMHActual;
+    rebuildDemandSMHSummaryFromUploads(budgetUpload, actualUpload);
+    const srcParts = [
+      (budgetUpload && budgetUpload.filename) || (window.DEMAND_SMH_SUMMARY_DATA && window.DEMAND_SMH_SUMMARY_DATA.sourceBudget),
+      (actualUpload && actualUpload.filename) || (window.DEMAND_SMH_SUMMARY_DATA && window.DEMAND_SMH_SUMMARY_DATA.sourceActual)
+    ].filter(Boolean);
+    SOURCE_REGISTER.demandSmhCY.source = srcParts.join(' + ') || SOURCE_REGISTER.demandSmhCY.source;
+    SOURCE_REGISTER.demandSmhCY.remarks = `Demand / SMH summary refreshed from admin upload; BP recalculated using ${(window.DEMAND_SMH_SUMMARY_DATA && window.DEMAND_SMH_SUMMARY_DATA.completedMonths) || 3} completed actual months. Demand 12N/10N Suspense Heads remains separately calculated.`;
+    _pendingDemandSMHBudget = null;
+    _pendingDemandSMHActual = null;
+  }
+  if(hadCYUpdate || hadSMHUpdate || hadDemandSMHUpdate) saveCYUploadState();
   if(hadPYUpdate) {
     savePYUploadState({
       budgetFile:pendingNames.pyBudget || SOURCE_REGISTER.budgetPY.source,
@@ -5750,10 +6069,11 @@ function applyUploads() {
     SOURCE_REGISTER.monthPY.remarks = SOURCE_REGISTER.budgetPY.remarks;
     setPYUpdateMode(false);
   }
-  if(hadCYUpdate || hadPYUpdate || hadSMHUpdate) {
+  if(hadCYUpdate || hadPYUpdate || hadSMHUpdate || hadDemandSMHUpdate) {
     const parts = [];
     if (hadCYUpdate) parts.push('CY PU data');
     if (hadSMHUpdate) parts.push('CY DEPT-Demand detail');
+    if (hadDemandSMHUpdate) parts.push('CY Demand / SMH summary');
     if (hadPYUpdate) parts.push('PY comparison data');
     const files = Object.values(pendingNames).filter(Boolean).join(' | ');
     addUploadConfirmation({
@@ -5769,6 +6089,7 @@ function applyUploads() {
   renderUploadLog();
   if(typeof renderTrend==='function') renderTrend();
   if(hadSMHUpdate && typeof renderSMHDetail==='function') renderSMHDetail();
+  if(hadDemandSMHUpdate && typeof renderDemandSMHSummary==='function') renderDemandSMHSummary();
 
   // Flash the apply button to confirm
   const btn = document.getElementById('applyBtn');
@@ -5781,7 +6102,7 @@ function applyUploads() {
     btn.disabled=true; // reset - need new upload to enable again
   },3000);
 
-  if(hadCYUpdate || hadPYUpdate || hadSMHUpdate){
+  if(hadCYUpdate || hadPYUpdate || hadSMHUpdate || hadDemandSMHUpdate){
     // Show confirmation banner at top
     const banner=document.createElement('div');
     banner.style.cssText='position:fixed;top:70px;right:20px;z-index:9998;background:#1A7A4A;color:#fff;padding:10px 18px;border-radius:8px;font-size:11px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.2)';
@@ -5922,7 +6243,7 @@ function renderTrend(){
   function fN(v){return v?Math.round(v).toLocaleString('en-IN'):'-';}
   function sumM(pus,ds){return MK.map((_,mi)=>pus.reduce((s,p2)=>s+(ds[p2.code]?ds[p2.code][MK[mi]]||0:0),0));}
 
-  // â”€â”€ KPI Strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── KPI Strip ────────────────────────────────────────────────
   const strip=document.getElementById('trendKPIStrip');
   if(strip){
     const totB=puList.reduce((s,p2)=>s+(BUDGET[p2.code]?BUDGET[p2.code].bg_isl||0:0),0);
@@ -5943,7 +6264,7 @@ function renderTrend(){
   const note=document.getElementById('trendDataNote');
   if(note) note.textContent='Data: 29-Jun-2026 (CY) | PY: 2025-26 full year';
 
-  // â”€â”€ Main Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Main Chart ────────────────────────────────────────────────
   const titleEl=document.getElementById('mainChartTitle');
   const cyV=sumM(puList,MONTH), pyV=hasPY&&showPY?sumM(puList,MONTH_PY):null;
   let mainLabels = ML_S.map((m,i)=>m+(i<=8?'\'26':'\'27'));
@@ -6008,15 +6329,15 @@ function renderTrend(){
     }
   }
 
-  // â”€â”€ Utilisation bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Utilisation bar ───────────────────────────────────────────
   const topU=activePUs.filter(p2=>BUDGET[p2.code]&&BUDGET[p2.code].bg_isl>0).sort((a,b)=>{return (BUDGET[b.code].actuals_till||0)/Math.max(BUDGET[b.code].bg_isl||1,1)-(BUDGET[a.code].actuals_till||0)/Math.max(BUDGET[a.code].bg_isl||1,1);}).slice(0,10);
   _mC('trendUtilChart',{type:'bar',data:{labels:topU.map(p2=>'PU-'+p2.code+': '+p2.desc.substring(0,14)),datasets:[{label:'Utilisation %',data:topU.map(p2=>Math.min(150,Math.round((BUDGET[p2.code].actuals_till||0)/Math.max(BUDGET[p2.code].bg_isl||1,1)*100))),backgroundColor:topU.map(p2=>{const u=(BUDGET[p2.code].actuals_till||0)/Math.max(BUDGET[p2.code].bg_isl||1,1)*100;return u>100?'rgba(204,0,0,.75)':u>85?'rgba(232,93,4,.75)':u>60?'rgba(192,112,0,.65)':'rgba(26,122,74,.75)';}),borderRadius:3}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'% utilised'}}},scales:{x:{max:155,title:{display:true,text:'%'},ticks:{callback:v=>v+'%',font:{size:9}}},y:{ticks:{font:{size:8}}}}}});
 
-  // â”€â”€ Top 15 Budget vs Actuals bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Top 15 Budget vs Actuals bar ──────────────────────────────
   const top15=activePUs.filter(p2=>BUDGET[p2.code]&&(BUDGET[p2.code].actuals_till||0)>0).sort((a,b)=>(BUDGET[b.code].actuals_till||0)-(BUDGET[a.code].actuals_till||0)).slice(0,15);
   _mC('trendTopPUChart',{type:'bar',data:{labels:top15.map(p2=>'PU-'+p2.code+': '+p2.desc.substring(0,14)),datasets:[{label:'Budget (RsCr)',data:top15.map(p2=>((BUDGET[p2.code].bg_isl||0)/10000).toFixed(0)),backgroundColor:'rgba(26,74,138,.4)',borderRadius:2},{label:'Actuals (RsCr)',data:top15.map(p2=>((BUDGET[p2.code].actuals_till||0)/10000).toFixed(0)),backgroundColor:'rgba(26,122,74,.75)',borderRadius:2}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{x:{ticks:{font:{size:8},maxRotation:35}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:10}}}}}});
 
-  // â”€â”€ Heatmap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Heatmap ───────────────────────────────────────────────────
   const hmDiv=document.getElementById('trendHeatmap');
   if(hmDiv){
     const hmPUs=activePUs.filter(p2=>MK.some(mk=>MONTH[p2.code]&&MONTH[p2.code][mk]>0)).slice(0,18);
@@ -6028,7 +6349,7 @@ function renderTrend(){
     hmDiv.innerHTML='<table><thead>'+hdr+'</thead><tbody>'+rows+'</tbody></table>';
   }
 
-  // â”€â”€ Focus PUs YoY chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Focus PUs YoY chart ───────────────────────────────────────
   const focusDs=[];
   const cyColors=['#1C6FD9','#1A7A4A','#E85D04','#9B2226','#6A4C93','#C9A84C'];
   FOCUS_PUS.forEach((code,fi)=>{
@@ -6039,7 +6360,7 @@ function renderTrend(){
   });
   _mC('trendFocusChart',{type:'line',data:{labels:ML_S.map((m,i)=>m+(i<=8?'\'26':'\'27')),datasets:focusDs},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:8},filter:i=>!i.text.includes('PY')||showPY}}},scales:{x:{ticks:{font:{size:9}}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:9}}}}}});
 
-  // â”€â”€ Analytics Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Analytics Table ───────────────────────────────────────────
   const thead=document.getElementById('trendTHead'),tbody=document.getElementById('trendTBody');
   if(thead&&tbody){
     thead.innerHTML='<tr><th style="text-align:left">PU</th><th style="text-align:left">Description</th><th>Type</th><th>Budget</th><th>Actuals CY</th><th>Util%</th><th>Status</th><th>PY Actuals</th><th>YoY</th>'+MK.map((mk,i)=>'<th>'+ML[i]+'</th>').join('')+'<th>Total</th></tr>';

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,9 +7,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="portal-build" content="rlp-mbd-2026-07-14-v2.2.1">
+<meta name="portal-build" content="rlp-mbd-2026-07-14-v2.2.2">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260714-admin-panel-2">
+<link rel="stylesheet" href="assets/css/main.css?v=20260714-mbrlr-fetch-sync-1">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -414,6 +414,23 @@
       </div>
     </div>
 
+
+    <div class="synced-upload-panel" id="syncedUploadPanel">
+      <div class="synced-head">
+        <div>
+          <h3>MB-BUDGET Synced Data</h3>
+          <p>Fetch files already synced into this MBRLR repo, sense latest data, then parse into the same pending upload area used by click or drag.</p>
+        </div>
+        <span class="synced-pill">LOCAL REPO SYNC</span>
+      </div>
+      <div class="synced-actions">
+        <button type="button" onclick="fetchSyncedBudgetData()">Fetch Synced Data</button>
+        <button type="button" id="senseSyncedBtn" onclick="senseAndParseSyncedData()" disabled>Sense / Parse Data</button>
+        <label class="synced-ok"><input type="checkbox" id="syncedManualOk"> Manual OK after review</label>
+      </div>
+      <div class="synced-status" id="syncedDataStatus">No synced data fetched yet.</div>
+      <div class="synced-file-list" id="syncedDataList"></div>
+    </div>
     <div style="margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:8px">
       <span style="background:#1C3A5E;color:#C9A84C;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">FY 2026-27 - CURRENT YEAR</span>
     </div>
@@ -438,6 +455,35 @@
           <div class="dz-text">Click or Drag &amp; Drop</div>
           <div class="dz-sub">.xls or .xlsx</div>
           <div class="dz-status" id="dz-month-cy-status"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #2B6CA3;display:flex;align-items:center;gap:8px">
+      <span style="background:#164A75;color:#E9F4FF;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">DEMAND / SMH SUMMARY - CURRENT YEAR</span>
+      <span style="font-size:9px;color:#164A75;font-weight:700">Used for Demand / SMH Wise Summary tab</span>
+    </div>
+    <div class="upload-cards" style="margin-top:10px">
+      <div class="upload-card" style="border-top:3px solid #2B6CA3">
+        <h3>Demand / SMH Budget Summary - CY 2026-27</h3>
+        <p>Upload <strong>SMH-DEMAND Wise Budget</strong> for FY 2026-27.<br>Refreshes OBA/BG_ISL for Demand / SMH Wise Summary.</p>
+        <div class="drop-zone" id="dz-demandsmhbudget-cy" ondragover="dzDrag(event,'demandsmhbudget-cy')" ondragleave="dzLeave('demandsmhbudget-cy')" ondrop="dzDrop(event,'demandsmhbudget-cy')">
+          <input type="file" id="inp-demandsmhbudget-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'demandsmhbudget','cy')">
+          <span class="dz-icon" id="dz-demandsmhbudget-cy-icon">FOLDER</span>
+          <div class="dz-text">Click or Drag &amp; Drop</div>
+          <div class="dz-sub">.xls or .xlsx</div>
+          <div class="dz-status" id="dz-demandsmhbudget-cy-status"></div>
+        </div>
+      </div>
+      <div class="upload-card" style="border-top:3px solid #2B6CA3">
+        <h3>Demand / SMH Actual Summary - CY 2026-27</h3>
+        <p>Upload <strong>SMH-DEMAND WISE ACTUAL</strong> for FY 2026-27.<br>Refreshes AE and BP variance for Demand / SMH Wise Summary.</p>
+        <div class="drop-zone" id="dz-demandsmhactual-cy" ondragover="dzDrag(event,'demandsmhactual-cy')" ondragleave="dzLeave('demandsmhactual-cy')" ondrop="dzDrop(event,'demandsmhactual-cy')">
+          <input type="file" id="inp-demandsmhactual-cy" accept=".xls,.xlsx" onchange="handleFileEx(event,'demandsmhactual','cy')">
+          <span class="dz-icon" id="dz-demandsmhactual-cy-icon">FOLDER</span>
+          <div class="dz-text">Click or Drag &amp; Drop</div>
+          <div class="dz-sub">.xls or .xlsx</div>
+          <div class="dz-status" id="dz-demandsmhactual-cy-status"></div>
         </div>
       </div>
     </div>
@@ -1013,11 +1059,11 @@
 
 <script src="assets/js/detail-data.js"></script>
 <script src="assets/js/demand-smh-data.js"></script>
-<script src="assets/js/admin-config.js?v=20260714-admin-panel-2"></script>
+<script src="assets/js/admin-config.js?v=20260714-mbrlr-fetch-sync-1"></script>
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260714-admin-panel-2"></script>
+<script src="assets/js/app.js?v=20260714-mbrlr-fetch-sync-1"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>

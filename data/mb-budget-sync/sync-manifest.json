@@ -1,0 +1,196 @@
+{
+  "ok": true,
+  "mode": "synced",
+  "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
+  "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
+  "targetFolder": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR\\data\\mb-budget-sync",
+  "financialYear": "2026-2027",
+  "generatedAt": "2026-07-14T13:53:50",
+  "counts": {
+    "sourceFiles": 6,
+    "processedFiles": 7,
+    "frFiles": 2,
+    "totalFiles": 17
+  },
+  "sourceFiles": [
+    {
+      "name": "pu-budget.xls",
+      "relativePath": "data/source-files/2026-2027/pu-budget.xls",
+      "size": 22016,
+      "modifiedAt": "2026-07-13T12:13:27",
+      "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls"
+    },
+    {
+      "name": "pu-month-actual.xls",
+      "relativePath": "data/source-files/2026-2027/pu-month-actual.xls",
+      "size": 16384,
+      "modifiedAt": "2026-07-13T12:13:27",
+      "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls"
+    },
+    {
+      "name": "pu-dept-demand-smh-budget.xls",
+      "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
+      "size": 1185280,
+      "modifiedAt": "2026-07-13T12:13:27",
+      "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-budget.xls"
+    },
+    {
+      "name": "pu-dept-demand-smh-actual.xls",
+      "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
+      "size": 385536,
+      "modifiedAt": "2026-07-13T12:13:27",
+      "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-actual.xls"
+    },
+    {
+      "name": "demand-smh-budget.xls",
+      "relativePath": "data/source-files/2026-2027/demand-smh-budget.xls",
+      "size": 9216,
+      "modifiedAt": "2026-07-13T12:13:27",
+      "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-budget.xls"
+    },
+    {
+      "name": "demand-smh-actual.xls",
+      "relativePath": "data/source-files/2026-2027/demand-smh-actual.xls",
+      "size": 8192,
+      "modifiedAt": "2026-07-13T12:13:27",
+      "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls"
+    }
+  ],
+  "processedFiles": [
+    {
+      "name": "current_payload.js",
+      "relativePath": "data/current_payload.js",
+      "size": 30968,
+      "modifiedAt": "2026-07-13T12:46:28",
+      "targetPath": "data/mb-budget-sync/processed/current_payload.js"
+    },
+    {
+      "name": "reports-data.js",
+      "relativePath": "data/reports-data.js",
+      "size": 409223,
+      "modifiedAt": "2026-07-13T11:27:49",
+      "targetPath": "data/mb-budget-sync/processed/reports-data.js"
+    },
+    {
+      "name": "reports-data.json",
+      "relativePath": "data/reports-data.json",
+      "size": 409200,
+      "modifiedAt": "2026-07-13T11:27:49",
+      "targetPath": "data/mb-budget-sync/processed/reports-data.json"
+    },
+    {
+      "name": "year-sources.js",
+      "relativePath": "data/year-sources.js",
+      "size": 10552,
+      "modifiedAt": "2026-07-13T11:45:05",
+      "targetPath": "data/mb-budget-sync/processed/year-sources.js"
+    },
+    {
+      "name": "year-sources.json",
+      "relativePath": "data/year-sources.json",
+      "size": 10524,
+      "modifiedAt": "2026-07-13T11:45:05",
+      "targetPath": "data/mb-budget-sync/processed/year-sources.json"
+    },
+    {
+      "name": "year-sources.local.js",
+      "relativePath": "data/year-sources.local.js",
+      "size": 7665,
+      "modifiedAt": "2026-07-13T11:27:49",
+      "targetPath": "data/mb-budget-sync/processed/year-sources.local.js"
+    },
+    {
+      "name": "year-sources.local.json",
+      "relativePath": "data/year-sources.local.json",
+      "size": 7629,
+      "modifiedAt": "2026-07-13T11:27:49",
+      "targetPath": "data/mb-budget-sync/processed/year-sources.local.json"
+    }
+  ],
+  "frFiles": [
+    {
+      "name": "fr-upload-manifest.json",
+      "relativePath": "data/fr/fr-upload-manifest.json",
+      "size": 171,
+      "modifiedAt": "2026-07-13T17:16:48",
+      "targetPath": "data/mb-budget-sync/fr/fr-upload-manifest.json"
+    },
+    {
+      "name": "FR_Budget_Status.xlsx",
+      "relativePath": "data/fr/FR_Budget_Status.xlsx",
+      "size": 37900,
+      "modifiedAt": "2026-07-13T17:16:48",
+      "targetPath": "data/mb-budget-sync/fr/FR_Budget_Status.xlsx"
+    }
+  ],
+  "generatedFiles": [
+    {
+      "name": "sync-manifest.json",
+      "targetPath": "data/mb-budget-sync/sync-manifest.json"
+    },
+    {
+      "name": "sync-log.json",
+      "targetPath": "data/mb-budget-sync/sync-log.json"
+    }
+  ],
+  "warnings": [],
+  "syncedAt": "2026-07-14T13:53:50",
+  "selectedTargets": [
+    "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls",
+    "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls",
+    "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
+    "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
+    "data/mb-budget-sync/source-files/2026-2027/demand-smh-budget.xls",
+    "data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls",
+    "data/mb-budget-sync/processed/current_payload.js",
+    "data/mb-budget-sync/processed/reports-data.json",
+    "data/mb-budget-sync/processed/year-sources.json"
+  ],
+  "copied": [
+    {
+      "source": "data/source-files/2026-2027/pu-budget.xls",
+      "target": "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls",
+      "size": 22016
+    },
+    {
+      "source": "data/source-files/2026-2027/pu-month-actual.xls",
+      "target": "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls",
+      "size": 16384
+    },
+    {
+      "source": "data/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
+      "target": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
+      "size": 1185280
+    },
+    {
+      "source": "data/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
+      "target": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
+      "size": 385536
+    },
+    {
+      "source": "data/source-files/2026-2027/demand-smh-budget.xls",
+      "target": "data/mb-budget-sync/source-files/2026-2027/demand-smh-budget.xls",
+      "size": 9216
+    },
+    {
+      "source": "data/source-files/2026-2027/demand-smh-actual.xls",
+      "target": "data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls",
+      "size": 8192
+    },
+    {
+      "source": "data/current_payload.js",
+      "target": "data/mb-budget-sync/processed/current_payload.js",
+      "size": 30968
+    },
+    {
+      "source": "data/reports-data.json",
+      "target": "data/mb-budget-sync/processed/reports-data.json",
+      "size": 409200
+    },
+    {
+      "source": "data/year-sources.json",
+      "target": "data/mb-budget-sync/processed/year-sources.json",
+      "size": 10524
+    }
+  ]
+}

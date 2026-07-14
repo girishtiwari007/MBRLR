@@ -1,0 +1,109 @@
+﻿{
+    "note":  "GitHub-hosted source files. Previous years are static snapshots; the current year folder is replaced monthly as new actual data is available.",
+    "preferredRemoteSource":  "repo-relative",
+    "syncYear":  "2026-2027",
+    "roles":  {
+                  "puBudget":  "Primary Unit wise budget for the selected year.",
+                  "puMonthActual":  "Primary Unit wise month-wise actual expense for the selected year.",
+                  "puDeptDemandSmhBudget":  "PU wise, department wise, demand/SMH wise budget.",
+                  "puDeptDemandSmhActual":  "PU wise, department wise, demand/SMH wise actual expense.",
+                  "demandSmhBudget":  "Demand/SMH wise budget.",
+                  "demandSmhActual":  "Demand/SMH wise actual expense.",
+                  "currPuBudget":  "Current year primary unit wise budget.",
+                  "currPuMonth":  "Current year primary unit wise actual up to the latest updated month/date.",
+                  "currPuDeptDemandSmhBudget":  "Current year PU, department, demand/SMH wise budget.",
+                  "currPuDeptDemandSmhActual":  "Current year PU, department, demand/SMH wise actual up to the latest updated month/date.",
+                  "currDemandSmhBudget":  "Current year demand/SMH wise budget.",
+                  "currDemandSmhActual":  "Current year demand/SMH wise actual up to the latest updated month/date.",
+                  "prevPuBudget":  "Previous year primary unit wise budget.",
+                  "prevPuMonth":  "Previous year primary unit wise month-wise actual.",
+                  "prevPuDeptDemandSmhBudget":  "Previous year PU, department, demand/SMH wise budget.",
+                  "prevPuDeptDemandSmhActual":  "Previous year PU, department, demand/SMH wise actual.",
+                  "prevDemandSmhBudget":  "Previous year demand/SMH wise budget.",
+                  "prevDemandSmhActual":  "Previous year demand/SMH wise actual.",
+                  "currSmhBudget":  "Compatibility key for current year demand/SMH budget sync.",
+                  "currSmhMonth":  "Compatibility key for current year demand/SMH actual sync.",
+                  "prevSmhBudget":  "Compatibility key for previous year demand/SMH budget sync.",
+                  "prevSmhMonth":  "Compatibility key for previous year demand/SMH actual sync."
+              },
+    "years":  {
+                  "2023-2024":  {
+                                    "status":  "static",
+                                    "folder":  "../data/source-files/2023-2024/",
+                                    "files":  {
+                                                  "puBudget":  "../data/source-files/2023-2024/pu-budget.xls",
+                                                  "puMonthActual":  "../data/source-files/2023-2024/pu-month-actual.xls",
+                                                  "puDeptDemandSmhBudget":  "../data/source-files/2023-2024/pu-dept-demand-smh-budget.xls",
+                                                  "puDeptDemandSmhActual":  "../data/source-files/2023-2024/pu-dept-demand-smh-actual.xls",
+                                                  "demandSmhBudget":  "../data/source-files/2023-2024/demand-smh-budget.xls",
+                                                  "demandSmhActual":  "../data/source-files/2023-2024/demand-smh-actual.xls",
+                                                  "smhDemandBudget":  "../data/source-files/2023-2024/demand-smh-budget.xls",
+                                                  "smhDemandActual":  "../data/source-files/2023-2024/demand-smh-actual.xls",
+                                                  "smhDemandMonthActual":  "../data/source-files/2023-2024/pu-dept-demand-smh-actual.xls",
+                                                  "puDemandDept":  "../data/source-files/2023-2024/pu-dept-demand-smh-budget.xls"
+                                              }
+                                },
+                  "2024-2025":  {
+                                    "status":  "static",
+                                    "folder":  "../data/source-files/2024-2025/",
+                                    "files":  {
+                                                  "puBudget":  "../data/source-files/2024-2025/pu-budget.xls",
+                                                  "puMonthActual":  "../data/source-files/2024-2025/pu-month-actual.xls",
+                                                  "puDeptDemandSmhBudget":  "../data/source-files/2024-2025/pu-dept-demand-smh-budget.xls",
+                                                  "puDeptDemandSmhActual":  "../data/source-files/2024-2025/pu-dept-demand-smh-actual.xls",
+                                                  "demandSmhBudget":  "../data/source-files/2024-2025/demand-smh-budget.xls",
+                                                  "demandSmhActual":  "../data/source-files/2024-2025/demand-smh-actual.xls",
+                                                  "smhDemandBudget":  "../data/source-files/2024-2025/demand-smh-budget.xls",
+                                                  "smhDemandActual":  "../data/source-files/2024-2025/demand-smh-actual.xls",
+                                                  "smhDemandMonthActual":  "../data/source-files/2024-2025/pu-dept-demand-smh-actual.xls",
+                                                  "puDemandDept":  "../data/source-files/2024-2025/pu-dept-demand-smh-budget.xls"
+                                              }
+                                },
+                  "2025-2026":  {
+                                    "status":  "static",
+                                    "folder":  "../data/source-files/2025-2026/",
+                                    "files":  {
+                                                  "puBudget":  "../data/source-files/2025-2026/pu-budget.xls",
+                                                  "puMonthActual":  "../data/source-files/2025-2026/pu-month-actual.xls",
+                                                  "puDeptDemandSmhBudget":  "../data/source-files/2025-2026/pu-dept-demand-smh-budget.xls",
+                                                  "puDeptDemandSmhActual":  "../data/source-files/2025-2026/pu-dept-demand-smh-actual.xls",
+                                                  "demandSmhBudget":  "../data/source-files/2025-2026/demand-smh-budget.xls",
+                                                  "demandSmhActual":  "../data/source-files/2025-2026/demand-smh-actual.xls",
+                                                  "smhDemandBudget":  "../data/source-files/2025-2026/demand-smh-budget.xls",
+                                                  "smhDemandActual":  "../data/source-files/2025-2026/demand-smh-actual.xls",
+                                                  "smhDemandMonthActual":  "../data/source-files/2025-2026/pu-dept-demand-smh-actual.xls",
+                                                  "puDemandDept":  "../data/source-files/2025-2026/pu-dept-demand-smh-budget.xls"
+                                              }
+                                },
+                  "2026-2027":  {
+                                    "status":  "monthly-current",
+                                    "updateCadence":  "Replace files in data/source-files/2026-2027 after each monthly update; previous years remain static.",
+                                    "folder":  "../data/source-files/2026-2027/",
+                                    "files":  {
+                                                  "currPuBudget":  "../data/source-files/2026-2027/pu-budget.xls",
+                                                  "currPuMonth":  "../data/source-files/2026-2027/pu-month-actual.xls",
+                                                  "currPuDeptDemandSmhBudget":  "../data/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
+                                                  "currPuDeptDemandSmhActual":  "../data/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
+                                                  "currSmhBudget":  "../data/source-files/2026-2027/demand-smh-budget.xls",
+                                                  "currSmhMonth":  "../data/source-files/2026-2027/demand-smh-actual.xls",
+                                                  "currDemandSmhBudget":  "../data/source-files/2026-2027/demand-smh-budget.xls",
+                                                  "currDemandSmhActual":  "../data/source-files/2026-2027/demand-smh-actual.xls",
+                                                  "prevPuBudget":  "../data/source-files/2025-2026/pu-budget.xls",
+                                                  "prevPuMonth":  "../data/source-files/2025-2026/pu-month-actual.xls",
+                                                  "prevPuDeptDemandSmhBudget":  "../data/source-files/2025-2026/pu-dept-demand-smh-budget.xls",
+                                                  "prevPuDeptDemandSmhActual":  "../data/source-files/2025-2026/pu-dept-demand-smh-actual.xls",
+                                                  "prevSmhBudget":  "../data/source-files/2025-2026/demand-smh-budget.xls",
+                                                  "prevSmhMonth":  "../data/source-files/2025-2026/demand-smh-actual.xls",
+                                                  "prevDemandSmhBudget":  "../data/source-files/2025-2026/demand-smh-budget.xls",
+                                                  "prevDemandSmhActual":  "../data/source-files/2025-2026/demand-smh-actual.xls"
+                                              },
+                                    "legacyKeys":  {
+                                                       "currentPayload":  "current_payload.js",
+                                                       "currentPuBudget":  "../data/source-files/2026-2027/pu-budget.xls",
+                                                       "previousPuBudget":  "../data/source-files/2025-2026/pu-budget.xls",
+                                                       "currentSmhBudget":  "../data/source-files/2026-2027/demand-smh-budget.xls",
+                                                       "previousSmhBudget":  "../data/source-files/2025-2026/demand-smh-budget.xls"
+                                                   }
+                                }
+              }
+}

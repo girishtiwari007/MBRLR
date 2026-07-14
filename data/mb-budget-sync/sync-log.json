@@ -1,0 +1,28 @@
+[
+  {
+    "syncedAt": "2026-07-14T13:53:50",
+    "financialYear": "2026-2027",
+    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
+    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
+    "copiedFiles": 9,
+    "selectedFiles": 9,
+    "warnings": []
+  },
+  {
+    "syncedAt": "2026-07-14T13:51:07",
+    "financialYear": "2026-2027",
+    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
+    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
+    "copiedFiles": 2,
+    "selectedFiles": 2,
+    "warnings": []
+  },
+  {
+    "syncedAt": "2026-07-14T13:41:48",
+    "financialYear": "2026-2027",
+    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
+    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
+    "copiedFiles": 15,
+    "warnings": []
+  }
+]
