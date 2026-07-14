@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260713-data-refresh';
+const ASSET_VERSION = '20260714-refine-3';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -54,6 +54,7 @@ const AUTH_DIGESTS = Object.freeze({
   ADMIN: 'b8824be5a97f2673f084e8d91336ffa24752344e361e9f25655e70aeeb12d104'
 });
 let _pendingUploadAfterLogin = false;
+let _pendingAdminTab = null;
 
 async function sha256Hex(value) {
   const bytes = new TextEncoder().encode(value);
@@ -73,11 +74,12 @@ async function doLogin() {
     return;
   }
   sessionStorage.setItem('rlp_upload_admin', '1');
-  const shouldOpenUpload = _pendingUploadAfterLogin;
+  const targetTab = _pendingAdminTab || (_pendingUploadAfterLogin ? 'upload' : null);
   _pendingUploadAfterLogin = false;
+  _pendingAdminTab = null;
   closeUploadLogin();
-  if (shouldOpenUpload) {
-    switchTab('upload');
+  if (targetTab) {
+    switchTab(targetTab);
   }
 }
 
@@ -88,17 +90,28 @@ function restoreLoginSession() {
   if (uploadTab) uploadTab.style.display = '';
   const uploadMenuBtn = document.getElementById('uploadMenuBtn');
   if (uploadMenuBtn) uploadMenuBtn.style.display = '';
+  const backupTab = document.getElementById('backupTab');
+  if (backupTab) backupTab.style.display = '';
+  const backupMenuBtn = document.getElementById('backupMenuBtn');
+  if (backupMenuBtn) backupMenuBtn.style.display = '';
 }
 
 function isUploadAdminUnlocked() {
   return sessionStorage.getItem('rlp_upload_admin') === '1';
 }
 
-function requestUploadAdmin() {
-  _pendingUploadAfterLogin = true;
+function requestUploadAdmin(targetTab='upload') {
+  _pendingUploadAfterLogin = targetTab === 'upload';
+  _pendingAdminTab = targetTab;
   const overlay = document.getElementById('loginOverlay');
+  const title = document.getElementById('loginTitle');
+  const sub = document.getElementById('loginSub');
   const pwd = document.getElementById('loginPwd');
   const err = document.getElementById('loginErr');
+  if (title) title.textContent = targetTab === 'backup' ? 'BACKUP ADMIN ACCESS' : 'UPLOAD ADMIN ACCESS';
+  if (sub) sub.innerHTML = targetTab === 'backup'
+    ? 'Portal backup is admin protected.<br>Enter ADMIN password to open backup download.'
+    : 'Portal is open for viewing.<br>Enter ADMIN password only for data upload.';
   if (err) err.textContent = '';
   if (pwd) pwd.value = '';
   if (overlay) overlay.classList.remove('hidden');
@@ -107,6 +120,7 @@ function requestUploadAdmin() {
 
 function closeUploadLogin() {
   _pendingUploadAfterLogin = false;
+  _pendingAdminTab = null;
   const overlay = document.getElementById('loginOverlay');
   const pwd = document.getElementById('loginPwd');
   const err = document.getElementById('loginErr');
@@ -1265,17 +1279,17 @@ function biDataForCurrentReport(tab) {
     const ct = control.reduce((t,r) => { t.ceiling += r.ceiling; t.actual += r.actualTill; t.projected += r.projectedRequirement; t.ask += r.askAmount; t.surrender += r.surrenderAmount; return t; }, {ceiling:0,actual:0,projected:0,ask:0,surrender:0});
     return Object.assign(base, {
       kpis: [
-        ['Current Ceiling', textCr(ct.ceiling), isRGActive() ? 'RG active' : 'BG/BE ceiling', 'good'],
         ['Projected Need', textCr(ct.projected), 'Till-date projection', ct.projected > ct.ceiling ? 'risk' : 'good'],
         ['Amount to Ask', textCr(ct.ask), 'Excess above ceiling', ct.ask ? 'danger' : 'good'],
-        ['Possible Surrender', textCr(ct.surrender), 'Verify pending bills', 'warn']
+        ['Possible Surrender', textCr(ct.surrender), 'Verify pending bills', 'warn'],
+        ['Action Cases', String(ask.length + surrender.length), 'Ask + surrender items', 'good']
       ],
       barsTitle: 'Ask / Surrender Action Board',
       bars: ask.concat(surrender).slice(0, 8).map(r => Object.assign({_displayValue:r.askAmount ? textCr(r.askAmount) : textCr(r.surrenderAmount), _barValue: r.askAmount || r.surrenderAmount}, r)),
       actions: [
         ask[0] ? `Top ask case: PU-${ask[0].pu.code} ${ask[0].pu.desc} needs ${textCr(ask[0].askAmount)}.` : 'No additional grant case in selected control filters.',
         surrender[0] ? `Top surrender candidate: PU-${surrender[0].pu.code} ${surrender[0].pu.desc} ${textCr(surrender[0].surrenderAmount)}.` : 'No surrender candidate in selected control filters.',
-        'Budget Control BI view follows Indian Railways BG > AR > REA > RG > FME > FG flow.',
+        'Budget Control BI view follows the active Indian Railways review stage and focuses on ask/surrender action.',
         'Final ask/surrender should be vetted against pending bills and committed liabilities.'
       ],
       focusRows: ask.concat(surrender).slice(0, 6)
@@ -1620,6 +1634,39 @@ function initBPFilter() {
     .join('');
   list.dataset.ready = '1';
   updateBPSelectionCount();
+  initPUDrawerBehavior('bpPUDrawer');
+}
+
+function filterPUChecklist(listId, term) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const q = String(term || '').trim().toLowerCase();
+  list.querySelectorAll('.bp-check-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = !q || text.includes(q) ? '' : 'none';
+  });
+}
+
+function closePUDrawer(id) {
+  const drawer = document.getElementById(id);
+  if (drawer) drawer.open = false;
+}
+
+function initPUDrawerBehavior(id) {
+  const drawer = document.getElementById(id);
+  if (!drawer || drawer.dataset.closeBound === '1') return;
+  drawer.dataset.closeBound = '1';
+  let timer = null;
+  drawer.addEventListener('mouseenter', () => {
+    if (timer) clearTimeout(timer);
+  });
+  drawer.addEventListener('mouseleave', () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => { drawer.open = false; }, 700);
+  });
+  document.addEventListener('click', event => {
+    if (drawer.open && !drawer.contains(event.target)) drawer.open = false;
+  });
 }
 
 function updateBPSelectionCount() {
@@ -1637,7 +1684,7 @@ function updateBPSelectionCount() {
 
 function onBPAllToggle(checked) {
   document.querySelectorAll('#bpPUFilter .bp-pu-check').forEach(ch => {
-    ch.checked = false;
+    ch.checked = !!checked;
   });
   updateBPSelectionCount();
   renderBPAnalysis();
@@ -1653,9 +1700,14 @@ function onBPPUChange() {
 function setBPSelection(mode) {
   const all = document.getElementById('bpPUAll');
   const checks = Array.from(document.querySelectorAll('#bpPUFilter .bp-pu-check'));
+  const search = document.getElementById('bpPUSearch');
+  if (search) {
+    search.value = '';
+    filterPUChecklist('bpPUFilter', '');
+  }
   if (all) all.checked = mode === 'all';
   checks.forEach(ch => {
-    ch.checked = false;
+    ch.checked = mode === 'all';
   });
   updateBPSelectionCount();
   renderBPAnalysis();
@@ -1794,12 +1846,12 @@ function budgetControlStage() {
     return {code:'AR', label:'August Review', askLabel:'AR Requirement', note:'Use AR to identify likely saving or additional requirement early.'};
   }
   if (month >= 9 && month <= 11) {
-    return {code:'REA', label:isRGActive() ? 'RG Approved' : 'REA Asked', askLabel:isRGActive() ? 'RG Control' : 'REA Asked', note:isRGActive() ? 'RG is the revised spending ceiling.' : 'REA is the Railway demand before Board approval.'};
+    return {code:'REA', label:isRGActive() ? 'RG Approved' : 'Review Proposal', askLabel:isRGActive() ? 'RG Control' : 'Budget Review', note:isRGActive() ? 'RG is the revised spending ceiling.' : 'Use review proposal for saving/excess action before Board approval.'};
   }
   if (month === 0 || month === 1) {
     return {code:'FME', label:'FME / FM', askLabel:'FME Asked', note:'January FM should show realistic expenditure expected up to 31 March.'};
   }
-  return {code:'FG', label:'FG / March Closing', askLabel:'FG Control', note:'FG is final authority before March closing and Appropriation Accounts.'};
+  return {code:'FG', label:'FG / Final Grant', askLabel:'FG Control', note:'FG is final authority before year-end Appropriation Accounts.'};
 }
 
 function fyElapsedFactor() {
@@ -1925,34 +1977,19 @@ function renderBudgetControl() {
   }, {ceiling:0, actual:0, projected:0, ask:0, surrender:0});
 
   const meta = document.getElementById('bcMeta');
-  if (meta) meta.textContent = `As on ${cur.label} ${cur.year}; projection uses actual till date over ${elapsedFactor.toFixed(2)} elapsed FY month(s). ${stage.note}`;
+  if (meta) meta.textContent = `As on ${cur.label} ${cur.year}; projection uses booked expenditure over ${elapsedFactor.toFixed(2)} elapsed FY month(s). ${stage.note}`;
   const basis = document.getElementById('bcBasis');
   if (basis) basis.textContent = `${stage.label} | ${isRGActive() ? 'RG Active' : 'BG/BE Ceiling'}`;
 
-  const flow = document.getElementById('bcFlow');
-  if (flow) {
-    const flowItems = [
-      ['BG / BE','Original grant','April spending ceiling'],
-      ['AR','August Review','First saving/excess review'],
-      ['REA','Budget Asked','Railway demand to Board'],
-      ['RG','Revised Grant','Board approved revised ceiling'],
-      ['FME / FM','Final Modified Estimate','January realistic March forecast'],
-      ['FG','Final Grant','Last authorised allocation'],
-      ['Actual','March Closing','Appropriation Accounts']
-    ];
-    flow.innerHTML = flowItems.map(([t,s,n]) => `<div class="bc-step ${t.includes(stage.code) || stage.label.includes(t) ? 'active' : ''}"><strong>${t}</strong><span>${s}</span><em>${n}</em></div>`).join('');
-  }
-
   const kpis = document.getElementById('bcKpis');
   if (kpis) {
-    const util = totals.ceiling ? (totals.actual / totals.ceiling) * 100 : 0;
     kpis.innerHTML = [
-      ['Current Ceiling', textCr(totals.ceiling), isRGActive() ? 'RG is active in data' : 'Using BG/BE until RG is available'],
-      ['Actual Till Date', textCr(totals.actual), `${util.toFixed(1)}% of current ceiling`],
       ['Projected Requirement', textCr(totals.projected), `Till-date projection to 31 March`],
       ['Amount to Ask', textCr(totals.ask), `${totals.ask || 0 ? 'Requirement above ceiling' : 'No net excess projected'}`],
       ['Possible Surrender', textCr(totals.surrender), 'Subject to pending liabilities'],
-      ['Current Stage', stage.label, stage.askLabel]
+      ['Current Stage', stage.label, stage.askLabel],
+      ['Watch List', String(totals.watch || 0), 'High utilisation or near ceiling'],
+      ['Budget, No Expense', String(totals.noexpense || 0), 'Provision exists, no booking']
     ].map(([l,v,s]) => `<div class="bc-kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join('');
   }
 
@@ -1974,15 +2011,13 @@ function renderBudgetControl() {
   const title = document.getElementById('bcTableTitle');
   if (title) title.textContent = `PU-wise Ask / Surrender Control Register - ${rows.length} PU(s) shown`;
   if (!rows.length) {
-    body.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#607080;padding:16px">No PU found for selected Budget Control filters.</td></tr>';
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#607080;padding:16px">No PU found for selected Budget Control filters.</td></tr>';
     refreshBIViewSoon();
     return;
   }
   const rowHtml = rows.map(r => `<tr class="${r.cls}${isImportantPU(r.pu.code) ? ' important-pu-row' : ''}">
     <td class="puc puc-link" onclick="openPUDetail('${r.pu.code}')">${htmlSafe(r.pu.code)}</td>
     <td class="desc">${htmlSafe(r.pu.desc)}</td>
-    <td class="n">${textCr(r.ceiling)}</td>
-    <td class="n">${textCr(r.actualTill)}</td>
     <td class="n">${textCr(r.projectedRequirement)}</td>
     <td class="n bp-var-excess">${r.askAmount ? textCr(r.askAmount) : '-'}</td>
     <td class="n bp-var-saving">${r.surrenderAmount ? textCr(r.surrenderAmount) : '-'}</td>
@@ -1993,8 +2028,6 @@ function renderBudgetControl() {
   </tr>`).join('');
   body.innerHTML = rowHtml + `<tr class="tot ${filteredTotals.ask > filteredTotals.surrender ? 'bc-ask' : 'bc-surrender'}">
     <td colspan="2" style="text-align:left">TOTAL SHOWN PUs</td>
-    <td class="n">${textCr(filteredTotals.ceiling)}</td>
-    <td class="n">${textCr(filteredTotals.actual)}</td>
     <td class="n">${textCr(filteredTotals.projected)}</td>
     <td class="n">${textCr(filteredTotals.ask)}</td>
     <td class="n">${textCr(filteredTotals.surrender)}</td>
@@ -2122,7 +2155,7 @@ function handleTopFilterChange(sourceLabel) {
 }
 
 // Tabs and report menu
-const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','trend','aitrend','remarks','upload'];
+const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','trend','aitrend','remarks','upload','backup'];
 
 function syncReportNavigation(name) {
   document.querySelectorAll('[data-report-tab]').forEach(btn => {
@@ -2200,7 +2233,8 @@ const REPORT_LABELS = {
   trend:['Graphs','Trend Analysis Graphs'],
   aitrend:['AI Summary','PU risk remarks'],
   remarks:['Remarks','Sources and rules'],
-  upload:['Upload','Admin data update']
+  upload:['Upload','Admin data update'],
+  backup:['Backup','Admin zip export']
 };
 
 function smartSearchItems() {
@@ -2656,8 +2690,8 @@ function initSmartTools() {
 }
 
 function switchTab(name) {
-  if (name === 'upload' && !isUploadAdminUnlocked()) {
-    requestUploadAdmin();
+  if ((name === 'upload' || name === 'backup') && !isUploadAdminUnlocked()) {
+    requestUploadAdmin(name);
     return;
   }
   if (name !== activeTabName()) resetFiltersForNavigation();
@@ -2678,6 +2712,7 @@ function switchTab(name) {
   if(_pp){ _pp.style.opacity='0'; _pp.style.transform='translateY(6px)'; }
   if(['liability','monthwise','pumaster'].includes(name)){setTimeout(renderAll,50);}
   if(name==='upload') renderCurDataGrid();
+  if(name==='backup') renderBackupPage();
   if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
   setTimeout(applyMobileTableLabels, 140);
   setTimeout(renderBIView, 160);
@@ -2685,6 +2720,8 @@ function switchTab(name) {
 
 window.jumpReport = jumpReport;
 window.switchTab = switchTab;
+window.filterPUChecklist = filterPUChecklist;
+window.closePUDrawer = closePUDrawer;
 
 function textCr(n) {
   if (!n || isNaN(n)) return '0.00 Cr';
@@ -2714,6 +2751,158 @@ function saveBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+const BACKUP_FILE_LIST = Object.freeze([
+  'index.html',
+  'README.md',
+  'assets/css/main.css',
+  'assets/css/theme-digital-india.css',
+  'assets/css/theme-control-room.css',
+  'assets/css/theme-executive-light.css',
+  'assets/css/theme-gov-command.css',
+  'assets/js/app.js',
+  'assets/js/detail-data.js',
+  'assets/js/demand-smh-data.js',
+  'assets/vendor/xlsx.full.min.js',
+  'assets/vendor/exceljs.min.js',
+  'assets/vendor/jspdf.umd.min.js',
+  'assets/vendor/jspdf.plugin.autotable.min.js'
+]);
+
+let _crcTable = null;
+function crc32(bytes) {
+  if (!_crcTable) {
+    _crcTable = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      _crcTable[n] = c >>> 0;
+    }
+  }
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = _crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+function dosDateTime(date) {
+  const year = Math.max(1980, date.getFullYear());
+  return {
+    time: (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2),
+    date: ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate()
+  };
+}
+
+function u16(value) {
+  const b = new Uint8Array(2);
+  new DataView(b.buffer).setUint16(0, value, true);
+  return b;
+}
+
+function u32(value) {
+  const b = new Uint8Array(4);
+  new DataView(b.buffer).setUint32(0, value >>> 0, true);
+  return b;
+}
+
+function concatUint8(parts) {
+  const total = parts.reduce((sum, p) => sum + p.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  parts.forEach(part => {
+    out.set(part, offset);
+    offset += part.length;
+  });
+  return out;
+}
+
+function createZipBlob(entries) {
+  const encoder = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  const now = dosDateTime(new Date());
+  entries.forEach(entry => {
+    const nameBytes = encoder.encode(entry.name.replace(/\\/g, '/'));
+    const data = entry.bytes instanceof Uint8Array ? entry.bytes : new Uint8Array(entry.bytes);
+    const crc = crc32(data);
+    const localHeader = concatUint8([
+      u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(now.time), u16(now.date),
+      u32(crc), u32(data.length), u32(data.length), u16(nameBytes.length), u16(0), nameBytes
+    ]);
+    localParts.push(localHeader, data);
+    const centralHeader = concatUint8([
+      u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(now.time), u16(now.date),
+      u32(crc), u32(data.length), u32(data.length), u16(nameBytes.length), u16(0), u16(0),
+      u16(0), u16(0), u32(0), u32(offset), nameBytes
+    ]);
+    centralParts.push(centralHeader);
+    offset += localHeader.length + data.length;
+  });
+  const centralSize = centralParts.reduce((sum, p) => sum + p.length, 0);
+  const endRecord = concatUint8([
+    u32(0x06054b50), u16(0), u16(0), u16(entries.length), u16(entries.length),
+    u32(centralSize), u32(offset), u16(0)
+  ]);
+  return new Blob([...localParts, ...centralParts, endRecord], {type:'application/zip'});
+}
+
+function renderBackupPage() {
+  const status = document.getElementById('backupStatus');
+  const detail = document.getElementById('backupDetail');
+  const fileList = document.getElementById('backupFileList');
+  if (status) status.textContent = 'Ready';
+  if (detail) detail.textContent = 'Click the button below to create and download a zip backup.';
+  if (fileList) fileList.textContent = `Files: ${BACKUP_FILE_LIST.length} GitHub-ready portal files`;
+}
+
+async function downloadPortalBackup() {
+  if (!isUploadAdminUnlocked()) {
+    requestUploadAdmin('backup');
+    return;
+  }
+  const btn = document.getElementById('downloadBackupBtn');
+  const status = document.getElementById('backupStatus');
+  const detail = document.getElementById('backupDetail');
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Creating ZIP...';
+    }
+    if (status) status.textContent = 'Preparing';
+    if (detail) detail.textContent = 'Reading portal files from current GitHub/local folder...';
+    const entries = [];
+    for (const file of BACKUP_FILE_LIST) {
+      const res = await fetch(file + '?backup=' + Date.now(), {cache:'no-store'});
+      if (!res.ok) throw new Error(`Unable to include ${file} (${res.status})`);
+      entries.push({name:file, bytes:new Uint8Array(await res.arrayBuffer())});
+    }
+    const manifest = [
+      'Revenue Liability Portal Backup',
+      `Created: ${new Date().toLocaleString('en-IN')}`,
+      `Financial Year: 2026-27`,
+      '',
+      'Files included:',
+      ...BACKUP_FILE_LIST.map(f => `- ${f}`),
+      '',
+      'Upload this extracted folder to GitHub Pages repository root.'
+    ].join('\n');
+    entries.push({name:'BACKUP_MANIFEST.txt', bytes:new TextEncoder().encode(manifest)});
+    const fileDate = new Date().toISOString().slice(0,10);
+    saveBlob(createZipBlob(entries), `Revenue_Liability_Portal_GitHub_Backup_${fileDate}.zip`);
+    if (status) status.textContent = 'Downloaded';
+    if (detail) detail.textContent = `${entries.length} files packaged successfully.`;
+  } catch (err) {
+    console.error('Backup download failed', err);
+    if (status) status.textContent = 'Failed';
+    if (detail) detail.textContent = err.message || String(err);
+    alert('Backup download failed: ' + (err.message || err));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Download Portal Backup ZIP';
+    }
+  }
+}
+
 function htmlSafe(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -2732,14 +2921,15 @@ function includeInAITrendSummary(pu) {
 }
 
 function buildAITrendItems() {
-  const {cur} = getMonthStatus();
-  const prevIdx = Math.max(0, cur.idx - 1);
+  const {cur, latestActual} = getMonthStatus();
+  const actualIdx = latestActual ? latestActual.idx : Math.max(0, cur.idx - 1);
+  const prevIdx = Math.max(0, actualIdx - 1);
   const prevKey = FY_MONTHS[prevIdx];
-  const curKey = cur.key;
+  const curKey = FY_MONTHS[actualIdx];
   const prevLabel = FY_MONTH_LABELS[prevIdx];
-  const curLabel = cur.label;
-  const compareMonthKeys = FY_MONTHS.slice(0, cur.idx + 1);
-  const compareMonthLabels = FY_MONTH_LABELS.slice(0, cur.idx + 1);
+  const curLabel = FY_MONTH_LABELS[actualIdx];
+  const compareMonthKeys = FY_MONTHS.slice(0, actualIdx + 1);
+  const compareMonthLabels = FY_MONTH_LABELS.slice(0, actualIdx + 1);
 
   return PU_META.filter(pu => includeInAITrendSummary(pu) && passesPUFocus(pu.code)).map(pu => {
     const md = MONTH[pu.code] || {};
@@ -2747,12 +2937,11 @@ function buildAITrendItems() {
     const cv = compute(pu.code);
     const budget = cv.budget || 0;
     const cyPrev = Number(md[prevKey]) || 0;
-    const cyCurRaw = Number(md[curKey]) || 0;
-    const cyCur = Math.max(cyCurRaw, cv.curCommitted || 0);
+    const cyCur = Number(md[curKey]) || 0;
     const pyPrev = Number(py[prevKey]) || 0;
     const pyCur = Number(py[curKey]) || 0;
     const monthRows = compareMonthKeys.map((key, idx) => {
-      const cyMonth = idx === cur.idx ? cyCur : (Number(md[key]) || 0);
+      const cyMonth = Number(md[key]) || 0;
       const pyMonth = Number(py[key]) || 0;
       return {
         key,
@@ -2765,7 +2954,7 @@ function buildAITrendItems() {
     });
     const cySamePeriod = monthRows.reduce((s,r) => s + r.cy, 0);
     const pySamePeriod = monthRows.reduce((s,r) => s + r.py, 0);
-    const cyTotalAsOn = cv.totalCommitted || cySamePeriod;
+    const cyTotalAsOn = cySamePeriod;
     const pyTotalAsOn = pySamePeriod;
     const ytdDiff = cyTotalAsOn - pyTotalAsOn;
     const avgCyMonth = monthRows.length ? cySamePeriod / monthRows.length : 0;
@@ -2780,7 +2969,8 @@ function buildAITrendItems() {
     return {
       pu, cv, budget, cyPrev, cyCur, pyPrev, pyCur, utilPct, balanceRatio,
       overSpent, noBudgetSpend, projRise, risk, prevLabel, curLabel,
-      monthRows, cyTotalAsOn, pyTotalAsOn, ytdDiff, budgetNoExpense, avgCyMonth
+      monthRows, cyTotalAsOn, pyTotalAsOn, ytdDiff, budgetNoExpense, avgCyMonth,
+      actualIdx, actualMonthLabel:curLabel
     };
   }).sort((a,b) => {
     const riskScore = {high:3, watch:2, ok:1};
@@ -2804,7 +2994,7 @@ function renderAITrendSummary() {
   if (meta) {
     const sample = allItems[0];
     meta.textContent = sample
-      ? `PU-wise ${sample.curLabel} as-on review: CY vs PY month trend, actuals, utilisation, overspend and liability projection`
+      ? `PU-wise latest actual month ${sample.curLabel} review: CY vs PY month trend, actuals, utilisation, overspend and liability projection`
       : 'PU-wise current year, previous year and projection risk summary';
   }
   if (!items.length) {
@@ -2871,9 +3061,9 @@ function renderAITrendSummary() {
         </table>
       </div>
       <ul class="ai-bullets">
-        <li><strong>Current month movement:</strong> CY ${item.prevLabel} to ${item.curLabel} moved from ${textCr(item.cyPrev)} to ${textCr(item.cyCur)} (${signedCr(cyMove)}); PY moved ${signedCr(pyMove)} for the same month pair.</li>
+        <li><strong>Latest actual month movement:</strong> CY ${item.prevLabel} to ${item.curLabel} moved from ${textCr(item.cyPrev)} to ${textCr(item.cyCur)} (${signedCr(cyMove)}); PY moved ${signedCr(pyMove)} for the same completed-month pair.</li>
         <li><strong>CY vs PY as-on:</strong> CY total is ${textCr(item.cyTotalAsOn)} against PY same-period ${textCr(item.pyTotalAsOn)} (${ytdPct}; difference ${signedCr(item.ytdDiff)}).</li>
-        <li><strong>Current month vs PY:</strong> ${item.curLabel} CY is ${textCr(item.cyCur)} against ${textCr(item.pyCur)} in PY (${pctChangeText(item.cyCur, item.pyCur)}; difference ${signedCr(yoyMove)}).</li>
+        <li><strong>Latest actual month vs PY:</strong> ${item.curLabel} CY is ${textCr(item.cyCur)} against ${textCr(item.pyCur)} in PY (${pctChangeText(item.cyCur, item.pyCur)}; difference ${signedCr(yoyMove)}).</li>
         <li><strong>Budget and overspend:</strong> Budget ${textCr(item.budget)}, utilisation ${item.utilPct.toFixed(1)}%, balance ${textCr(item.cv.balanceBudget)}. ${spendStatus}</li>
         <li><strong>Liability AI analysis:</strong> ${projectionImpact} ${liabilityLine}</li>
       </ul>
@@ -2917,9 +3107,42 @@ function smhDemandCode(smhValue) {
   const raw = String(smhValue || '').trim();
   const code = (raw.match(/SMH\s*-\s*(.+)$/i) || [])[1] || raw.replace(/^SMH\s*/i, '').replace(/^-/, '').trim();
   const norm = code.trim().toUpperCase();
-  const match = demandSMHRows().find(r => String(r.smh || '').trim().toUpperCase() === norm);
-  const demand = match ? String(match.demand || '').trim().replace(/^Demand\s*/i, '') : '';
+  const demand = demandNumberForSMH(norm);
   return demand ? `DEMAND ${demand}/SMH-${norm}` : `SMH-${norm}`;
+}
+
+function smhCodeOnly(smhValue) {
+  const raw = String(smhValue || '').trim();
+  return ((raw.match(/SMH\s*-\s*(.+)$/i) || [])[1] || raw.replace(/^SMH\s*/i, '').replace(/^-/, '').trim()).trim().toUpperCase();
+}
+
+const DEMAND_BY_SMH = {
+  '01':'03',
+  '02':'04',
+  '03':'05',
+  '04':'06',
+  '05':'07',
+  '06':'08',
+  '07':'09',
+  '08':'10',
+  '09':'11',
+  '10':'12',
+  '11':'13',
+  '10N':'12N/10N'
+};
+
+function demandNumberForSMH(smhValue) {
+  const smh = smhCodeOnly(smhValue);
+  if (DEMAND_BY_SMH[smh]) return DEMAND_BY_SMH[smh];
+  const match = demandSMHRows().find(r => String(r.smh || '').trim().toUpperCase() === smh);
+  return match ? String(match.demand || '').trim().replace(/^Demand\s*/i, '') : '';
+}
+
+function detailDemandSMHLabel(rowOrDept, smhValue) {
+  const smh = typeof rowOrDept === 'object' ? rowOrDept.smh : smhValue;
+  const smhCode = smhCodeOnly(smh);
+  const demand = demandNumberForSMH(smhCode);
+  return demand ? `D-${demand}/SMH-${smhCode}` : `SMH-${smhCode}`;
 }
 
 function detailBPStatus(rowOrTotal) {
@@ -2965,7 +3188,7 @@ function updateSMHPUSelectionCount() {
 
 function onSMHPUAllToggle(checked) {
   document.querySelectorAll('#smhPUFilter .smh-pu-check').forEach(ch => {
-    ch.checked = false;
+    ch.checked = !!checked;
   });
   updateSMHPUSelectionCount();
   renderSMHDetail();
@@ -2981,9 +3204,14 @@ function onSMHPUChange() {
 function setSMHPUSelection(mode, silent) {
   const all = document.getElementById('smhPUAll');
   const checks = Array.from(document.querySelectorAll('#smhPUFilter .smh-pu-check'));
+  const search = document.getElementById('smhPUSearch');
+  if (search) {
+    search.value = '';
+    filterPUChecklist('smhPUFilter', '');
+  }
   if (all) all.checked = mode === 'all';
   checks.forEach(ch => {
-    ch.checked = false;
+    ch.checked = mode === 'all';
   });
   updateSMHPUSelectionCount();
   if (!silent) renderSMHDetail();
@@ -3023,6 +3251,7 @@ function initSMHDetailFilters() {
     </label>`).join('');
   deptSel.dataset.ready = 'yes';
   updateSMHPUSelectionCount();
+  initPUDrawerBehavior('smhPUDrawer');
 }
 
 function aggregateDetailRows(rows, mode) {
@@ -3079,13 +3308,14 @@ function renderSMHReportRows(rows, monthKeys) {
     smhs.forEach(smh => {
       const smhRows = deptRows.filter(r => r.smh === smh)
         .sort((a,b) => String(a.puCode).localeCompare(String(b.puCode), undefined, {numeric:true}));
-      html += `<tr class="smh-row"><td></td><td>${htmlSafe(smh)}</td><td></td>${'<td></td>'.repeat(blankDetailCells)}</tr>`;
+      const demandSmhLabel = detailDemandSMHLabel(dept.deptCode, smh);
+      html += `<tr class="smh-row"><td></td><td>${htmlSafe(demandSmhLabel)}</td><td></td>${'<td></td>'.repeat(blankDetailCells)}</tr>`;
       smhRows.forEach(r => {
         const bal = r.budget - r.actualTill;
         const noExpCls = isSMHBudgetNoExpense(r) ? ' no-exp-row' : '';
         const bp = detailBPStatus(r);
         html += `<tr class="pu-row${noExpCls}${isImportantPU(r.puCode) ? ' important-pu-row' : ''}">
-          <td></td>
+          <td>${htmlSafe(demandSmhLabel)}</td>
           <td></td>
           <td>PU - ${htmlSafe(r.puCode)} - ${htmlSafe(r.puName)}</td>
           <td>${detailNum(r.budget)}</td>
@@ -3104,7 +3334,7 @@ function renderSMHReportRows(rows, monthKeys) {
       html += `<tr class="subtot${smhNoExpCls}">
         <td></td>
         <td></td>
-        <td>Sub-Total: ${htmlSafe(smh)}</td>
+        <td>Sub-Total: ${htmlSafe(demandSmhLabel)}</td>
         <td>${detailNum(smhTotal.budget)}</td>
         ${monthKeys.map(m => `<td>${detailNum(smhTotal.months[m] || 0)}</td>`).join('')}
         <td><strong>${detailNum(smhTotal.actualTill)}</strong></td>
@@ -3225,7 +3455,7 @@ function renderSMHDetail() {
       const noExp = isSMHBudgetNoExpense(r);
       const bp = detailBPStatus(r);
       return `<tr class="pu-row${noExp ? ' no-exp-row' : ''}">
-        <td>${htmlSafe(smhDemandCode(r.smh))}</td>
+        <td>${htmlSafe(detailDemandSMHLabel(r))}</td>
         <td>${htmlSafe(r.deptCode)} - ${htmlSafe(r.deptName)}</td>
         <td>${detailNum(r.budget)}</td>
         ${visibleMonthKeys.map(m => `<td>${detailNum((r.months || {})[m] || 0)}</td>`).join('')}
@@ -3251,7 +3481,7 @@ function renderSMHDetail() {
     const bp = detailBPStatus(r);
     const rowClass = (mode === 'dept' ? 'dept-row' : mode === 'smh' ? 'smh-row' : 'pu-row') + (noExp ? ' no-exp-row' : '') + (mode === 'pu' && isImportantPU(r.puCode) ? ' important-pu-row' : '');
     const first = `${htmlSafe(r.deptCode)} - ${htmlSafe(r.deptName)}`;
-    const second = mode === 'dept' ? 'All Demand' : htmlSafe(r.smh);
+    const second = mode === 'dept' ? 'All Demand' : htmlSafe(detailDemandSMHLabel(r));
     const third = mode === 'pu' ? `PU - ${htmlSafe(r.puCode)} - ${htmlSafe(r.puName)}` : (mode === 'smh' ? 'Sub-total' : 'Department Total');
     return `<tr class="${rowClass}">
       <td>${first}</td>
@@ -3701,7 +3931,7 @@ async function downloadExcel() {
 
   // Sheet 6: Budget Control - BG/AR/REA/RG/FME/FG action view
   const bcRowsSource = buildBudgetControlRows();
-  const bcHdrs = ['PU','Description','Action','Ceiling',"Actual Till Date (Rs'000s)",
+  const bcHdrs = ['PU','Description','Action',
     "Projected Requirement (Rs'000s)","Amount to Ask (Rs'000s)","Possible Surrender (Rs'000s)",
     'Utilisation %','Budget Stage','Budget Control Remark'];
   const bcRows = bcRowsSource.map(r => {
@@ -3709,8 +3939,6 @@ async function downloadExcel() {
       r.pu.code,
       r.pu.desc,
       r.label,
-      Math.round(r.ceiling || 0),
-      Math.round(r.actualTill || 0),
       Math.round(r.projectedRequirement || 0),
       Math.round(r.askAmount || 0),
       Math.round(r.surrenderAmount || 0),
@@ -3732,14 +3960,14 @@ async function downloadExcel() {
     t.surrender += Number(r.surrenderAmount) || 0;
     return t;
   }, {ceiling:0, actual:0, projected:0, ask:0, surrender:0});
-  const bcTotRow = ['', 'TOTAL ACTIVE PUs', '', Math.round(bcTotals.ceiling), Math.round(bcTotals.actual),
+  const bcTotRow = ['', 'TOTAL ACTIVE PUs', '',
     Math.round(bcTotals.projected), Math.round(bcTotals.ask), Math.round(bcTotals.surrender),
     bcTotals.ceiling ? parseFloat(((bcTotals.actual / bcTotals.ceiling) * 100).toFixed(1)) + '%' : '0.0%',
     budgetControlStage().askLabel, 'Net ask/surrender calculated from current projection rule.'];
   bcTotRow._tot = true;
   bcRows.push(bcTotRow);
   addSheet(wb,'Budget Control',HDR_TITLE,'Indian Railways Budget Control - Ask / Surrender / Watch Register',bcHdrs,bcRows,
-    [8,26,18,14,18,22,18,20,12,18,42]);
+    [8,28,18,22,18,20,12,18,46]);
 
   // Sheet 7: DEPT-Demand Wise - visible report style, no internal raw JSON
   if (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) {
@@ -3765,7 +3993,8 @@ async function downloadExcel() {
       const smhs = [...new Set(deptRows.map(r => r.smh))]
         .sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
       smhs.forEach(smh => {
-        const demandHeader = ['',smh,''].concat(Array(smhHeaders.length - 3).fill(''));
+        const demandSmhLabel = detailDemandSMHLabel(dept.deptCode, smh);
+        const demandHeader = ['',demandSmhLabel,''].concat(Array(smhHeaders.length - 3).fill(''));
         demandHeader._cs = true;
         smhRows.push(demandHeader);
         const demandRows = deptRows.filter(r => r.smh === smh)
@@ -3775,7 +4004,7 @@ async function downloadExcel() {
           const bp = detailBPStatus(r);
           const smhPuRow = [
             '',
-            '',
+            demandSmhLabel,
             `PU - ${r.puCode} - ${r.puName}`,
             Number(r.budget) || 0
           ].concat(smhVisibleMonths.map(m => Number((r.months || {})[m]) || 0))
@@ -3789,8 +4018,8 @@ async function downloadExcel() {
         const demandBP = detailBPStatus(demandTotal);
         const demandTotalRow = [
           '',
-          '',
-          `Sub-Total: ${smh}`,
+          demandSmhLabel,
+          `Sub-Total: ${demandSmhLabel}`,
           demandTotal.budget
         ].concat(smhVisibleMonths.map(m => demandTotal.months[m] || 0))
          .concat([demandTotal.actualTill, demandBalance, isSMHBudgetNoExpense(demandTotal) ? 'BUDGET AVAILABLE, NO EXPENSES' : '', demandBP.status, demandBP.remark]);
@@ -4153,7 +4382,7 @@ async function downloadPDFReport() {
       const bp = detailBPStatus(r);
       return [
         `${r.deptCode} - ${r.deptName}`,
-        r.smh,
+        detailDemandSMHLabel(r),
         `PU-${r.puCode} - ${r.puName}`,
         detailCr(r.budget),
         detailCr(r.actualTill),
@@ -4166,7 +4395,7 @@ async function downloadPDFReport() {
     .filter(r => !isSkippedDisplayPU(r.puCode) && normPUCode(r.puCode) !== '98' && isSMHBudgetNoExpense(r))
     .sort((a,b) => (Number(b.budget) || 0) - (Number(a.budget) || 0))
     .slice(0, 80)
-    .map(r => [`${r.deptCode} - ${r.deptName}`, r.smh, `PU-${r.puCode} - ${r.puName}`, detailCr(r.budget), 'Budget available but no actual expense booked']);
+    .map(r => [`${r.deptCode} - ${r.deptName}`, detailDemandSMHLabel(r), `PU-${r.puCode} - ${r.puName}`, detailCr(r.budget), 'Budget available but no actual expense booked']);
   const demandRows = demandSMHOperationalRows();
   const demandSuspenseRows = demandSMHSuspenseRows();
   const demandTotals = demandSMHTotals();
@@ -4341,13 +4570,11 @@ async function downloadPDFReport() {
   autoTable({
     startY: 58,
     pageTitle:'Revenue Liability Report - Budget Control',
-    head:[['PU','Description','Action','Ceiling','Actual','Projected','Ask','Surrender','Util %','Budget Stage','Remark']],
+    head:[['PU','Description','Action','Projected','Ask','Surrender','Util %','Budget Stage','Remark']],
     body:bcRows.map(r => [
       'PU-' + r.pu.code,
       r.pu.desc,
       r.label,
-      textCr(r.ceiling),
-      textCr(r.actualTill),
       textCr(r.projectedRequirement),
       r.askAmount ? textCr(r.askAmount) : '-',
       r.surrenderAmount ? textCr(r.surrenderAmount) : '-',
@@ -4356,7 +4583,7 @@ async function downloadPDFReport() {
       r.remark
     ]),
     styles:{fontSize:7.2, cellPadding:2.5, overflow:'linebreak'},
-    columnStyles:{1:{cellWidth:125},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'},10:{cellWidth:190}}
+    columnStyles:{1:{cellWidth:150},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},8:{cellWidth:215}}
   });
 
   addPage('Revenue Liability Report - PU-wise Liability Annexure');
@@ -4474,6 +4701,7 @@ window.downloadPDFReport = downloadPDFReport;
 function initExportButtons() {
   const excelBtn = document.getElementById('downloadExcelBtn');
   const pdfBtn = document.getElementById('downloadPdfBtn');
+  const backupBtn = document.getElementById('downloadBackupBtn');
   if (excelBtn && !excelBtn.dataset.bound) {
     excelBtn.dataset.bound = '1';
     excelBtn.addEventListener('click', downloadExcel);
@@ -4481,6 +4709,10 @@ function initExportButtons() {
   if (pdfBtn && !pdfBtn.dataset.bound) {
     pdfBtn.dataset.bound = '1';
     pdfBtn.addEventListener('click', downloadPDFReport);
+  }
+  if (backupBtn && !backupBtn.dataset.bound) {
+    backupBtn.dataset.bound = '1';
+    backupBtn.addEventListener('click', downloadPortalBackup);
   }
 }
 
