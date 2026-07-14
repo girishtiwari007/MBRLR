@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260714-refine-3';
+const ASSET_VERSION = '20260714-admin-panel-2';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -94,6 +94,10 @@ function restoreLoginSession() {
   if (backupTab) backupTab.style.display = '';
   const backupMenuBtn = document.getElementById('backupMenuBtn');
   if (backupMenuBtn) backupMenuBtn.style.display = '';
+  const adminTab = document.getElementById('adminTab');
+  if (adminTab) adminTab.style.display = '';
+  const adminMenuBtn = document.getElementById('adminMenuBtn');
+  if (adminMenuBtn) adminMenuBtn.style.display = '';
 }
 
 function isUploadAdminUnlocked() {
@@ -108,10 +112,14 @@ function requestUploadAdmin(targetTab='upload') {
   const sub = document.getElementById('loginSub');
   const pwd = document.getElementById('loginPwd');
   const err = document.getElementById('loginErr');
-  if (title) title.textContent = targetTab === 'backup' ? 'BACKUP ADMIN ACCESS' : 'UPLOAD ADMIN ACCESS';
+  if (title) title.textContent = targetTab === 'backup' ? 'BACKUP ADMIN ACCESS' : targetTab === 'admin' ? 'PORTAL ADMIN ACCESS' : targetTab === 'remarks' ? 'REMARKS ADMIN ACCESS' : 'UPLOAD ADMIN ACCESS';
   if (sub) sub.innerHTML = targetTab === 'backup'
     ? 'Portal backup is admin protected.<br>Enter ADMIN password to open backup download.'
-    : 'Portal is open for viewing.<br>Enter ADMIN password only for data upload.';
+    : targetTab === 'admin'
+      ? 'Portal design settings are admin protected.<br>Enter ADMIN password to edit headings and menu names.'
+      : targetTab === 'remarks'
+        ? 'Remarks and source rules are now inside Portal Admin.<br>Enter ADMIN password to open.'
+      : 'Portal is open for viewing.<br>Enter ADMIN password only for data upload.';
   if (err) err.textContent = '';
   if (pwd) pwd.value = '';
   if (overlay) overlay.classList.remove('hidden');
@@ -2155,7 +2163,7 @@ function handleTopFilterChange(sourceLabel) {
 }
 
 // Tabs and report menu
-const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','trend','aitrend','remarks','upload','backup'];
+const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','trend','aitrend','remarks','upload','backup','admin'];
 
 function syncReportNavigation(name) {
   document.querySelectorAll('[data-report-tab]').forEach(btn => {
@@ -2180,6 +2188,259 @@ function initReportMenuButtons() {
     });
   });
   syncReportNavigation(activeTabName());
+}
+
+const ADMIN_CONFIG_KEY = 'rlp_admin_design_config_v2';
+const ADMIN_MENU_DEFAULTS = {
+  summary:'Summary',
+  liability:'Main Report',
+  smhdetail:'DEPT-Demand',
+  demandsmh:'Demand / SMH',
+  pumaster:'PU Master',
+  monthwise:'Month-wise',
+  bpanalysis:'BP Analysis',
+  budgetcontrol:'Budget Control',
+  trend:'Graphs',
+  aitrend:'AI Summary',
+  remarks:'Remarks',
+  upload:'Upload',
+  backup:'Backup',
+  admin:'Portal Admin'
+};
+const ADMIN_TAB_DEFAULTS = {
+  summary:'Executive Summary',
+  liability:'Revenue Liability',
+  smhdetail:'DEPT-Demand Wise',
+  demandsmh:'Demand / SMH Summary',
+  pumaster:'PU Master',
+  monthwise:'Month-wise Actuals',
+  bpanalysis:'BP Analysis',
+  budgetcontrol:'Budget Control',
+  trend:'Trend Graphs',
+  aitrend:'AI Trend Summary',
+  remarks:'Remarks',
+  upload:'Data Upload',
+  backup:'Portal Backup',
+  admin:'Portal Admin'
+};
+const ADMIN_DEFAULT_CONFIG = {
+  headerTitle:'REVENUE LIABILITY PORTAL - MORADABAD DIVISION',
+  headerSub:"Northern Railway | Financial Authority Dashboard | All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees",
+  footerText:'Revenue Liability Portal - Moradabad Division / Northern Railway - FY 2026-27 - For Official Use Only',
+  fontFamily:'Segoe UI, Arial, sans-serif',
+  baseFont:12,
+  menuFont:10,
+  tableFont:10,
+  filters:{type:true, liability:true, activity:true, focus:true, util:true},
+  menu:Object.fromEntries(TAB_IDS.map(id => [id, {label:ADMIN_MENU_DEFAULTS[id] || id, visible:!['remarks','upload','backup'].includes(id)}]))
+};
+let _adminConfig = null;
+
+function cloneAdminDefaults() {
+  return JSON.parse(JSON.stringify(ADMIN_DEFAULT_CONFIG));
+}
+
+function mergeAdminConfig(input) {
+  const cfg = cloneAdminDefaults();
+  const src = input && typeof input === 'object' ? input : {};
+  const hasMenuConfig = !!(src.menu && typeof src.menu === 'object');
+  ['headerTitle','headerSub','footerText','fontFamily'].forEach(k => {
+    if (typeof src[k] === 'string') cfg[k] = src[k];
+  });
+  ['baseFont','menuFont','tableFont'].forEach(k => {
+    const value = Number(src[k]);
+    if (Number.isFinite(value)) cfg[k] = value;
+  });
+  cfg.filters = {...cfg.filters, ...(src.filters || {})};
+  cfg.menu = {...cfg.menu};
+  Object.entries(src.menu || {}).forEach(([id, val]) => {
+    if (!cfg.menu[id]) cfg.menu[id] = {label:id, visible:true};
+    if (typeof val === 'string') cfg.menu[id].label = val;
+    else if (val && typeof val === 'object') {
+      if (typeof val.label === 'string') cfg.menu[id].label = val.label;
+      if (typeof val.visible === 'boolean') cfg.menu[id].visible = val.visible;
+    }
+  });
+  ['remarks','upload','backup'].forEach(id => {
+    if (!hasMenuConfig && cfg.menu[id]) cfg.menu[id].visible = false;
+  });
+  return cfg;
+}
+
+function loadAdminConfig() {
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(ADMIN_CONFIG_KEY) || 'null'); } catch(e) {}
+  _adminConfig = mergeAdminConfig(stored || window.PORTAL_ADMIN_CONFIG || {});
+  return _adminConfig;
+}
+
+function applyAdminConfig(config) {
+  const cfg = mergeAdminConfig(config || _adminConfig || {});
+  _adminConfig = cfg;
+  const root = document.documentElement;
+  root.style.setProperty('--admin-ui-font', cfg.fontFamily);
+  root.style.setProperty('--admin-base-font', `${cfg.baseFont}px`);
+  root.style.setProperty('--admin-menu-font', `${cfg.menuFont}px`);
+  root.style.setProperty('--admin-table-font', `${cfg.tableFont}px`);
+  const title = document.querySelector('.ht h1');
+  const sub = document.querySelector('.ht p');
+  const footer = document.getElementById('portalFooter');
+  if (title) title.textContent = cfg.headerTitle;
+  if (sub) sub.textContent = cfg.headerSub;
+  if (footer) footer.textContent = cfg.footerText;
+  TAB_IDS.forEach((id, idx) => {
+    const menuCfg = cfg.menu[id] || {label:ADMIN_MENU_DEFAULTS[id] || id, visible:true};
+    document.querySelectorAll(`[data-report-tab="${id}"]`).forEach(btn => {
+      const label = btn.querySelector('span');
+      if (label) label.textContent = menuCfg.label;
+      btn.classList.toggle('admin-hidden-filter', menuCfg.visible === false);
+    });
+    const tab = document.querySelectorAll('.tabs .tab')[idx];
+    if (tab) {
+      tab.textContent = menuCfg.label || ADMIN_TAB_DEFAULTS[id] || id;
+      tab.classList.toggle('admin-hidden-filter', menuCfg.visible === false);
+    }
+    if (REPORT_LABELS[id]) REPORT_LABELS[id][0] = menuCfg.label || REPORT_LABELS[id][0];
+  });
+  toggleAdminFilter('typeFilter', cfg.filters.type, 'all');
+  toggleAdminFilter('liabFilter', cfg.filters.liability, 'all');
+  toggleAdminFilter('activityFilter', cfg.filters.activity, 'all');
+  toggleAdminFilter('puFocusFilter', cfg.filters.focus, 'all');
+  const utilWrap = document.querySelector('.util-filter');
+  if (utilWrap) utilWrap.classList.toggle('admin-hidden-filter', !cfg.filters.util);
+  if (!cfg.filters.util) {
+    const cmp = document.getElementById('utilCompare');
+    const pct = document.getElementById('utilPctFilter');
+    if (cmp) cmp.value = 'all';
+    if (pct) pct.value = '';
+  }
+}
+
+function toggleAdminFilter(id, visible, resetValue) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('admin-hidden-filter', !visible);
+  if (!visible && resetValue !== undefined) el.value = resetValue;
+}
+
+function renderAdminDesign() {
+  if (!isUploadAdminUnlocked()) return;
+  const cfg = _adminConfig || loadAdminConfig();
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+  setVal('adminHeaderTitle', cfg.headerTitle);
+  setVal('adminHeaderSub', cfg.headerSub);
+  setVal('adminFooterText', cfg.footerText);
+  setVal('adminFontFamily', cfg.fontFamily);
+  setVal('adminBaseFont', cfg.baseFont);
+  setVal('adminMenuFont', cfg.menuFont);
+  setVal('adminTableFont', cfg.tableFont);
+  setChk('adminShowTypeFilter', cfg.filters.type);
+  setChk('adminShowLiabilityFilter', cfg.filters.liability);
+  setChk('adminShowActivityFilter', cfg.filters.activity);
+  setChk('adminShowFocusFilter', cfg.filters.focus);
+  setChk('adminShowUtilFilter', cfg.filters.util);
+  const editor = document.getElementById('adminMenuEditor');
+  if (editor) {
+    editor.innerHTML = TAB_IDS.map(id => {
+      const item = cfg.menu[id] || {label:ADMIN_MENU_DEFAULTS[id] || id, visible:true};
+      return `<div class="admin-menu-row" data-admin-menu="${htmlSafe(id)}">
+        <label>${htmlSafe(id)} <input type="text" value="${htmlSafe(item.label)}" data-admin-menu-label="${htmlSafe(id)}"></label>
+        <label class="admin-visible"><input type="checkbox" ${item.visible !== false ? 'checked' : ''} data-admin-menu-visible="${htmlSafe(id)}"> Show</label>
+      </div>`;
+    }).join('');
+  }
+  bindAdminInputs();
+  updateAdminPreview();
+}
+
+function bindAdminInputs() {
+  document.querySelectorAll('#tab-admin input,#tab-admin select').forEach(el => {
+    if (el.dataset.adminBound === '1') return;
+    el.dataset.adminBound = '1';
+    el.addEventListener('input', () => {
+      const cfg = readAdminForm();
+      applyAdminConfig(cfg);
+      updateAdminPreview(cfg);
+    });
+    el.addEventListener('change', () => {
+      const cfg = readAdminForm();
+      applyAdminConfig(cfg);
+      updateAdminPreview(cfg);
+    });
+  });
+}
+
+function readAdminForm() {
+  const val = id => (document.getElementById(id) || {}).value || '';
+  const chk = id => !!((document.getElementById(id) || {}).checked);
+  const cfg = mergeAdminConfig(_adminConfig || {});
+  cfg.headerTitle = val('adminHeaderTitle') || ADMIN_DEFAULT_CONFIG.headerTitle;
+  cfg.headerSub = val('adminHeaderSub') || ADMIN_DEFAULT_CONFIG.headerSub;
+  cfg.footerText = val('adminFooterText') || ADMIN_DEFAULT_CONFIG.footerText;
+  cfg.fontFamily = val('adminFontFamily') || ADMIN_DEFAULT_CONFIG.fontFamily;
+  cfg.baseFont = Number(val('adminBaseFont')) || ADMIN_DEFAULT_CONFIG.baseFont;
+  cfg.menuFont = Number(val('adminMenuFont')) || ADMIN_DEFAULT_CONFIG.menuFont;
+  cfg.tableFont = Number(val('adminTableFont')) || ADMIN_DEFAULT_CONFIG.tableFont;
+  cfg.filters = {
+    type:chk('adminShowTypeFilter'),
+    liability:chk('adminShowLiabilityFilter'),
+    activity:chk('adminShowActivityFilter'),
+    focus:chk('adminShowFocusFilter'),
+    util:chk('adminShowUtilFilter')
+  };
+  TAB_IDS.forEach(id => {
+    const label = document.querySelector(`[data-admin-menu-label="${id}"]`);
+    const visible = document.querySelector(`[data-admin-menu-visible="${id}"]`);
+    cfg.menu[id] = {
+      label: label ? label.value : (cfg.menu[id] || {}).label || id,
+      visible: visible ? visible.checked : true
+    };
+  });
+  return cfg;
+}
+
+function updateAdminPreview(config) {
+  const cfg = config || readAdminForm();
+  const preview = document.getElementById('adminPreview');
+  if (!preview) return;
+  preview.style.fontFamily = cfg.fontFamily;
+  preview.style.fontSize = `${cfg.baseFont}px`;
+  const head = preview.querySelector('.admin-preview-head');
+  if (head) head.textContent = cfg.headerTitle;
+  preview.querySelectorAll('.admin-preview-menu button').forEach(btn => {
+    btn.style.fontSize = `${cfg.menuFont}px`;
+  });
+  const tbl = preview.querySelector('table');
+  if (tbl) tbl.style.fontSize = `${cfg.tableFont}px`;
+}
+
+function saveAdminDesign() {
+  if (!isUploadAdminUnlocked()) { requestUploadAdmin('admin'); return; }
+  const cfg = readAdminForm();
+  localStorage.setItem(ADMIN_CONFIG_KEY, JSON.stringify(cfg));
+  applyAdminConfig(cfg);
+  const status = document.getElementById('adminSaveStatus');
+  if (status) status.textContent = 'Saved locally and applied';
+}
+
+function resetAdminDesign() {
+  if (!isUploadAdminUnlocked()) { requestUploadAdmin('admin'); return; }
+  localStorage.removeItem(ADMIN_CONFIG_KEY);
+  _adminConfig = cloneAdminDefaults();
+  applyAdminConfig(_adminConfig);
+  renderAdminDesign();
+  const status = document.getElementById('adminSaveStatus');
+  if (status) status.textContent = 'Reset to defaults';
+}
+
+function exportAdminConfig() {
+  if (!isUploadAdminUnlocked()) { requestUploadAdmin('admin'); return; }
+  const cfg = readAdminForm();
+  const content = `window.PORTAL_ADMIN_CONFIG = ${JSON.stringify(cfg, null, 2)};\n`;
+  saveBlob(new Blob([content], {type:'application/javascript'}), 'admin-config.js');
+  const status = document.getElementById('adminSaveStatus');
+  if (status) status.textContent = 'Downloaded admin-config.js for GitHub commit';
 }
 
 function setDashboardPinned(pinned) {
@@ -2234,11 +2495,13 @@ const REPORT_LABELS = {
   aitrend:['AI Summary','PU risk remarks'],
   remarks:['Remarks','Sources and rules'],
   upload:['Upload','Admin data update'],
-  backup:['Backup','Admin zip export']
+  backup:['Backup','Admin zip export'],
+  admin:['Portal Admin','Names and layout']
 };
 
 function smartSearchItems() {
   const reportItems = Object.entries(REPORT_LABELS)
+    .filter(([key]) => isUploadAdminUnlocked() || !['remarks','upload','backup'].includes(key))
     .map(([key, val]) => ({type:'report', key, title:val[0], sub:val[1]}));
   const puItems = activePUMeta().map(pu => ({
     type:'pu',
@@ -2690,7 +2953,7 @@ function initSmartTools() {
 }
 
 function switchTab(name) {
-  if ((name === 'upload' || name === 'backup') && !isUploadAdminUnlocked()) {
+  if ((name === 'remarks' || name === 'upload' || name === 'backup' || name === 'admin') && !isUploadAdminUnlocked()) {
     requestUploadAdmin(name);
     return;
   }
@@ -2702,6 +2965,7 @@ function switchTab(name) {
   if(name==='budgetcontrol'){setTimeout(renderBudgetControl,80);}
   if(name==='demandsmh'){setTimeout(renderDemandSMHSummary,80);}
   if(name==='remarks'){setTimeout(renderRemarks,80);}
+  if(name==='admin'){setTimeout(renderAdminDesign,80);}
   document.querySelectorAll('.tab').forEach((t,i) => {
     t.classList.toggle('active', TAB_IDS[i]===name);
   });
@@ -2722,6 +2986,9 @@ window.jumpReport = jumpReport;
 window.switchTab = switchTab;
 window.filterPUChecklist = filterPUChecklist;
 window.closePUDrawer = closePUDrawer;
+window.saveAdminDesign = saveAdminDesign;
+window.resetAdminDesign = resetAdminDesign;
+window.exportAdminConfig = exportAdminConfig;
 
 function textCr(n) {
   if (!n || isNaN(n)) return '0.00 Cr';
@@ -2760,6 +3027,7 @@ const BACKUP_FILE_LIST = Object.freeze([
   'assets/css/theme-executive-light.css',
   'assets/css/theme-gov-command.css',
   'assets/js/app.js',
+  'assets/js/admin-config.js',
   'assets/js/detail-data.js',
   'assets/js/demand-smh-data.js',
   'assets/vendor/xlsx.full.min.js',
@@ -5975,6 +6243,8 @@ loadCYUploadState();
 loadUploadAdminState();
 initSMHDetailFilters();
 restoreLoginSession();
+loadAdminConfig();
+applyAdminConfig(_adminConfig);
 renderAll();
 renderUploadConfirmHistory();
 setTimeout(renderSMHDetail, 120);

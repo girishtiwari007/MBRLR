@@ -7,9 +7,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="portal-build" content="rlp-mbd-2026-07-14-v2.1.4">
+<meta name="portal-build" content="rlp-mbd-2026-07-14-v2.2.1">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260714-refine-3">
+<link rel="stylesheet" href="assets/css/main.css?v=20260714-admin-panel-2">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -89,7 +89,7 @@
       <span>DEPT-Demand</span><small>Wise details</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="demandsmh" aria-pressed="false">
-      <span>Demand SMH</span><small>Grant summary</small><em>NEW</em>
+      <span>Demand / SMH</span><small>Grant summary</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="pumaster" aria-pressed="false">
       <span>PU Master</span><small>Code reference</small>
@@ -117,6 +117,9 @@
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="backup" id="backupMenuBtn" aria-pressed="false">
       <span>Backup</span><small>Admin zip export</small><em>NEW</em>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="admin" id="adminMenuBtn" aria-pressed="false">
+      <span>Portal Admin</span><small>Names and layout</small><em>NEW</em>
     </button>
   </div>
 </div>
@@ -265,6 +268,7 @@
   <div class="tab" onclick="switchTab('remarks')">Remarks / Clarification</div>
   <div class="tab" id="uploadTab" onclick="switchTab('upload')">Data Upload</div>
   <div class="tab" id="backupTab" onclick="switchTab('backup')">Portal Backup</div>
+  <div class="tab" id="adminTab" onclick="switchTab('admin')">Portal Admin</div>
 </div>
 <div class="bi-view-panel" id="biViewPanel" hidden></div>
 <!-- TAB: SUMMARY -->
@@ -937,16 +941,83 @@
   </div>
 </div>
 
-<div style="text-align:center;padding:10px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
+<div class="tab-content" id="tab-admin">
+  <div class="admin-wrap">
+    <div class="admin-head">
+      <div>
+        <div class="admin-title">Portal Admin Design Panel</div>
+        <div class="admin-sub">Admin-only control for headings, report names, filter visibility and font simulation.</div>
+      </div>
+      <div class="admin-lock">ADMIN ONLY</div>
+    </div>
+    <div class="admin-note">Browser save applies instantly on this device. For GitHub Pages, export the config and commit <strong>assets/js/admin-config.js</strong> through GitHub Desktop or Codex.</div>
+    <div class="admin-page-shortcuts">
+      <button type="button" onclick="switchTab('remarks')"><strong>Remarks / Clarification</strong><span>Sources, exclusions and rules</span></button>
+      <button type="button" onclick="switchTab('upload')"><strong>Data Upload</strong><span>Admin upload and confirm files</span></button>
+      <button type="button" onclick="switchTab('backup')"><strong>Portal Backup</strong><span>Download GitHub-ready ZIP</span></button>
+    </div>
+    <div class="admin-grid">
+      <section class="admin-card">
+        <h3>Portal Headings</h3>
+        <label>Header Title <input id="adminHeaderTitle" type="text"></label>
+        <label>Header Subtitle <input id="adminHeaderSub" type="text"></label>
+        <label>Footer Text <input id="adminFooterText" type="text"></label>
+      </section>
+      <section class="admin-card">
+        <h3>Font Simulator</h3>
+        <label>UI Font
+          <select id="adminFontFamily">
+            <option value="Segoe UI, Arial, sans-serif">Segoe UI</option>
+            <option value="Tahoma, Segoe UI, Arial, sans-serif">Tahoma Compact</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Verdana, Arial, sans-serif">Verdana</option>
+          </select>
+        </label>
+        <label>Base Font Size <input id="adminBaseFont" type="range" min="10" max="14" step="0.5"></label>
+        <label>Menu Font Size <input id="adminMenuFont" type="range" min="8" max="12" step="0.5"></label>
+        <label>Table Font Size <input id="adminTableFont" type="range" min="9" max="13" step="0.5"></label>
+      </section>
+      <section class="admin-card admin-filter-card">
+        <h3>Top Filter Visibility</h3>
+        <label><input id="adminShowTypeFilter" type="checkbox"> PU Type Filter</label>
+        <label><input id="adminShowLiabilityFilter" type="checkbox"> Liability Filter</label>
+        <label><input id="adminShowActivityFilter" type="checkbox"> Activity Filter</label>
+        <label><input id="adminShowFocusFilter" type="checkbox"> Important PU Filter</label>
+        <label><input id="adminShowUtilFilter" type="checkbox"> Utilisation Filter</label>
+      </section>
+      <section class="admin-card admin-preview-card">
+        <h3>Live Preview</h3>
+        <div class="admin-preview" id="adminPreview">
+          <div class="admin-preview-head">Revenue Liability Portal</div>
+          <div class="admin-preview-menu"><button>Main Report</button><button>DEPT-Demand</button><button>AI Summary</button></div>
+          <table><thead><tr><th>PU</th><th>Description</th><th>Budget</th></tr></thead><tbody><tr><td>32</td><td>Contractual payments</td><td>117,051</td></tr></tbody></table>
+        </div>
+      </section>
+    </div>
+    <section class="admin-card admin-menu-editor">
+      <h3>Report Menu Names</h3>
+      <div class="admin-menu-grid" id="adminMenuEditor"></div>
+    </section>
+    <div class="admin-actions">
+      <button type="button" onclick="saveAdminDesign()">Save & Apply</button>
+      <button type="button" onclick="exportAdminConfig()">Export GitHub Config</button>
+      <button type="button" onclick="resetAdminDesign()">Reset Defaults</button>
+      <span id="adminSaveStatus">Ready</span>
+    </div>
+  </div>
+</div>
+
+<div id="portalFooter" style="text-align:center;padding:10px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
   Revenue Liability Portal &nbsp;-&nbsp; Moradabad Division / Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
 </div>
 
 <script src="assets/js/detail-data.js"></script>
 <script src="assets/js/demand-smh-data.js"></script>
+<script src="assets/js/admin-config.js?v=20260714-admin-panel-2"></script>
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260714-refine-3"></script>
+<script src="assets/js/app.js?v=20260714-admin-panel-2"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>
