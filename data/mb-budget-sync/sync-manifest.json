@@ -5,7 +5,7 @@
   "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
   "targetFolder": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR\\data\\mb-budget-sync",
   "financialYear": "2026-2027",
-  "generatedAt": "2026-07-14T13:53:50",
+  "generatedAt": "2026-07-14T15:49:49",
   "counts": {
     "sourceFiles": 6,
     "processedFiles": 7,
@@ -134,7 +134,7 @@
     }
   ],
   "warnings": [],
-  "syncedAt": "2026-07-14T13:53:50",
+  "syncedAt": "2026-07-14T15:49:49",
   "selectedTargets": [
     "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls",
     "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls",

@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260714-mbrlr-fetch-sync-1';
+const ASSET_VERSION = '20260714-demand-june-ae-2';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -237,7 +237,7 @@ const SOURCE_REGISTER = {
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'SMH-DEMAND Wise PU wise Dept wise Month Wise 2026-2027 Budget.xls', used:'DEPT-Demand Wise'},
   smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'SMH-DEMAND Wise PU wise Dept wise Month Wise 2026-2027 Actual.xls', used:'DEPT-Demand Wise'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'SMH-DEMAND Wise 2026-2027 Budget.xls + SMH-DEMAND WISE 2026-2027 ACTUAL.xls', used:'Demand / SMH Summary', remarks:'OBA = BG_ISL; BP = BG_ISL / 12 x completed actual months; AE = actuals up to JUL 2026 till-date. Demand 12N/10N Suspense Heads is shown separately.'}
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'SMH-DEMAND Wise 2026-2027 Budget.xls + SMH-DEMAND WISE 2026-2027 ACTUAL.xls', used:'Demand / SMH Summary', remarks:'OBA = BG_ISL; BP = BG_ISL / 12 x selected BP months. Default mode uses completed actual month; till-date mode uses latest uploaded month. Imported BP is ignored. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -439,6 +439,52 @@ const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
 let _uploadConfirmHistory = [];
 let _pyUploadMeta = null;
 let _pyUploadMode = false;
+function bpModeUsesTillDate() {
+  return false;
+}
+
+function getBPModeStatus() {
+  const status = getMonthStatus();
+  const completedThroughIdx = status.actualMonths.length ? FY_MONTHS.indexOf(status.actualMonths[status.actualMonths.length - 1]) : -1;
+  const latestIdx = status.latestActual ? status.latestActual.idx : completedThroughIdx;
+  const activeIdx = completedThroughIdx;
+  const bpMonths = activeIdx >= 0 ? FY_MONTHS.slice(0, activeIdx + 1) : [];
+  const bpThrough = activeIdx >= 0 ? {idx:activeIdx, key:FY_MONTHS[activeIdx], label:FY_MONTH_LABELS[activeIdx], year:activeIdx<=8?2026:2027} : null;
+  const latestData = latestIdx >= 0 ? {idx:latestIdx, key:FY_MONTHS[latestIdx], label:FY_MONTH_LABELS[latestIdx], year:latestIdx<=8?2026:2027} : null;
+  return {
+    ...status,
+    bpMonths,
+    bpMonthCount:bpMonths.length,
+    bpThrough,
+    latestData,
+    mode:'completed',
+    modeLabel:'Completed actual month',
+    formulaLabel:bpThrough ? `${bpMonths.length} month(s) through ${bpThrough.label} ${bpThrough.year}` : 'No actual month'
+  };
+}
+
+function actualForBPMode(code) {
+  const md = MONTH[code] || {};
+  const mode = getBPModeStatus();
+  const hasMonthData = mode.bpMonths.some(m => Object.prototype.hasOwnProperty.call(md, m));
+  const actual = BUDGET[code] ? Number(BUDGET[code].actuals_till) : NaN;
+  if (hasMonthData) return mode.bpMonths.reduce((sum, m) => sum + (Number(md[m]) || 0), 0);
+  if (Number.isFinite(actual)) return actual;
+  return compute(code).totalCommitted;
+}
+
+function setBPModeTillDate(checked) {
+  syncBPModeControls();
+  if (typeof renderBPAnalysis === 'function') renderBPAnalysis();
+  if (typeof renderBudgetControl === 'function') renderBudgetControl();
+  if (typeof renderDemandSMHSummary === 'function') renderDemandSMHSummary();
+  if (typeof refreshBIViewSoon === 'function') refreshBIViewSoon();
+}
+
+function syncBPModeControls() {
+  const mode = getBPModeStatus();
+  document.querySelectorAll('[data-bp-mode-label]').forEach(el => { el.textContent = `${mode.modeLabel}: ${mode.formulaLabel}`; });
+}
 
 function formatAsOnDate(d) {
   const dt = d instanceof Date && !isNaN(d) ? d : DEFAULT_DATA_AS_ON_DATE;
@@ -1731,13 +1777,12 @@ function bpSelectedCodes() {
 }
 
 function buildBPRows() {
-  const {actualMonths} = getMonthStatus();
-  const actualMonthCount = actualMonths.length;
+  const bpMode = getBPModeStatus();
+  const actualMonths = bpMode.bpMonths;
+  const actualMonthCount = bpMode.bpMonthCount;
   return activePUMeta().map(pu => {
     const budget = getBudget(pu.code);
-    const source = BUDGET[pu.code] || {};
-    const actual = Number(source.actuals_till);
-    const actualTill = Number.isFinite(actual) ? actual : compute(pu.code).totalCommitted;
+    const actualTill = actualForBPMode(pu.code);
     const bp = (budget / 12) * actualMonthCount;
     const variance = actualTill - bp;
     const utilPct = budget ? (actualTill / budget) * 100 : (actualTill ? 999 : 0);
@@ -1756,7 +1801,6 @@ function buildBPRows() {
     return {pu, budget, actualTill, bp, variance, utilPct, actualMonthCount, status, remark, overFullBudget, noExpense};
   });
 }
-
 function getFilteredBPRows() {
   const selected = bpSelectedCodes();
   const statusFilter = (document.getElementById('bpStatusFilter') || {}).value || 'all';
@@ -1777,12 +1821,15 @@ function getFilteredBPRows() {
 }
 
 function renderBPAnalysis() {
+  syncBPModeControls();
   initBPFilter();
   const body = document.getElementById('bpTableBody');
   if (!body) return;
   const rows = getFilteredBPRows();
-  const {actualMonths, cur} = getMonthStatus();
-  const monthLabels = actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ') || 'No completed month';
+  const bpMode = getBPModeStatus();
+  const actualMonths = bpMode.bpMonths;
+  const cur = bpMode.bpThrough || bpMode.cur;
+  const monthLabels = actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ') || 'No actual month selected';
   const totals = rows.reduce((t, r) => {
     t.budget += r.budget;
     t.bp += r.bp;
@@ -1797,14 +1844,17 @@ function renderBPAnalysis() {
   if (kpis) {
     kpis.innerHTML = [
       ['Total Budget Grant', textCr(totals.budget), 'Selected PU budget'],
-      ['Budget Proportionate', textCr(totals.bp), `${actualMonths.length} completed month(s): ${monthLabels}`],
-      ['Actual Till Date', textCr(totals.actual), `As on ${cur.label} ${cur.year}`],
+      ['Budget Proportionate', textCr(totals.bp), `${bpMode.modeLabel}: ${monthLabels}`],
+      ['Actual Used', textCr(totals.actual), `AE up to ${bpMode.bpThrough ? bpMode.bpThrough.label + ' ' + bpMode.bpThrough.year : 'completed month'}`],
       [totals.variance >= 0 ? 'Net Excess vs BP' : 'Net Saving vs BP', signedCr(totals.variance), `${totals.excessCount} excess / ${totals.savingCount} saving PUs`],
       ['Over Full Budget', String(totals.overCount), 'PU count already above full BG']
     ].map(([l,v,s]) => `<div class="bp-kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join('');
   }
   const meta = document.getElementById('bpMeta');
-  if (meta) meta.textContent = `BP = BG / 12 x ${actualMonths.length}. Completed months counted: ${monthLabels}. ${cur.label} is current running month and is not counted in BP month count.`;
+  if (meta) {
+    const latest = bpMode.latestData ? `${bpMode.latestData.label} ${bpMode.latestData.year}` : 'no latest actual month';
+    meta.textContent = `BP = BG / 12 x ${actualMonths.length}. Completed months counted: ${monthLabels}. AE is also kept up to completed month only. Latest data available: ${latest}. Imported BP is ignored.`;
+  }
   const title = document.getElementById('bpTableTitle');
   if (title) title.textContent = `PU-wise Budget Proportionate Position - ${rows.length} PU(s) shown`;
   if (!rows.length) {
@@ -1914,14 +1964,13 @@ function budgetControlStatus(row) {
 }
 
 function buildBudgetControlRows() {
-  const {actualMonths} = getMonthStatus();
-  const elapsedFactor = fyElapsedFactor();
+  const bpMode = getBPModeStatus();
+  const actualMonths = bpMode.bpMonths;
+  const elapsedFactor = Math.max(0.25, bpMode.bpMonthCount || fyElapsedFactor());
   const stage = budgetControlStage();
   return activePUMeta().map(pu => {
     const ceiling = getBudget(pu.code);
-    const source = BUDGET[pu.code] || {};
-    const actual = Number(source.actuals_till);
-    const actualTill = Number.isFinite(actual) ? actual : compute(pu.code).totalCommitted;
+    const actualTill = actualForBPMode(pu.code);
     const projectedRequirement = Math.max(actualTill, elapsedFactor > 0 ? (actualTill / elapsedFactor) * 12 : actualTill);
     const varianceVsCeiling = projectedRequirement - ceiling;
     const askAmount = Math.max(0, varianceVsCeiling);
@@ -1942,7 +1991,6 @@ function buildBudgetControlRows() {
       (Math.max(b.askAmount, b.surrenderAmount) - Math.max(a.askAmount, a.surrenderAmount));
   });
 }
-
 function getFilteredBudgetControlRows() {
   const action = (document.getElementById('bcActionFilter') || {}).value || 'all';
   const type = (document.getElementById('bcTypeFilter') || {}).value || 'all';
@@ -1960,14 +2008,17 @@ function getFilteredBudgetControlRows() {
 }
 
 function renderBudgetControl() {
+  syncBPModeControls();
   const body = document.getElementById('bcTableBody');
   if (!body) return;
   const rows = getFilteredBudgetControlRows();
   const allRows = buildBudgetControlRows();
-  const {actualMonths, cur} = getMonthStatus();
+  const bpMode = getBPModeStatus();
+  const actualMonths = bpMode.bpMonths;
+  const cur = bpMode.bpThrough || bpMode.cur;
   const stage = budgetControlStage();
-  const elapsedFactor = fyElapsedFactor();
-  const monthLabels = actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ') || 'No completed month';
+  const elapsedFactor = Math.max(0.25, bpMode.bpMonthCount || fyElapsedFactor());
+  const monthLabels = actualMonths.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]).join(', ') || 'No actual month selected';
   const totals = allRows.reduce((t, r) => {
     t.ceiling += r.ceiling;
     t.actual += r.actualTill;
@@ -1987,7 +2038,7 @@ function renderBudgetControl() {
   }, {ceiling:0, actual:0, projected:0, ask:0, surrender:0});
 
   const meta = document.getElementById('bcMeta');
-  if (meta) meta.textContent = `As on ${cur.label} ${cur.year}; projection uses booked expenditure over ${elapsedFactor.toFixed(2)} elapsed FY month(s). ${stage.note}`;
+  if (meta) meta.textContent = `As on ${cur.label} ${cur.year}; BP and AE basis use completed months: ${monthLabels}. Projection uses booked expenditure over ${elapsedFactor.toFixed(2)} FY month(s). ${stage.note}`;
   const basis = document.getElementById('bcBasis');
   if (basis) basis.textContent = `${stage.label} | ${isRGActive() ? 'RG Active' : 'BG/BE Ceiling'}`;
 
@@ -3416,8 +3467,8 @@ function detailDemandSMHLabel(rowOrDept, smhValue) {
 }
 
 function detailBPStatus(rowOrTotal) {
-  const {actualMonths} = getMonthStatus();
-  const monthCount = actualMonths.length;
+  const bpMode = getBPModeStatus();
+  const monthCount = bpMode.bpMonthCount;
   const budget = Number(rowOrTotal.budget) || 0;
   const actualTill = Number(rowOrTotal.actualTill) || 0;
   const bp = (budget / 12) * monthCount;
@@ -3798,18 +3849,16 @@ function demandSMHSuspenseRows() {
   return demandSMHRows().filter(isDemandSMHSuspense);
 }
 
-function demandSMHTotals() {
-  const data = demandSMHData();
-  if (data.totals) return data.totals;
-  const rows = demandSMHOperationalRows();
+function demandSMHTotals(rowsOverride) {
+  const rows = rowsOverride || demandSMHOperationalRows();
   const totals = rows.reduce((t, r) => {
     t.oba += Number(r.oba) || 0;
+    t.bp += Number(r.bp) || 0;
     t.ae += Number(r.ae) || 0;
+    t.variation += Number(r.variation) || 0;
     t.budgetRemaining += Number(r.budgetRemaining) || 0;
     return t;
-  }, {oba:0, ae:0, budgetRemaining:0});
-  totals.bp = Math.round(totals.oba / 12 * (Number(data.completedMonths) || 3));
-  totals.variation = totals.ae - totals.bp;
+  }, {oba:0, bp:0, ae:0, variation:0, budgetRemaining:0});
   totals.bpPct = totals.bp ? Math.round((totals.ae / totals.bp) * 100) : 0;
   totals.obaUtil = totals.oba ? Math.round((totals.ae / totals.oba) * 100) : 0;
   return totals;
@@ -3822,22 +3871,25 @@ function demandSMHLabel(row) {
 }
 
 function renderDemandSMHSummary() {
+  syncBPModeControls();
   const body = document.getElementById('demandSmhBody');
   if (!body) return;
   const data = demandSMHData();
-  const rows = demandSMHOperationalRows();
-  const suspenseRows = demandSMHSuspenseRows();
-  const totals = demandSMHTotals();
+  const bpMode = getBPModeStatus();
+  const recalculatedRows = recalcDemandSMHRows(demandSMHRows(), bpMode.bpMonthCount);
+  const rows = recalculatedRows.filter(r => !isDemandSMHSuspense(r));
+  const suspenseRows = recalculatedRows.filter(isDemandSMHSuspense);
+  const totals = demandSMHTotals(rows);
   const meta = document.getElementById('demandSmhMeta');
-  if (meta) meta.textContent = `Current year Demand / SMH grant summary for FY ${data.fy || '2026-2027'}; BP uses ${data.completedMonths || 3} completed actual months. Demand 12N/10N Suspense Heads is separately calculated.`;
+  if (meta) meta.textContent = `Current year Demand / SMH grant summary for FY ${data.fy || '2026-2027'}; BP and AE use completed months only. Imported BP is ignored.`;
   const source = document.getElementById('demandSmhSource');
-  if (source) source.textContent = `Source: ${data.sourceBudget || 'SMH Wise Budget'} | Code: ${data.sourceCode || 'DEMAND AND SMH'} | AE as on ${data.asOn || 'JUN 2026'} | Suspense kept separate`;
+  if (source) source.textContent = `Source: ${data.sourceBudget || 'SMH Wise Budget'} | Code: ${data.sourceCode || 'DEMAND AND SMH'} | AE as on ${bpMode.bpThrough ? bpMode.bpThrough.label + ' ' + bpMode.bpThrough.year : (data.asOn || 'JUN 2026')} | Suspense kept separate`;
   const kpis = document.getElementById('demandSmhKpis');
   if (kpis) {
     kpis.innerHTML = [
       ['OBA / BG_ISL', detailCr(totals.oba), `${detailNum(totals.oba)} in Rs'000s`],
-      ['BP Value', detailCr(totals.bp), `BG / 12 x ${data.completedMonths || 3} months`],
-      ['Actual Expenditure', detailCr(totals.ae), `AE up to ${data.asOn || 'JUN 2026'}`],
+      ['BP Value', detailCr(totals.bp), `BG / 12 x ${bpMode.bpMonthCount || 0} months`],
+      ['Actual Expenditure', detailCr(totals.ae), `AE up to ${bpMode.bpThrough ? bpMode.bpThrough.label + ' ' + bpMode.bpThrough.year : (data.asOn || 'JUN 2026')}`],
       ['Variation vs BP', detailCr(totals.variation), totals.variation > 0 ? 'Excess against proportionate budget' : 'Saving against proportionate budget'],
       ['OBA Utilized', `${totals.obaUtil}%`, 'Actual as percentage of OBA'],
       ['Suspense Separate', suspenseRows[0] ? detailCr(suspenseRows[0].ae) : '0.00 Cr', 'Demand 12N/10N not netted in main total']
@@ -4174,7 +4226,8 @@ async function downloadExcel() {
 
   // Sheet 5: Budget Proportionate Analysis
   const bpRowsSource = buildBPRows();
-  const bpHdrs = ['PU','Description','PU Type','Liability','Budget Grant BG (Rs\'000s)','Completed Actual Months',
+  const bpModeExport = getBPModeStatus();
+  const bpHdrs = ['PU','Description','PU Type','Liability','Budget Grant BG (Rs\'000s)','BP Months',
     'Budget Proportionate (Rs\'000s)','Actual Till Date (Rs\'000s)','Variance vs BP (Rs\'000s)','Utilisation %','BP Status','BP Remark'];
   const bpRows = bpRowsSource.map(r => {
     const row = [r.pu.code, r.pu.desc, r.pu.puType, r.pu.liab, r.budget, r.actualMonthCount,
@@ -4191,12 +4244,12 @@ async function downloadExcel() {
     return t;
   }, {budget:0, bp:0, actual:0, variance:0});
   const bpTotRow = ['', 'TOTAL SELECTED PUs', '', '', Math.round(bpTotals.budget),
-    (getMonthStatus().actualMonths || []).length, Math.round(bpTotals.bp), Math.round(bpTotals.actual),
+    bpModeExport.bpMonthCount, Math.round(bpTotals.bp), Math.round(bpTotals.actual),
     Math.round(bpTotals.variance), bpTotals.budget ? parseFloat(((bpTotals.actual / bpTotals.budget) * 100).toFixed(1)) + '%' : '0.0%',
     bpTotals.variance >= 0 ? 'Net Excess' : 'Net Saving', 'Calculated on all active PUs.'];
   bpTotRow._tot = true;
   bpRows.push(bpTotRow);
-  addSheet(wb,'Budget Proportionate',HDR_TITLE,'BP = Budget Grant / 12 x completed actual months; running month is excluded',bpHdrs,bpRows,
+  addSheet(wb,'Budget Proportionate',HDR_TITLE,`BP = Budget Grant / 12 x selected BP months; mode: ${bpModeExport.modeLabel}; ${bpModeExport.formulaLabel}; imported BP is ignored`,bpHdrs,bpRows,
     [8,26,14,14,18,14,20,20,18,12,18,36]);
 
   // Sheet 6: Budget Control - BG/AR/REA/RG/FME/FG action view
@@ -5680,10 +5733,16 @@ function findDemandSummaryHeader(rows, kind) {
   const limit = Math.min(rows.length, 18);
   for (let i = 0; i < limit; i++) {
     const row = rows[i] || [];
-    const joined = row.map(demandSummaryUpper).join(' | ');
+    const cells = row.map(demandSummaryUpper);
+    const joined = cells.join(' | ');
     const hasDemand = joined.includes('DEMAND') || joined.includes('SMH') || joined.includes('GRANT');
+    const monthHeaderCount = cells.filter(h => FY_MONTHS.some((mk, idx) => {
+      const ml = FY_MONTH_LABELS[idx].toUpperCase();
+      const abbr = mk.toUpperCase();
+      return h === abbr || h.startsWith(abbr + ' ') || h === ml || h.startsWith(ml + ' ');
+    })).length;
     const hasBudget = joined.includes('OBA') || joined.includes('BG_ISL') || joined.includes('BG ISL') || joined.includes('BUDGET');
-    const hasActual = joined.includes('AE') || joined.includes('ACTUAL') || joined.includes('EXP');
+    const hasActual = joined.includes('AE') || joined.includes('ACTUAL') || joined.includes('EXP') || monthHeaderCount >= 3;
     if (hasDemand && (kind === 'budget' ? hasBudget : hasActual)) return i;
   }
   return -1;
@@ -5698,14 +5757,24 @@ function parseDemandSMHSummaryUpload(rows, kind) {
   const comboC = hdr.findIndex(h => h.includes('DEMAND') && (h.includes('SMH') || h.includes('/')));
   const deptC = hdr.findIndex(h => h === 'DEPT' || h.includes('DEPARTMENT'));
   let valueC = -1;
+  let bpC = -1;
+  const monthCols = {};
   if (kind === 'budget') {
     valueC = hdr.findIndex(h => h.includes('OBA') || h.includes('BG_ISL') || h.includes('BG ISL'));
     if (valueC < 0) valueC = hdr.findIndex(h => h.includes('BUDGET') && !h.includes('REMAIN') && !h.includes('BALANCE') && !h.includes('BP'));
+    bpC = hdr.findIndex(h => h === 'BP' || (!h.includes('% BP') && (h.includes('BUDGET PROPORTION') || h.includes('BP UPTO') || h.includes('BP UP TO'))));
   } else {
+    FY_MONTHS.forEach((mk, idx) => {
+      const ml = FY_MONTH_LABELS[idx].toUpperCase();
+      const abbr = mk.toUpperCase();
+      const ci = hdr.findIndex(h => h === abbr || h.startsWith(abbr + ' ') || h === ml || h.startsWith(ml + ' '));
+      if (ci >= 0) monthCols[mk] = ci;
+    });
     valueC = hdr.findIndex(h => h === 'AE' || h.includes('TILL DATE') || h.includes('EXP. TOTAL') || h.includes('EXP TOTAL') || (h.includes('ACTUAL') && h.includes('TOTAL')));
     if (valueC < 0) valueC = hdr.findIndex(h => h.includes('ACTUALS') || h.includes('ACTUAL') || h.includes('EXPENDITURE'));
   }
-  if (valueC < 0) throw new Error(kind === 'budget' ? 'Cannot map OBA/BG_ISL/Budget column.' : 'Cannot map AE/Actual/Exp column.');
+  if (kind === 'budget' && valueC < 0) throw new Error('Cannot map OBA/BG_ISL/Budget column.');
+  if (kind !== 'budget' && Object.keys(monthCols).length < 3 && valueC < 0) throw new Error('Cannot map AE/Actual month columns or total expenditure column.');
 
   const map = {};
   let n = 0;
@@ -5723,12 +5792,20 @@ function parseDemandSMHSummaryUpload(rows, kind) {
     const meta = demandSmhMetaFor(demand, smh);
     const deptText = deptC >= 0 ? demandSummaryNorm(row[deptC]) : '';
     if (!map[key]) {
-      map[key] = {demand, smh, dept:deptText || meta.dept, description:meta.description, oba:0, ae:0};
+      map[key] = {demand, smh, dept:deptText || meta.dept, description:meta.description, oba:0, ae:0, months:{}};
     }
     if (deptText) map[key].dept = deptText;
     if (!map[key].description) map[key].description = meta.description;
     if (kind === 'budget') map[key].oba += demandSummaryNumber(row[valueC]);
-    else map[key].ae += demandSummaryNumber(row[valueC]);
+    else if (Object.keys(monthCols).length) {
+      FY_MONTHS.forEach(m => {
+        const val = monthCols[m] !== undefined ? demandSummaryNumber(row[monthCols[m]]) : 0;
+        map[key].months[m] = (Number(map[key].months[m]) || 0) + val;
+        map[key].ae += val;
+      });
+    } else {
+      map[key].ae += demandSummaryNumber(row[valueC]);
+    }
     n++;
   }
   if (n === 0) throw new Error('No Demand/SMH rows found in uploaded file.');
@@ -5736,10 +5813,14 @@ function parseDemandSMHSummaryUpload(rows, kind) {
 }
 
 function recalcDemandSMHRows(rows, completedMonths) {
-  const months = Number(completedMonths) || 3;
+  const mode = getBPModeStatus();
+  const months = Number(completedMonths) || mode.bpMonthCount || 3;
+  const monthKeys = mode.bpMonths || [];
   return (rows || []).map(row => {
     const oba = Number(row.oba) || 0;
-    const ae = Number(row.ae) || 0;
+    const totalAe = Number(row.ae) || 0;
+    const hasMonthData = row.months && monthKeys.some(key => Object.prototype.hasOwnProperty.call(row.months, key));
+    const ae = hasMonthData ? monthKeys.reduce((sum, key) => sum + (Number(row.months[key]) || 0), 0) : totalAe;
     const bp = Math.round(oba / 12 * months);
     const variation = Math.round(ae - bp);
     const budgetRemaining = Math.round(oba - ae);
@@ -5766,19 +5847,25 @@ function rebuildDemandSMHSummaryFromUploads(budgetUpload, actualUpload) {
       if (!demand || !smh) return;
       const key = `${demand}|${smh}`;
       const meta = demandSmhMetaFor(demand, smh);
-      if (!map[key]) map[key] = {demand, smh, dept:r.dept || meta.dept, description:r.description || meta.description, oba:0, ae:0};
+      if (!map[key]) map[key] = {demand, smh, dept:r.dept || meta.dept, description:r.description || meta.description, oba:0, ae:0, months:{}};
       if (r.dept) map[key].dept = r.dept;
       if (r.description) map[key].description = r.description;
       if (!map[key].dept) map[key].dept = meta.dept;
       if (!map[key].description) map[key].description = meta.description;
-      if (mode === 'budget') map[key].oba = Number(r.oba) || 0;
-      else map[key].ae = Number(r.ae) || 0;
+      map[key].months = {...(map[key].months || {})};
+      if (mode === 'budget') {
+        map[key].oba = Number(r.oba) || 0;
+      } else {
+        if (r.months) map[key].months = {...map[key].months, ...r.months};
+        map[key].ae = r.months ? FY_MONTHS.reduce((sum, m) => sum + (Number(map[key].months[m]) || 0), 0) : (Number(r.ae) || 0);
+      }
     });
   }
   mergeRows(budgetUpload, 'budget');
   mergeRows(actualUpload, 'actual');
   const {latestActual} = getMonthStatus();
-  const completedMonths = (getMonthStatus().actualMonths || []).length || Number(data.completedMonths) || 3;
+  const bpMode = getBPModeStatus();
+  const completedMonths = bpMode.bpMonthCount || Number(data.completedMonths) || 3;
   const rows = recalcDemandSMHRows(Object.values(map), completedMonths).sort((a,b) => {
     const as = isDemandSMHSuspense(a), bs = isDemandSMHSuspense(b);
     if (as !== bs) return as ? 1 : -1;
@@ -5802,11 +5889,48 @@ function rebuildDemandSMHSummaryFromUploads(budgetUpload, actualUpload) {
     completedMonths,
     sourceBudget:budgetUpload && budgetUpload.filename ? budgetUpload.filename : data.sourceBudget,
     sourceActual:actualUpload && actualUpload.filename ? actualUpload.filename : data.sourceActual,
-    note:`OBA uses uploaded BG_ISL/OBA where provided. BP = OBA / 12 x ${completedMonths} completed actual months. AE uses uploaded actual summary where provided. Demand 12N/10N Suspense Heads is shown separately and is not netted from the main Demand/SMH total.`,
+    note:`OBA uses uploaded BG_ISL/OBA where provided. BP always recalculates inside portal as OBA / 12 x ${completedMonths}; imported BP is ignored. AE uses completed month columns only. Demand 12N/10N Suspense Heads is shown separately and is not netted from the main Demand/SMH total.`,
     rows,
     totals
   };
   return window.DEMAND_SMH_SUMMARY_DATA;
+}
+
+function demandSMHNeedsMonthHydration() {
+  const rows = demandSMHRows();
+  if (!rows.length) return false;
+  return rows.some(r => {
+    const months = r && r.months;
+    return !months || !Object.prototype.hasOwnProperty.call(months, 'jun');
+  });
+}
+
+async function hydrateDemandSMHActualMonthsFromSyncedFile() {
+  if (!demandSMHNeedsMonthHydration() || !window.XLSX || hydrateDemandSMHActualMonthsFromSyncedFile.running) return;
+  hydrateDemandSMHActualMonthsFromSyncedFile.running = true;
+  try {
+    const response = await fetch('data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls', {cache:'no-store'});
+    if (!response.ok) throw new Error('Demand/SMH synced actual file not available.');
+    const buffer = await response.arrayBuffer();
+    const wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:0});
+    const parsed = parseDemandSMHSummaryUpload(rows, 'actual');
+    rebuildDemandSMHSummaryFromUploads(null, {
+      rows: parsed.rows,
+      filename: 'demand-smh-actual.xls',
+      rowCount: parsed.rowCount,
+      at: new Date()
+    });
+    saveCYUploadState();
+    renderDemandSMHSummary();
+    renderRemarks();
+    refreshBIViewSoon();
+  } catch (err) {
+    console.warn('Could not hydrate Demand/SMH month-wise actuals', err);
+  } finally {
+    hydrateDemandSMHActualMonthsFromSyncedFile.running = false;
+  }
 }
 
 function parseUpload(file, type, year) {
@@ -6055,7 +6179,7 @@ function applyUploads() {
       (actualUpload && actualUpload.filename) || (window.DEMAND_SMH_SUMMARY_DATA && window.DEMAND_SMH_SUMMARY_DATA.sourceActual)
     ].filter(Boolean);
     SOURCE_REGISTER.demandSmhCY.source = srcParts.join(' + ') || SOURCE_REGISTER.demandSmhCY.source;
-    SOURCE_REGISTER.demandSmhCY.remarks = `Demand / SMH summary refreshed from admin upload; BP recalculated using ${(window.DEMAND_SMH_SUMMARY_DATA && window.DEMAND_SMH_SUMMARY_DATA.completedMonths) || 3} completed actual months. Demand 12N/10N Suspense Heads remains separately calculated.`;
+    SOURCE_REGISTER.demandSmhCY.remarks = `Demand / SMH summary refreshed from admin upload; BP recalculated using ${getBPModeStatus().formulaLabel}. Imported BP is ignored. Demand 12N/10N Suspense Heads remains separately calculated.`;
     _pendingDemandSMHBudget = null;
     _pendingDemandSMHActual = null;
   }
@@ -6569,6 +6693,7 @@ applyAdminConfig(_adminConfig);
 renderAll();
 renderUploadConfirmHistory();
 setTimeout(renderSMHDetail, 120);
+setTimeout(hydrateDemandSMHActualMonthsFromSyncedFile, 250);
 (function(){
   const sel=document.getElementById('trendPUSelect'); if(!sel) return;
   activePUMeta().forEach(pu=>{
