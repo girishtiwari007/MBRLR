@@ -7,9 +7,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="portal-build" content="rlp-mbd-2026-07-14-v2.2.2">
+<meta name="portal-build" content="rlp-mbd-2026-07-20-division-setup">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260714-demand-june-ae-2">
+<link rel="stylesheet" href="assets/css/main.css?v=20260720-division-setup-1">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -424,11 +424,17 @@
         <span class="synced-pill">LOCAL REPO SYNC</span>
       </div>
       <div class="synced-actions">
-        <button type="button" onclick="fetchSyncedBudgetData()">Fetch Synced Data</button>
+        <button type="button" id="fetchSyncedBtn" onclick="fetchSyncedBudgetData()">Fetch Synced Data</button>
         <button type="button" id="senseSyncedBtn" onclick="senseAndParseSyncedData()" disabled>Sense / Parse Data</button>
+        <button type="button" id="validatePortalBtn" onclick="runPortalValidation()">Validate Calculations</button>
         <label class="synced-ok"><input type="checkbox" id="syncedManualOk"> Manual OK after review</label>
       </div>
       <div class="synced-status" id="syncedDataStatus">No synced data fetched yet.</div>
+      <div class="sync-health-panel" id="syncHealthPanel">
+        <div class="sync-health-title">Sync Health & Calculation Check</div>
+        <div class="sync-health-grid" id="syncHealthGrid"></div>
+        <div class="validation-results" id="validationResults">Click Validate Calculations before export or final review.</div>
+      </div>
       <div class="synced-file-list" id="syncedDataList"></div>
     </div>
     <div style="margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:8px">
@@ -1011,6 +1017,45 @@
       <button type="button" onclick="switchTab('upload')"><strong>Data Upload</strong><span>Admin upload and confirm files</span></button>
       <button type="button" onclick="switchTab('backup')"><strong>Portal Backup</strong><span>Download GitHub-ready ZIP</span></button>
     </div>
+    <section class="admin-card division-setup-card">
+      <div class="division-setup-head">
+        <div>
+          <h3>Division Setup Builder</h3>
+          <p>Create a division-wise setup plan, apply portal identity, and download a setup pack for GitHub/Data Upload.</p>
+        </div>
+        <span>Multi-Division Ready</span>
+      </div>
+      <div class="division-setup-grid">
+        <label>Railway
+          <input id="setupRailway" type="text" value="Northern Railway" placeholder="e.g. Northern Railway">
+        </label>
+        <label>Division
+          <input id="setupDivision" type="text" value="Moradabad Division" placeholder="e.g. Lucknow Division">
+        </label>
+        <label>Financial Year
+          <input id="setupFY" type="text" value="2026-27" placeholder="e.g. 2026-27">
+        </label>
+        <label>Repository / Portal Code
+          <input id="setupRepoCode" type="text" value="MBRLR" placeholder="e.g. LKO-RLP">
+        </label>
+      </div>
+      <div class="division-file-grid">
+        <label><input type="checkbox" data-setup-file="pu-budget" checked> PU Wise Budget Available</label>
+        <label><input type="checkbox" data-setup-file="pu-month" checked> PU Wise Month-wise Actual</label>
+        <label><input type="checkbox" data-setup-file="dept-budget" checked> DEPT-Demand/SMH PU-wise Budget</label>
+        <label><input type="checkbox" data-setup-file="dept-actual" checked> DEPT-Demand/SMH PU-wise Actual</label>
+        <label><input type="checkbox" data-setup-file="demand-budget" checked> Demand / SMH Budget Summary</label>
+        <label><input type="checkbox" data-setup-file="demand-actual" checked> Demand / SMH Actual Summary</label>
+        <label><input type="checkbox" data-setup-file="py-budget" checked> Previous Year PU Budget</label>
+        <label><input type="checkbox" data-setup-file="py-month" checked> Previous Year PU Month-wise Actual</label>
+      </div>
+      <div class="division-setup-output" id="divisionSetupOutput">Enter division details, then apply branding or download setup pack.</div>
+      <div class="division-setup-actions">
+        <button type="button" onclick="applyDivisionSetup()">Apply Division Branding</button>
+        <button type="button" onclick="downloadDivisionSetupPack()">Download Setup Pack</button>
+        <button type="button" onclick="renderDivisionSetupPreview()">Preview Process</button>
+      </div>
+    </section>
     <div class="admin-grid">
       <section class="admin-card">
         <h3>Portal Headings</h3>
@@ -1068,11 +1113,11 @@
 
 <script src="assets/js/detail-data.js"></script>
 <script src="assets/js/demand-smh-data.js"></script>
-<script src="assets/js/admin-config.js?v=20260714-demand-june-ae-2"></script>
+<script src="assets/js/admin-config.js?v=20260720-division-setup-1"></script>
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260714-demand-june-ae-2"></script>
+<script src="assets/js/app.js?v=20260720-division-setup-1"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>

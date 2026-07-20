@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260714-demand-june-ae-2';
+const ASSET_VERSION = '20260720-division-setup-1';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -135,6 +135,18 @@ function closeUploadLogin() {
   if (overlay) overlay.classList.add('hidden');
   if (pwd) pwd.value = '';
   if (err) err.textContent = '';
+}
+
+function showPortalNotice(message, state='ok') {
+  const box = document.createElement('div');
+  box.className = 'portal-notice ' + state;
+  box.textContent = message;
+  document.body.appendChild(box);
+  setTimeout(() => box.classList.add('show'), 20);
+  setTimeout(() => {
+    box.classList.remove('show');
+    setTimeout(() => box.remove(), 260);
+  }, state === 'err' ? 5200 : 3600);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2405,6 +2417,7 @@ function renderAdminDesign() {
   }
   bindAdminInputs();
   updateAdminPreview();
+  renderDivisionSetupPreview();
 }
 
 function bindAdminInputs() {
@@ -2415,11 +2428,13 @@ function bindAdminInputs() {
       const cfg = readAdminForm();
       applyAdminConfig(cfg);
       updateAdminPreview(cfg);
+      renderDivisionSetupPreview();
     });
     el.addEventListener('change', () => {
       const cfg = readAdminForm();
       applyAdminConfig(cfg);
       updateAdminPreview(cfg);
+      renderDivisionSetupPreview();
     });
   });
 }
@@ -2494,6 +2509,137 @@ function exportAdminConfig() {
   saveBlob(new Blob([content], {type:'application/javascript'}), 'admin-config.js');
   const status = document.getElementById('adminSaveStatus');
   if (status) status.textContent = 'Downloaded admin-config.js for GitHub commit';
+}
+
+const DIVISION_SETUP_FILES = [
+  ['pu-budget', 'PU Wise Budget Available', 'Current year BG_ISL/RG/Actuals Till Date per PU', 'Data Upload > Budget Available - CY'],
+  ['pu-month', 'PU Wise Month-wise Actual', 'Current year APR-MAR actuals per PU', 'Data Upload > Month-wise Actuals - CY'],
+  ['dept-budget', 'DEPT-Demand/SMH PU-wise Budget', 'Department, Demand/SMH and PU-wise budget rows', 'Data Upload > Department SMH Budget - CY'],
+  ['dept-actual', 'DEPT-Demand/SMH PU-wise Actual', 'Department, Demand/SMH and PU-wise month actuals', 'Data Upload > Department SMH Month-wise Actuals - CY'],
+  ['demand-budget', 'Demand / SMH Budget Summary', 'Demand/SMH level OBA/BG_ISL summary', 'Data Upload > Demand / SMH Budget Summary - CY'],
+  ['demand-actual', 'Demand / SMH Actual Summary', 'Demand/SMH level month-wise actual summary', 'Data Upload > Demand / SMH Actual Summary - CY'],
+  ['py-budget', 'Previous Year PU Budget', 'Previous year budget for comparison', 'Data Upload > Previous Year Budget'],
+  ['py-month', 'Previous Year PU Month-wise Actual', 'Previous year APR-MAR actuals for comparison', 'Data Upload > Previous Year Month-wise']
+];
+
+function readDivisionSetupForm() {
+  const val = id => ((document.getElementById(id) || {}).value || '').trim();
+  const division = val('setupDivision') || 'Moradabad Division';
+  const railway = val('setupRailway') || 'Northern Railway';
+  const fy = val('setupFY') || '2026-27';
+  const repoCode = val('setupRepoCode') || division.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toUpperCase();
+  const selectedFiles = DIVISION_SETUP_FILES
+    .filter(([key]) => {
+      const el = document.querySelector(`[data-setup-file="${key}"]`);
+      return !el || el.checked;
+    })
+    .map(([key, label, purpose, uploadSlot]) => ({key, label, purpose, uploadSlot}));
+  return {division, railway, fy, repoCode, selectedFiles};
+}
+
+function divisionSetupConfig(setup) {
+  const cfg = readAdminForm();
+  cfg.headerTitle = `REVENUE LIABILITY PORTAL - ${setup.division.toUpperCase()}`;
+  cfg.headerSub = `${setup.railway} | Financial Authority Dashboard | All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees`;
+  cfg.footerText = `Revenue Liability Portal - ${setup.division} / ${setup.railway} - FY ${setup.fy} - For Official Use Only`;
+  return cfg;
+}
+
+function divisionSetupMarkdown(setup) {
+  const lines = [
+    `# Revenue Liability Portal Setup - ${setup.division}`,
+    '',
+    `Railway: ${setup.railway}`,
+    `Financial Year: ${setup.fy}`,
+    `Repository / Portal Code: ${setup.repoCode}`,
+    `Generated: ${new Date().toLocaleString('en-IN')}`,
+    '',
+    '## Step Process For New Division',
+    '1. Create or copy a fresh GitHub Pages repository for the division portal.',
+    '2. Open Portal Admin and apply division branding using the generated admin-config.js.',
+    '3. Go to Data Upload and upload the checked source files in the matching upload slots.',
+    '4. Click Validate Calculations in the MB-BUDGET Synced Data panel.',
+    '5. Review Revenue Liability, DEPT-Demand Wise, Demand / SMH Summary, BP Analysis, Budget Control and AI Summary.',
+    '6. Download Excel and PDF reports and confirm formatting before sharing.',
+    '7. Use Portal Backup to download the GitHub-ready ZIP after verification.',
+    '',
+    '## Required Source Files',
+    '| File | Purpose | Upload Slot |',
+    '| --- | --- | --- |',
+    ...setup.selectedFiles.map(file => `| ${file.label} | ${file.purpose} | ${file.uploadSlot} |`),
+    '',
+    '## Standard Portal Rules',
+    '- Department 00 is skipped.',
+    '- PU-98 Credit or Recoveries is skipped from normal expenditure display.',
+    '- PU-72, PU-73, PU-74 and PU-75 remain display-excluded unless rule is changed in code.',
+    '- Demand 12N/10N Suspense Heads is shown separately and not netted from main Demand/SMH total.',
+    '- BP is recalculated inside portal as OBA or BG / 12 x completed actual months.',
+    '',
+    '## Recommended Acceptance Check',
+    '- Current year gross budget matches IPAS source file.',
+    '- Actual month detection is correct.',
+    '- Demand / SMH Summary total excludes Suspense from main total.',
+    '- PDF and Excel exports open and preserve formatting.',
+    '- GitHub Pages opens without internet dependency for export libraries.'
+  ];
+  return lines.join('\n');
+}
+
+function renderDivisionSetupPreview() {
+  if (!isUploadAdminUnlocked()) { requestUploadAdmin('admin'); return; }
+  const setup = readDivisionSetupForm();
+  const output = document.getElementById('divisionSetupOutput');
+  if (!output) return;
+  output.innerHTML = `
+    <strong>${htmlSafe(setup.division)} / ${htmlSafe(setup.railway)} / FY ${htmlSafe(setup.fy)}</strong>
+    <span>${setup.selectedFiles.length} source file type(s) selected. Process: set identity, upload division files, validate, export, backup, publish.</span>
+    <ol>
+      <li>Apply division branding.</li>
+      <li>Upload or sync selected division source files.</li>
+      <li>Validate calculations and review exception pages.</li>
+      <li>Download GitHub-ready backup after verification.</li>
+    </ol>`;
+}
+
+function applyDivisionSetup() {
+  if (!isUploadAdminUnlocked()) { requestUploadAdmin('admin'); return; }
+  const setup = readDivisionSetupForm();
+  const cfg = divisionSetupConfig(setup);
+  _adminConfig = cfg;
+  applyAdminConfig(cfg);
+  renderAdminDesign();
+  renderDivisionSetupPreview();
+  const status = document.getElementById('adminSaveStatus');
+  if (status) status.textContent = `Applied ${setup.division} branding locally`;
+  showPortalNotice(`${setup.division} branding applied. Export GitHub Config to make it permanent.`, 'ok');
+}
+
+function downloadDivisionSetupPack() {
+  if (!isUploadAdminUnlocked()) { requestUploadAdmin('admin'); return; }
+  const setup = readDivisionSetupForm();
+  const cfg = divisionSetupConfig(setup);
+  const setupJson = JSON.stringify({
+    portal:'Revenue Liability Portal',
+    generatedAt:new Date().toISOString(),
+    division:setup.division,
+    railway:setup.railway,
+    financialYear:setup.fy,
+    repoCode:setup.repoCode,
+    requiredFiles:setup.selectedFiles,
+    adminConfig:cfg
+  }, null, 2);
+  const adminConfigJs = `window.PORTAL_ADMIN_CONFIG = ${JSON.stringify(cfg, null, 2)};\n`;
+  const checklist = divisionSetupMarkdown(setup);
+  const safeName = setup.repoCode.replace(/[^A-Za-z0-9_-]+/g, '-');
+  const entries = [
+    {name:'division-setup.json', bytes:new TextEncoder().encode(setupJson)},
+    {name:'admin-config.js', bytes:new TextEncoder().encode(adminConfigJs)},
+    {name:'DIVISION_SETUP_CHECKLIST.md', bytes:new TextEncoder().encode(checklist)}
+  ];
+  saveBlob(createZipBlob(entries), `Revenue_Liability_${safeName}_Setup_Pack.zip`);
+  const status = document.getElementById('adminSaveStatus');
+  if (status) status.textContent = `Downloaded setup pack for ${setup.division}`;
+  renderDivisionSetupPreview();
 }
 
 function setDashboardPinned(pinned) {
@@ -3042,6 +3188,9 @@ window.closePUDrawer = closePUDrawer;
 window.saveAdminDesign = saveAdminDesign;
 window.resetAdminDesign = resetAdminDesign;
 window.exportAdminConfig = exportAdminConfig;
+window.applyDivisionSetup = applyDivisionSetup;
+window.downloadDivisionSetupPack = downloadDivisionSetupPack;
+window.renderDivisionSetupPreview = renderDivisionSetupPreview;
 
 function textCr(n) {
   if (!n || isNaN(n)) return '0.00 Cr';
@@ -3215,7 +3364,7 @@ async function downloadPortalBackup() {
     console.error('Backup download failed', err);
     if (status) status.textContent = 'Failed';
     if (detail) detail.textContent = err.message || String(err);
-    alert('Backup download failed: ' + (err.message || err));
+    showPortalNotice('Backup download failed: ' + (err.message || err), 'err');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -4427,7 +4576,7 @@ async function downloadExcel() {
   } catch (err) {
     console.error('Excel export failed', err);
     document.body.dataset.exportStatus = 'excel-error';
-    alert('Excel export failed: ' + (err.message || err));
+    showPortalNotice('Excel export failed: ' + (err.message || err), 'err');
   }
 }
 
@@ -4596,7 +4745,7 @@ async function downloadPDFReport() {
   const jsPDF = window.jspdf && window.jspdf.jsPDF;
   if (!jsPDF || !jsPDF.API.autoTable) {
     document.body.dataset.exportStatus = 'pdf-error';
-    alert('PDF library not loaded. Please refresh and try again.');
+    showPortalNotice('PDF library not loaded. Please refresh and try again.', 'err');
     return;
   }
   const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
@@ -5014,7 +5163,7 @@ async function downloadPDFReport() {
   } catch (err) {
     console.error('PDF export failed', err);
     document.body.dataset.exportStatus = 'pdf-error';
-    alert('PDF export failed: ' + (err.message || err));
+    showPortalNotice('PDF export failed: ' + (err.message || err), 'err');
   }
 }
 
@@ -5417,6 +5566,7 @@ function attachPUPopup(){
 
 let _syncedBudgetManifest = null;
 let _syncedBudgetRoleFiles = [];
+let _syncedParseRunning = false;
 const SYNCED_BUDGET_ROLE_MAP = Object.freeze({
   'pu-budget.xls': {type:'budget', year:'cy', label:'Budget Available CY'},
   'pu-month-actual.xls': {type:'month', year:'cy', label:'Month-wise Actual CY'},
@@ -5431,6 +5581,101 @@ function setSyncedStatus(message, state){
   el.className = 'synced-status' + (state ? ' ' + state : '');
   el.textContent = message;
 }
+
+function hasPendingUploadData() {
+  return !!(_pendingBudget || _pendingMonth || _pendingSMHBudget || _pendingSMHMonth || _pendingDemandSMHBudget || _pendingDemandSMHActual || _pendingBudgetPY || _pendingMonthPY);
+}
+
+function refreshApplyButtonState() {
+  const btn = document.getElementById('applyBtn');
+  if (btn) btn.disabled = _syncedParseRunning || !hasPendingUploadData();
+}
+
+function renderSyncHealthPanel(manifest=_syncedBudgetManifest) {
+  const grid = document.getElementById('syncHealthGrid');
+  if (!grid) return;
+  const rows = manifest ? syncedFileRows(manifest) : [];
+  const roleRows = rows.filter(file => SYNCED_BUDGET_ROLE_MAP[file.name]);
+  const selected = manifest ? syncedSelectedSet(manifest) : new Set();
+  const selectedRows = roleRows.filter(file => !selected.size || selected.has(file.targetPath));
+  const sourceCount = rows.length;
+  const processedCount = Array.isArray(manifest && manifest.processedFiles) ? manifest.processedFiles.length : 0;
+  const latestModified = rows.map(r => r.modifiedAt).filter(Boolean).sort().pop() || '-';
+  const items = [
+    ['Manifest', manifest ? 'Loaded' : 'Not fetched', manifest ? (manifest.syncedAt || manifest.generatedAt || '-') : 'Fetch synced data'],
+    ['FY', (manifest && manifest.financialYear) || '2026-2027', `Build ${ASSET_VERSION}`],
+    ['Parse-ready', `${selectedRows.length} file(s)`, `${roleRows.length} matched upload roles`],
+    ['Source files', `${sourceCount} listed`, `${processedCount} processed artefact(s)`],
+    ['Latest source', latestModified, 'As per sync manifest'],
+    ['Pending apply', hasPendingUploadData() ? 'Ready' : 'None', _syncedParseRunning ? 'Parser running' : 'Parser idle']
+  ];
+  grid.innerHTML = items.map(([label, value, note]) => `
+    <div class="sync-health-item">
+      <span>${htmlSafe(label)}</span>
+      <strong>${htmlSafe(value)}</strong>
+      <em>${htmlSafe(note)}</em>
+    </div>`).join('');
+}
+
+function portalValidationChecks() {
+  const checks = [];
+  const activeCodes = activePUMeta().map(p => p.code).filter(code => BUDGET[code]);
+  const budgetTotal = activeCodes.reduce((sum, code) => sum + (Number((BUDGET[code] || {}).bg_isl) || 0), 0);
+  const actualTotal = activeCodes.reduce((sum, code) => sum + (Number((BUDGET[code] || {}).actuals_till) || 0), 0);
+  checks.push({
+    state: budgetTotal > 0 ? 'ok' : 'err',
+    title: 'Current year PU budget',
+    detail: budgetTotal > 0 ? `${activeCodes.length} active PUs, ${textCr(budgetTotal)} gross budget, ${textCr(actualTotal)} actual till date.` : 'No active PU budget total found.'
+  });
+  const monthStatus = getMonthStatus();
+  const monthRows = activeCodes.filter(code => MONTH[code] && monthStatus.actualMonths.some(m => Number(MONTH[code][m]) || 0));
+  checks.push({
+    state: monthRows.length ? 'ok' : 'warn',
+    title: 'Month-wise CY actuals',
+    detail: monthRows.length ? `${monthRows.length} active PUs have actuals through ${monthStatus.latestActual ? monthStatus.latestActual.label + ' ' + monthStatus.latestActual.year : 'latest completed month'}.` : 'No month-wise actual rows detected for active PUs.'
+  });
+  const demandRows = recalcDemandSMHRows(demandSMHRows(), getBPModeStatus().bpMonthCount);
+  const demandOps = demandRows.filter(r => !isDemandSMHSuspense(r));
+  const suspenseRows = demandRows.filter(isDemandSMHSuspense);
+  const demandTotals = demandSMHTotals(demandOps);
+  checks.push({
+    state: demandOps.length ? 'ok' : 'warn',
+    title: 'Demand / SMH Summary',
+    detail: demandOps.length ? `${demandOps.length} main rows, ${textCr(demandTotals.oba)} OBA/BG_ISL; ${suspenseRows.length ? 'Suspense kept separate.' : 'No suspense row detected.'}` : 'Demand / SMH rows are not loaded.'
+  });
+  const detailRows = (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) ? window.DETAIL_SMH_DATA.rows : [];
+  const detailBudget = detailRows.reduce((sum, row) => sum + (Number(row.budget) || 0), 0);
+  checks.push({
+    state: detailRows.length ? 'ok' : 'warn',
+    title: 'DEPT-Demand detail',
+    detail: detailRows.length ? `${detailRows.length} detail rows available, ${textCr(detailBudget)} detail budget.` : 'Department > SMH > PU detail data is not loaded.'
+  });
+  checks.push({
+    state: 'ok',
+    title: 'Display exclusions',
+    detail: 'Department 00, PU-98 recoveries, and PU-72/73/74/75 display exclusions remain active.'
+  });
+  return checks;
+}
+
+function runPortalValidation() {
+  const resultBox = document.getElementById('validationResults');
+  const checks = portalValidationChecks();
+  const bad = checks.filter(c => c.state === 'err').length;
+  const warn = checks.filter(c => c.state === 'warn').length;
+  if (resultBox) {
+    resultBox.className = 'validation-results ' + (bad ? 'err' : warn ? 'warn' : 'ok');
+    resultBox.innerHTML = checks.map(c => `
+      <div class="validation-row ${c.state}">
+        <strong>${htmlSafe(c.title)}</strong>
+        <span>${htmlSafe(c.detail)}</span>
+      </div>`).join('');
+  }
+  renderSyncHealthPanel();
+  showPortalNotice(bad ? 'Validation found blocking data issue.' : warn ? 'Validation complete with warning(s).' : 'Validation complete. Data checks passed.', bad ? 'err' : warn ? 'warn' : 'ok');
+  return checks;
+}
+
 function syncedFileRows(manifest){
   const rows = [];
   ['sourceFiles','processedFiles','frFiles'].forEach(group => {
@@ -5472,6 +5717,7 @@ async function fetchSyncedBudgetData(){
     const selected = syncedSelectedSet(manifest);
     _syncedBudgetRoleFiles = syncedFileRows(manifest).filter(file => SYNCED_BUDGET_ROLE_MAP[file.name] && (!selected.size || selected.has(file.targetPath)));
     renderSyncedDataList(manifest);
+    renderSyncHealthPanel(manifest);
     const syncedAt = manifest.syncedAt || manifest.generatedAt || 'unknown time';
     const year = manifest.financialYear || 'current year';
     const note = _syncedBudgetRoleFiles.length
@@ -5483,6 +5729,7 @@ async function fetchSyncedBudgetData(){
     _syncedBudgetManifest = null;
     _syncedBudgetRoleFiles = [];
     renderSyncedDataList({sourceFiles:[],processedFiles:[],frFiles:[]});
+    renderSyncHealthPanel(null);
     setSyncedStatus(error.message || 'Unable to fetch synced data.', 'err');
   }
 }
@@ -5500,7 +5747,15 @@ async function senseAndParseSyncedData(){
     setSyncedStatus('Review fetched file list and tick Manual OK after review before parsing.', 'warn');
     return;
   }
-  setSyncedStatus(`Parsing ${_syncedBudgetRoleFiles.length} synced file(s) through existing upload logic...`, 'warn');
+  _syncedParseRunning = true;
+  refreshApplyButtonState();
+  const senseBtn = document.getElementById('senseSyncedBtn');
+  const fetchBtn = document.getElementById('fetchSyncedBtn');
+  if(senseBtn) senseBtn.disabled = true;
+  if(fetchBtn) fetchBtn.disabled = true;
+  setSyncedStatus(`Parsing ${_syncedBudgetRoleFiles.length} synced file(s). Apply will unlock after parsing finishes...`, 'warn');
+  let okCount = 0;
+  let failCount = 0;
   for(const fileInfo of _syncedBudgetRoleFiles){
     const role = SYNCED_BUDGET_ROLE_MAP[fileInfo.name];
     try{
@@ -5508,17 +5763,28 @@ async function senseAndParseSyncedData(){
       if(!response.ok) throw new Error(`Cannot fetch ${fileInfo.targetPath}`);
       const blob = await response.blob();
       const file = new File([blob], `Synced-${fileInfo.name}`, {type: blob.type || 'application/vnd.ms-excel', lastModified: Date.now()});
-      parseUpload(file, role.type, role.year);
+      const result = await parseUpload(file, role.type, role.year);
+      if(result && result.ok) okCount++;
+      else failCount++;
     }catch(error){
+      failCount++;
       setDZState(`${role.type}-${role.year}`, 'error', error.message || 'Synced file fetch failed');
     }
   }
+  _syncedParseRunning = false;
+  if(senseBtn) senseBtn.disabled = !_syncedBudgetRoleFiles.length;
+  if(fetchBtn) fetchBtn.disabled = false;
   const btn = document.getElementById('applyBtn');
-  if(btn){
-    btn.disabled = false;
-    btn.textContent = 'OK Apply Synced Parsed Data & Refresh Portal';
-  }
-  setSyncedStatus('Synced files sent to parser. Check green upload cards, then click OK Apply to refresh portal.', 'ok');
+  if(btn) btn.textContent = 'OK Apply Synced Parsed Data & Refresh Portal';
+  refreshApplyButtonState();
+  renderSyncHealthPanel();
+  setSyncedStatus(
+    failCount
+      ? `Parsed ${okCount} file(s), ${failCount} file(s) need attention. Apply is available only for successfully parsed data.`
+      : `Parsed ${okCount} synced file(s). Check green upload cards, then click OK Apply to refresh portal.`,
+    failCount ? 'warn' : 'ok'
+  );
+  showPortalNotice(failCount ? 'Synced parsing completed with warning(s).' : 'Synced parsing completed.', failCount ? 'warn' : 'ok');
 }
 let _pendingBudget = null;  // parsed budget data waiting to apply
 let _pendingMonth  = null;  // parsed month data waiting to apply
@@ -5564,7 +5830,8 @@ function setDZState(type, state, msg) {
   else { icon.textContent='...'; stat.className='dz-status'; }
   stat.textContent = msg||'';
   // Enable apply button if at least one pending
-  document.getElementById('applyBtn').disabled = !(_pendingBudget || _pendingMonth || _pendingSMHBudget || _pendingSMHMonth || _pendingDemandSMHBudget || _pendingDemandSMHActual || _pendingBudgetPY || _pendingMonthPY);
+  refreshApplyButtonState();
+  renderSyncHealthPanel();
 }
 
 function smhEmptyMonths() {
@@ -5936,14 +6203,15 @@ async function hydrateDemandSMHActualMonthsFromSyncedFile() {
 function parseUpload(file, type, year) {
   if (!isUploadAdminUnlocked()) {
     requestUploadAdmin();
-    return;
+    return Promise.resolve({ok:false, error:'Admin access required'});
   }
   year = year || 'cy';
   const fileTimestamp = uploadFileTimestamp(file);
   const dzId = type + '-' + year;
   setDZState(dzId, 'loading', 'Reading file...');
-  const reader = new FileReader();
-  reader.onload = function(e) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
     try {
       const wb   = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
       const ws   = wb.Sheets[wb.SheetNames[0]];
@@ -6034,12 +6302,20 @@ function parseUpload(file, type, year) {
         setDZState(dzId,'done','OK Parsed '+n+' PUs - Latest: '+dml+' | '+(year==='cy'?'CY':'PY'));
         addLog((year==='cy'?'Month Wise CY 2026-27':'Month Wise PY 2025-26'),file.name,n,dml);
       }
+      resolve({ok:true, type, year, filename:file.name});
     } catch(err) {
       setDZState(type+'-'+year,'error','Error '+err.message);
       console.error(err);
+      resolve({ok:false, type, year, filename:file.name, error:err});
     }
   };
-  reader.readAsArrayBuffer(file);
+    reader.onerror = function() {
+      const err = reader.error || new Error('Unable to read file.');
+      setDZState(type+'-'+year,'error','Error '+(err.message || err));
+      resolve({ok:false, type, year, filename:file.name, error:err});
+    };
+    reader.readAsArrayBuffer(file);
+  });
 }
 function addLog(fileType, filename, puCount, monthDetected) {
   _uploadHistory.unshift({
@@ -6211,6 +6487,7 @@ function applyUploads() {
   renderUploadConfirmHistory();
   renderRemarks();
   renderUploadLog();
+  renderSyncHealthPanel();
   if(typeof renderTrend==='function') renderTrend();
   if(hadSMHUpdate && typeof renderSMHDetail==='function') renderSMHDetail();
   if(hadDemandSMHUpdate && typeof renderDemandSMHSummary==='function') renderDemandSMHSummary();
@@ -6692,6 +6969,7 @@ loadAdminConfig();
 applyAdminConfig(_adminConfig);
 renderAll();
 renderUploadConfirmHistory();
+renderSyncHealthPanel();
 setTimeout(renderSMHDetail, 120);
 setTimeout(hydrateDemandSMHActualMonthsFromSyncedFile, 250);
 (function(){
