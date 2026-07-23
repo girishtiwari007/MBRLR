@@ -8,7 +8,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260720-division-setup-1';
+const ASSET_VERSION = '20260723-data-refresh-2';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -243,109 +243,20 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU Wise 2026-2027 Budget.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU Wise Month Wise 2026-2027 Actual.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 23-Jul-2026; actual till date aligned to APR-JUL month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 23-Jul-2026; latest loaded month JUL 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'SMH-DEMAND Wise PU wise Dept wise Month Wise 2026-2027 Budget.xls', used:'DEPT-Demand Wise'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'SMH-DEMAND Wise PU wise Dept wise Month Wise 2026-2027 Actual.xls', used:'DEPT-Demand Wise'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'SMH-DEMAND Wise 2026-2027 Budget.xls + SMH-DEMAND WISE 2026-2027 ACTUAL.xls', used:'Demand / SMH Summary', remarks:'OBA = BG_ISL; BP = BG_ISL / 12 x selected BP months. Default mode uses completed actual month; till-date mode uses latest uploaded month. Imported BP is ignored. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 23-Jul-2026.'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 23-Jul-2026; latest loaded month JUL 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 23-Jul-2026. Static source includes APR-JUL; portal default BP uses completed months through JUN because JUL is running. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
-let BUDGET = {
-  '10':{bg_isl:680197,rg:0,actuals_till:218804},
-  '11':{bg_isl:77300,rg:0,actuals_till:43958},
-  '12':{bg_isl:209913,rg:0,actuals_till:73688},
-  '13':{bg_isl:527832,rg:0,actuals_till:116001},
-  '14':{bg_isl:3566,rg:0,actuals_till:352},
-  '15':{bg_isl:16048,rg:0,actuals_till:5394},
-  '16':{bg_isl:308081,rg:0,actuals_till:130831},
-  '17':{bg_isl:2110,rg:0,actuals_till:0},
-  '18':{bg_isl:8252,rg:0,actuals_till:0},
-  '19':{bg_isl:655,rg:0,actuals_till:0},
-  '20':{bg_isl:18623,rg:0,actuals_till:8251},
-  '21':{bg_isl:3300,rg:0,actuals_till:521},
-  '22':{bg_isl:0,rg:0,actuals_till:0},
-  '23':{bg_isl:42,rg:0,actuals_till:0},
-  '24':{bg_isl:215,rg:0,actuals_till:0},
-  '25':{bg_isl:379418,rg:0,actuals_till:318899},
-  '26':{bg_isl:384392,rg:0,actuals_till:102246},
-  '27':{bg_isl:1068752,rg:0,actuals_till:348025},
-  '28':{bg_isl:149947,rg:0,actuals_till:42356},
-  '29':{bg_isl:0,rg:0,actuals_till:124},
-  '30':{bg_isl:3878724,rg:0,actuals_till:813838},
-  '31':{bg_isl:95273,rg:0,actuals_till:15405},
-  '32':{bg_isl:3254310,rg:0,actuals_till:955743},
-  '33':{bg_isl:2625440,rg:0,actuals_till:351700},
-  '36':{bg_isl:155548,rg:0,actuals_till:5500},
-  '38':{bg_isl:95829,rg:0,actuals_till:14165},
-  '39':{bg_isl:5,rg:0,actuals_till:0},
-  '42':{bg_isl:25882,rg:0,actuals_till:3937},
-  '43':{bg_isl:12005,rg:0,actuals_till:1855},
-  '44':{bg_isl:11589,rg:0,actuals_till:200441},
-  '49':{bg_isl:544,rg:0,actuals_till:2893},
-  '52':{bg_isl:0,rg:0,actuals_till:0},
-  '53':{bg_isl:614,rg:0,actuals_till:1140},
-  '60':{bg_isl:4703356,rg:0,actuals_till:1175862},
-  '72':{bg_isl:32329,rg:0,actuals_till:25685},
-  '73':{bg_isl:31932,rg:0,actuals_till:25685},
-  '74':{bg_isl:4,rg:0,actuals_till:0},
-  '75':{bg_isl:26098,rg:0,actuals_till:24910},
-  '98':{bg_isl:-1652821,rg:0,actuals_till:-288791},
-  '99':{bg_isl:1797579,rg:0,actuals_till:1781866},
-  '01':{bg_isl:6706409,rg:0,actuals_till:1832267},
-  '02':{bg_isl:4100453,rg:0,actuals_till:1190135},
-  '03':{bg_isl:285089,rg:0,actuals_till:82},
-  '04':{bg_isl:776198,rg:0,actuals_till:201371},
-  '07':{bg_isl:496609,rg:0,actuals_till:130195},
-  '08':{bg_isl:1285187,rg:0,actuals_till:318409}
-};
+let BUDGET = {"01":{"bg_isl":6706409,"rg":0,"actuals_till":1832727},"02":{"bg_isl":4100453,"rg":0,"actuals_till":1190341},"03":{"bg_isl":285089,"rg":0,"actuals_till":81},"04":{"bg_isl":776198,"rg":0,"actuals_till":201350},"07":{"bg_isl":496609,"rg":0,"actuals_till":130169},"08":{"bg_isl":1285187,"rg":0,"actuals_till":318410},"10":{"bg_isl":680197,"rg":0,"actuals_till":218843},"11":{"bg_isl":77300,"rg":0,"actuals_till":43958},"12":{"bg_isl":209913,"rg":0,"actuals_till":73690},"13":{"bg_isl":527832,"rg":0,"actuals_till":115991},"14":{"bg_isl":3566,"rg":0,"actuals_till":354},"15":{"bg_isl":16048,"rg":0,"actuals_till":5795},"16":{"bg_isl":308081,"rg":0,"actuals_till":130862},"17":{"bg_isl":2110,"rg":0,"actuals_till":0},"18":{"bg_isl":8252,"rg":0,"actuals_till":0},"19":{"bg_isl":655,"rg":0,"actuals_till":0},"20":{"bg_isl":18623,"rg":0,"actuals_till":8191},"21":{"bg_isl":3300,"rg":0,"actuals_till":521},"22":{"bg_isl":0,"rg":0,"actuals_till":0},"23":{"bg_isl":42,"rg":0,"actuals_till":0},"24":{"bg_isl":215,"rg":0,"actuals_till":0},"25":{"bg_isl":379418,"rg":0,"actuals_till":318967},"26":{"bg_isl":384392,"rg":0,"actuals_till":123334},"27":{"bg_isl":1068752,"rg":0,"actuals_till":588298},"28":{"bg_isl":149947,"rg":0,"actuals_till":54304},"29":{"bg_isl":0,"rg":0,"actuals_till":321},"30":{"bg_isl":3878724,"rg":0,"actuals_till":1100903},"31":{"bg_isl":95273,"rg":0,"actuals_till":23900},"32":{"bg_isl":3254310,"rg":0,"actuals_till":1599273},"33":{"bg_isl":2625440,"rg":0,"actuals_till":534261},"36":{"bg_isl":155548,"rg":0,"actuals_till":11736},"38":{"bg_isl":95829,"rg":0,"actuals_till":30820},"39":{"bg_isl":5,"rg":0,"actuals_till":0},"42":{"bg_isl":25882,"rg":0,"actuals_till":3938},"43":{"bg_isl":12005,"rg":0,"actuals_till":1855},"44":{"bg_isl":11589,"rg":0,"actuals_till":200440},"49":{"bg_isl":544,"rg":0,"actuals_till":5416},"52":{"bg_isl":0,"rg":0,"actuals_till":0},"53":{"bg_isl":614,"rg":0,"actuals_till":1141},"60":{"bg_isl":4703356,"rg":0,"actuals_till":1807074},"72":{"bg_isl":32329,"rg":0,"actuals_till":30459},"73":{"bg_isl":31932,"rg":0,"actuals_till":30459},"74":{"bg_isl":4,"rg":0,"actuals_till":0},"75":{"bg_isl":26098,"rg":0,"actuals_till":30329},"98":{"bg_isl":-1652821,"rg":0,"actuals_till":-454774},"99":{"bg_isl":1797579,"rg":0,"actuals_till":2060222},"TOTAL":{"bg_isl":32582828,"rg":0,"actuals_till":12373958}};
 
 // Month-wise actuals from MONTH WISE report - Rs'000s
-let MONTH = {
-  '10':{apr:63531,may:71427,jun:83846,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '11':{apr:13824,may:17030,jun:13104,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '12':{apr:25290,may:22611,jun:25787,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '13':{apr:41628,may:35790,jun:38583,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '14':{apr:154,may:149,jun:50,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '15':{apr:2096,may:1652,jun:1646,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '16':{apr:44933,may:41693,jun:44205,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '20':{apr:2666,may:2950,jun:2636,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '21':{apr:521,may:0,jun:0,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '25':{apr:103975,may:128614,jun:86310,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '26':{apr:30352,may:33757,jun:38137,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '27':{apr:195370,may:152529,jun:126,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '28':{apr:17104,may:12231,jun:13021,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '29':{apr:3,may:0,jun:121,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '30':{apr:235339,may:467625,jun:110873,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '31':{apr:6627,may:8778,jun:0,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '32':{apr:385443,may:433214,jun:137086,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '33':{apr:145104,may:206596,jun:0,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '36':{apr:0,may:5500,jun:0,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '38':{apr:0,may:14165,jun:0,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '42':{apr:1292,may:1069,jun:1577,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '43':{apr:655,may:500,jun:700,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '44':{apr:766,may:1692,jun:197982,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '49':{apr:2403,may:249,jun:241,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '53':{apr:1070,may:0,jun:71,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '60':{apr:450171,may:725691,jun:0,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '72':{apr:15207,may:5140,jun:5338,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '73':{apr:15207,may:5140,jun:5338,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '75':{apr:14110,may:6386,jun:4414,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '98':{apr:-112823,may:-80293,jun:-95675,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '99':{apr:1498093,may:156216,jun:127556,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '01':{apr:611000,may:610721,jun:610546,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '02':{apr:422511,may:384198,jun:383426,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '03':{apr:53,may:28,jun:0,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '04':{apr:66797,may:67250,jun:67324,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '07':{apr:44217,may:42920,jun:43058,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0},
-  '08':{apr:108760,may:104872,jun:104778,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0,jan:0,feb:0,mar:0}
-};
-
-// FY Month order APRtoMAR and their keys
-const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
-const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
+let MONTH = {"01":{"apr":611000,"may":610721,"jun":609257,"jul":1749,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"02":{"apr":422511,"may":384198,"jun":382142,"jul":1490,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"03":{"apr":53,"may":28,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"04":{"apr":66797,"may":67250,"jun":67256,"jul":47,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"07":{"apr":44217,"may":42920,"jun":43031,"jul":1,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"08":{"apr":108760,"may":104872,"jun":104778,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"10":{"apr":63531,"may":71427,"jun":83846,"jul":39,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"11":{"apr":13824,"may":17030,"jun":13104,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"12":{"apr":25290,"may":22611,"jun":25787,"jul":2,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"13":{"apr":41628,"may":35790,"jun":38546,"jul":27,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"14":{"apr":154,"may":149,"jun":51,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"15":{"apr":2096,"may":1652,"jun":1646,"jul":401,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"16":{"apr":44933,"may":41693,"jun":44205,"jul":31,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"20":{"apr":2666,"may":2950,"jun":2575,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"21":{"apr":521,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"25":{"apr":103975,"may":128614,"jun":86310,"jul":68,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"26":{"apr":30352,"may":33757,"jun":38743,"jul":20482,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"27":{"apr":195370,"may":152529,"jun":240399,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"28":{"apr":17104,"may":12231,"jun":13527,"jul":11442,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"29":{"apr":3,"may":0,"jun":121,"jul":197,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"30":{"apr":235339,"may":467625,"jun":311219,"jul":86720,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"31":{"apr":6627,"may":8778,"jun":7358,"jul":1137,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"32":{"apr":385443,"may":433214,"jun":148204,"jul":632412,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"33":{"apr":145104,"may":206596,"jun":182561,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"36":{"apr":0,"may":5500,"jun":6236,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"38":{"apr":0,"may":14165,"jun":16655,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"42":{"apr":1292,"may":1069,"jun":1577,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"43":{"apr":655,"may":500,"jun":700,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"44":{"apr":766,"may":1692,"jun":197982,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"49":{"apr":2403,"may":249,"jun":252,"jul":2512,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"53":{"apr":1070,"may":0,"jun":71,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"60":{"apr":450171,"may":725691,"jun":631212,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"72":{"apr":15207,"may":5140,"jun":6381,"jul":3731,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"73":{"apr":15207,"may":5140,"jun":6381,"jul":3731,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"75":{"apr":14110,"may":6386,"jun":5414,"jul":4419,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"98":{"apr":-112823,"may":-80293,"jun":-75006,"jul":-186652,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"99":{"apr":1498093,"may":156216,"jun":109451,"jul":296462,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"TOTAL":{"apr":4453450,"may":3688090,"jun":3351971,"jul":880447,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0}};
 let BUDGET_PY = {
   '01':{bg_isl:6105068,rg:7074279,actuals_till:7351227},
   '02':{bg_isl:4264737,rg:4420234,actuals_till:4447867},
@@ -442,9 +353,11 @@ let _pendingMonthPY  = null;
 // ═══════════════════════════════════════════════
 let _uploadedMonthIdx = null; // latest completed month detected from uploaded CY month-wise file
 let _latestActualMonthIdx = null;
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-07-13T10:50:45+05:30');
+const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
+const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-07-23T12:36:45+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-07-13-data-refresh';
+const RLP_BUILD_ID = 'rlp-mbd-2026-07-23-local-sync';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -538,6 +451,13 @@ function saveCYUploadState() {
 
 function clearStoredUploadState() {
   try {
+    [localStorage, sessionStorage].forEach(store => {
+      Object.keys(store).forEach(k => {
+        if (k === 'rlp_cy_upload_state' || (k.startsWith('rlp_cy_upload_state_') && k !== RLP_UPLOAD_STATE_KEY)) {
+          store.removeItem(k);
+        }
+      });
+    });
     Object.keys(localStorage).forEach(k => {
       if (k === 'rlp_cy_upload_state' || k.startsWith('rlp_cy_upload_state_')) {
         localStorage.removeItem(k);
@@ -1100,6 +1020,11 @@ function renderAIDashboard() {
 
 const REPORT_VIEW_MODE_KEY = 'rlp_report_view_mode';
 let reportViewMode = 'classic';
+const BI_ALLOWED_TABS = new Set(['trend', 'aitrend']);
+
+function isBIViewAllowed(tab = activeTabName()) {
+  return BI_ALLOWED_TABS.has(tab);
+}
 
 function currentReportTitle(tab) {
   const label = REPORT_LABELS[tab] || ['Current Report', 'Report view'];
@@ -1180,6 +1105,15 @@ function biVisualWidgets(tab, data) {
         <div class="bi-alert-line">${htmlSafe((currentReportTitle(tab) || {}).title || 'Report')} visual reading</div>
       </div>
     </div>`;
+}
+
+function trendDecisionRows() {
+  return reportRowsForActivePUs().filter(r => r.pu && passesPUFocus(r.pu.code));
+}
+
+function trendControlRows() {
+  const rows = typeof buildBudgetControlRows === 'function' ? buildBudgetControlRows() : [];
+  return rows.filter(r => r.pu && passesPUFocus(r.pu.code));
 }
 
 function filteredSMHRowsForBI() {
@@ -1364,7 +1298,44 @@ function biDataForCurrentReport(tab) {
     });
   }
 
-  if (tab === 'trend' || tab === 'aitrend' || tab === 'monthwise') {
+  if (tab === 'aitrend') {
+    const aiRows = buildAITrendItems();
+    const high = aiRows.filter(x => x.risk === 'high');
+    const watch = aiRows.filter(x => x.risk === 'watch');
+    const overAI = aiRows.filter(x => x.overSpent).sort((a,b)=>Math.abs(b.cv.balanceBudget)-Math.abs(a.cv.balanceBudget));
+    const noExpAI = aiRows.filter(x => x.budgetNoExpense).sort((a,b)=>b.budget-a.budget);
+    const control = trendControlRows();
+    const ask = control.filter(r => r.askAmount > 0).sort((a,b)=>b.askAmount-a.askAmount);
+    const surrender = control.filter(r => r.surrenderAmount > 0).sort((a,b)=>b.surrenderAmount-a.surrenderAmount);
+    const move = aiRows.slice().sort((a,b)=>Math.abs((b.cyCur-b.cyPrev)||0)-Math.abs((a.cyCur-a.cyPrev)||0));
+    return Object.assign(base, {
+      kpis: [
+        ['High / Watch PUs', String(high.length + watch.length), `High ${high.length}, Watch ${watch.length}`, high.length ? 'risk' : 'good'],
+        ['Over Budget', String(overAI.length), overAI[0] ? `PU-${overAI[0].pu.code}: ${textCr(Math.abs(overAI[0].cv.balanceBudget))}` : 'No overspend', overAI.length ? 'danger' : 'good'],
+        ['Budget, No Expense', String(noExpAI.length), noExpAI[0] ? `Largest PU-${noExpAI[0].pu.code} ${textCr(noExpAI[0].budget)}` : 'No such PU', noExpAI.length ? 'warn' : 'good'],
+        ['Amount to Ask', textCr(ask.reduce((s,r)=>s+(r.askAmount||0),0)), ask[0] ? `Top PU-${ask[0].pu.code}` : 'No ask signal', ask.length ? 'danger' : 'good']
+      ],
+      barsTitle: 'AI Risk Priority',
+      bars: aiRows.slice(0, 8).map(item => ({
+        pu:item.pu,
+        utilPct:item.utilPct,
+        _barValue: Math.max(Math.abs(item.utilPct), Math.abs(item.cv.balanceBudget || 0) / 10000),
+        _displayValue:item.utilPct.toFixed(1) + '%',
+        remark:item.risk === 'high' ? 'High Risk' : item.risk === 'watch' ? 'Watch' : 'Normal',
+        over:item.overSpent,
+        noExpense:item.budgetNoExpense
+      })),
+      actions: [
+        move[0] ? `Largest latest month movement is PU-${move[0].pu.code}: ${signedCr(move[0].cyCur - move[0].cyPrev)} from ${move[0].prevLabel} to ${move[0].curLabel}.` : 'No latest month movement signal available.',
+        overAI[0] ? `Immediate control point: PU-${overAI[0].pu.code} is over by ${textCr(Math.abs(overAI[0].cv.balanceBudget))}.` : 'No over-budget AI priority item.',
+        noExpAI[0] ? `Budget without expenditure needs confirmation: PU-${noExpAI[0].pu.code}, budget ${textCr(noExpAI[0].budget)}.` : 'No budget-without-expense AI priority item.',
+        surrender[0] ? `Possible surrender signal led by PU-${surrender[0].pu.code}: ${textCr(surrender[0].surrenderAmount)}.` : 'No surrender signal under current rule.'
+      ],
+      focusRows: aiRows.slice(0, 6).map(item => ({pu:item.pu, utilPct:item.utilPct, over:item.overSpent, noExpense:item.budgetNoExpense, balance:item.cv.balanceBudget, remark:item.risk === 'high' ? 'High Risk' : item.risk === 'watch' ? 'Watch' : 'Normal'}))
+    });
+  }
+
+  if (tab === 'trend' || tab === 'monthwise') {
     const {cur, actualMonths} = getMonthStatus();
     return Object.assign(base, {
       kpis: [
@@ -1407,9 +1378,21 @@ function renderBIView() {
   const panel = document.getElementById('biViewPanel');
   if (!panel) return;
   const tab = activeTabName();
-  document.body.classList.toggle('bi-view-active', reportViewMode === 'bi');
-  panel.hidden = reportViewMode !== 'bi';
-  if (reportViewMode !== 'bi') return;
+  const allowed = isBIViewAllowed(tab);
+  const showBI = reportViewMode === 'bi' && allowed;
+  document.body.classList.toggle('bi-view-active', showBI);
+  panel.hidden = !showBI;
+  const toggle = document.getElementById('reportViewToggle');
+  if (toggle) {
+    toggle.classList.toggle('bi-unavailable', !allowed);
+    toggle.title = allowed ? 'Switch between classic and BI-AI view' : 'BI-AI view is available only for Graphs and AI Summary';
+  }
+  document.querySelectorAll('[data-report-view-mode]').forEach(btn => {
+    const active = showBI ? btn.dataset.reportViewMode === 'bi' : btn.dataset.reportViewMode === 'classic';
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  if (!showBI) return;
   const {title, sub} = currentReportTitle(tab);
   const data = biDataForCurrentReport(tab);
   const focus = (data.focusRows || []).map(r => {
@@ -1449,7 +1432,13 @@ function renderBIView() {
 }
 
 function setReportViewMode(mode) {
-  reportViewMode = mode === 'bi' ? 'bi' : 'classic';
+  const requestedBI = mode === 'bi';
+  if (requestedBI && !isBIViewAllowed()) {
+    reportViewMode = 'classic';
+    showPortalNotice('BI-AI View is available only for Graphs and AI Summary.', 'warn');
+  } else {
+    reportViewMode = requestedBI ? 'bi' : 'classic';
+  }
   try { sessionStorage.setItem(REPORT_VIEW_MODE_KEY, reportViewMode); } catch(e) {}
   document.querySelectorAll('[data-report-view-mode]').forEach(btn => {
     const active = btn.dataset.reportViewMode === reportViewMode;
@@ -3390,6 +3379,11 @@ function includeInAITrendSummary(pu) {
   return isActiveDisplayPU(pu) && !isCommittedStaff;
 }
 
+function hasPYTrendData() {
+  const hasRows = obj => Object.keys(obj || {}).some(key => key !== 'TOTAL');
+  return hasRows(MONTH_PY) || hasRows(BUDGET_PY);
+}
+
 function buildAITrendItems() {
   const {cur, latestActual} = getMonthStatus();
   const actualIdx = latestActual ? latestActual.idx : Math.max(0, cur.idx - 1);
@@ -3461,32 +3455,60 @@ function renderAITrendSummary() {
       ? allItems.filter(x => x.risk === 'high' || x.risk === 'watch')
       : allItems.slice(0, 18);
   const meta = document.getElementById('aiTrendMeta');
+  const hasPY = hasPYTrendData();
   if (meta) {
     const sample = allItems[0];
     meta.textContent = sample
-      ? `PU-wise latest actual month ${sample.curLabel} review: CY vs PY month trend, actuals, utilisation, overspend and liability projection`
-      : 'PU-wise current year, previous year and projection risk summary';
+      ? `PU-wise latest actual month ${sample.curLabel} review: ${hasPY ? 'CY vs PY month trend' : 'CY-only trend; PY data not loaded'}, actuals, utilisation, overspend and liability projection`
+      : 'PU-wise current year trend, previous year comparison if loaded, and projection risk summary';
   }
   if (!items.length) {
     wrap.innerHTML = '<div class="ai-pu-card risk-ok"><ul class="ai-bullets"><li>No high-risk or watch-list PU found for the selected scope.</li></ul></div>';
     refreshBIViewSoon();
     return;
   }
-  wrap.innerHTML = items.map(item => {
+  const controlRows = trendControlRows();
+  const askRows = controlRows.filter(r => r.askAmount > 0).sort((a,b)=>b.askAmount-a.askAmount);
+  const surrenderRows = controlRows.filter(r => r.surrenderAmount > 0).sort((a,b)=>b.surrenderAmount-a.surrenderAmount);
+  const highItems = allItems.filter(x => x.risk === 'high');
+  const watchItems = allItems.filter(x => x.risk === 'watch');
+  const overItems = allItems.filter(x => x.overSpent).sort((a,b)=>Math.abs(b.cv.balanceBudget)-Math.abs(a.cv.balanceBudget));
+  const noExpenseItems = allItems.filter(x => x.budgetNoExpense).sort((a,b)=>b.budget-a.budget);
+  const moveItems = allItems.slice().sort((a,b)=>Math.abs((b.cyCur-b.cyPrev)||0)-Math.abs((a.cyCur-a.cyPrev)||0));
+  const digest = `<div class="ai-officer-digest">
+    <div class="ai-digest-head">
+      <strong>Officer AI Digest</strong>
+      <span>Latest completed actual month: ${htmlSafe(items[0].actualMonthLabel || 'JUN')}</span>
+    </div>
+    <div class="ai-digest-grid">
+      <div><span>High / Watch PUs</span><strong>${highItems.length + watchItems.length}</strong><small>High ${highItems.length}, Watch ${watchItems.length}</small></div>
+      <div><span>Top Overspend</span><strong>${overItems[0] ? `PU-${htmlSafe(overItems[0].pu.code)}` : '-'}</strong><small>${overItems[0] ? `${textCr(Math.abs(overItems[0].cv.balanceBudget))} over` : 'No over budget PU'}</small></div>
+      <div><span>Budget, No Expense</span><strong>${noExpenseItems.length}</strong><small>${noExpenseItems[0] ? `Largest PU-${htmlSafe(noExpenseItems[0].pu.code)} ${textCr(noExpenseItems[0].budget)}` : 'No such case'}</small></div>
+      <div><span>Amount to Ask</span><strong>${textCr(askRows.reduce((s,r)=>s+(r.askAmount||0),0))}</strong><small>${askRows[0] ? `Top PU-${htmlSafe(askRows[0].pu.code)} ${textCr(askRows[0].askAmount)}` : 'No ask signal'}</small></div>
+      <div><span>Possible Surrender</span><strong>${textCr(surrenderRows.reduce((s,r)=>s+(r.surrenderAmount||0),0))}</strong><small>${surrenderRows[0] ? `Top PU-${htmlSafe(surrenderRows[0].pu.code)} ${textCr(surrenderRows[0].surrenderAmount)}` : 'No surrender signal'}</small></div>
+      <div><span>Largest Month Move</span><strong>${moveItems[0] ? `PU-${htmlSafe(moveItems[0].pu.code)}` : '-'}</strong><small>${moveItems[0] ? `${signedCr(moveItems[0].cyCur-moveItems[0].cyPrev)} from ${htmlSafe(moveItems[0].prevLabel)} to ${htmlSafe(moveItems[0].curLabel)}` : 'No movement'}</small></div>
+    </div>
+    <ul>
+      <li>Priority is based on overspend, utilisation pressure, budget-with-no-expense and projected liability pressure.</li>
+      <li>Staff PU with committed liability remains excluded from this AI Trend Summary to keep focus on controllable action points.</li>
+      <li>Budget Control ask/surrender values are indicative and should be checked against pending bills before proposal.</li>
+    </ul>
+  </div>`;
+  wrap.innerHTML = digest + items.map(item => {
     const riskLabel = item.risk === 'high' ? 'High Risk' : item.risk === 'watch' ? 'Watch' : 'Normal';
     const riskClass = item.risk === 'high' ? 'high' : item.risk === 'watch' ? 'watch' : 'ok';
     const cyMove = item.cyCur - item.cyPrev;
     const pyMove = item.pyCur - item.pyPrev;
     const yoyMove = item.cyCur - item.pyCur;
-    const ytdPct = pctChangeText(item.cyTotalAsOn, item.pyTotalAsOn);
+    const ytdPct = hasPY ? pctChangeText(item.cyTotalAsOn, item.pyTotalAsOn) : 'PY not loaded';
     const monthTable = item.monthRows.map(r => {
-      const pctText = r.pct === null ? (r.cy ? 'new' : '-') : (r.pct >= 0 ? '+' : '') + r.pct.toFixed(1) + '%';
+      const pctText = !hasPY ? '-' : r.pct === null ? (r.cy ? 'new' : '-') : (r.pct >= 0 ? '+' : '') + r.pct.toFixed(1) + '%';
       const cls = r.diff > 0 ? 'up' : r.diff < 0 ? 'down' : '';
       return `<tr>
         <td>${htmlSafe(r.label)}</td>
         <td>${textCr(r.cy)}</td>
-        <td>${textCr(r.py)}</td>
-        <td class="${cls}">${signedCr(r.diff)}</td>
+        <td>${hasPY ? textCr(r.py) : '-'}</td>
+        <td class="${cls}">${hasPY ? signedCr(r.diff) : '-'}</td>
         <td class="${cls}">${htmlSafe(pctText)}</td>
       </tr>`;
     }).join('');
@@ -3520,7 +3542,7 @@ function renderAITrendSummary() {
       </div>
       <div class="ai-kpi-row">
         <div><span>CY Actual as on</span><strong>${textCr(item.cyTotalAsOn)}</strong></div>
-        <div><span>PY Same Period</span><strong>${textCr(item.pyTotalAsOn)}</strong></div>
+        <div><span>PY Same Period</span><strong>${hasPY ? textCr(item.pyTotalAsOn) : 'Not loaded'}</strong></div>
         <div><span>Utilisation</span><strong>${item.utilPct.toFixed(1)}%</strong></div>
         <div><span>Balance</span><strong>${textCr(item.cv.balanceBudget)}</strong></div>
       </div>
@@ -3531,9 +3553,9 @@ function renderAITrendSummary() {
         </table>
       </div>
       <ul class="ai-bullets">
-        <li><strong>Latest actual month movement:</strong> CY ${item.prevLabel} to ${item.curLabel} moved from ${textCr(item.cyPrev)} to ${textCr(item.cyCur)} (${signedCr(cyMove)}); PY moved ${signedCr(pyMove)} for the same completed-month pair.</li>
-        <li><strong>CY vs PY as-on:</strong> CY total is ${textCr(item.cyTotalAsOn)} against PY same-period ${textCr(item.pyTotalAsOn)} (${ytdPct}; difference ${signedCr(item.ytdDiff)}).</li>
-        <li><strong>Latest actual month vs PY:</strong> ${item.curLabel} CY is ${textCr(item.cyCur)} against ${textCr(item.pyCur)} in PY (${pctChangeText(item.cyCur, item.pyCur)}; difference ${signedCr(yoyMove)}).</li>
+        <li><strong>Latest actual month movement:</strong> CY ${item.prevLabel} to ${item.curLabel} moved from ${textCr(item.cyPrev)} to ${textCr(item.cyCur)} (${signedCr(cyMove)}).${hasPY ? ` PY moved ${signedCr(pyMove)} for the same completed-month pair.` : ' PY comparison will appear after previous-year file is confirmed.'}</li>
+        <li><strong>CY vs PY as-on:</strong> CY total is ${textCr(item.cyTotalAsOn)}${hasPY ? ` against PY same-period ${textCr(item.pyTotalAsOn)} (${ytdPct}; difference ${signedCr(item.ytdDiff)})` : '; PY same-period data is not loaded in this browser'}.</li>
+        <li><strong>Latest actual month vs PY:</strong> ${hasPY ? `${item.curLabel} CY is ${textCr(item.cyCur)} against ${textCr(item.pyCur)} in PY (${pctChangeText(item.cyCur, item.pyCur)}; difference ${signedCr(yoyMove)}).` : `PY month comparison is pending; current ${item.curLabel} CY amount is ${textCr(item.cyCur)}.`}</li>
         <li><strong>Budget and overspend:</strong> Budget ${textCr(item.budget)}, utilisation ${item.utilPct.toFixed(1)}%, balance ${textCr(item.cv.balanceBudget)}. ${spendStatus}</li>
         <li><strong>Liability AI analysis:</strong> ${projectionImpact} ${liabilityLine}</li>
       </ul>
@@ -5601,12 +5623,16 @@ function renderSyncHealthPanel(manifest=_syncedBudgetManifest) {
   const sourceCount = rows.length;
   const processedCount = Array.isArray(manifest && manifest.processedFiles) ? manifest.processedFiles.length : 0;
   const latestModified = rows.map(r => r.modifiedAt).filter(Boolean).sort().pop() || '-';
+  const actionLog = Array.isArray(manifest && manifest.actionLog) ? manifest.actionLog : [];
+  const lastAction = actionLog[0] || null;
   const items = [
     ['Manifest', manifest ? 'Loaded' : 'Not fetched', manifest ? (manifest.syncedAt || manifest.generatedAt || '-') : 'Fetch synced data'],
     ['FY', (manifest && manifest.financialYear) || '2026-2027', `Build ${ASSET_VERSION}`],
     ['Parse-ready', `${selectedRows.length} file(s)`, `${roleRows.length} matched upload roles`],
     ['Source files', `${sourceCount} listed`, `${processedCount} processed artefact(s)`],
     ['Latest source', latestModified, 'As per sync manifest'],
+    ['Last confirmed', (manifest && (manifest.confirmedAt || manifest.syncedAt)) || '-', lastAction ? lastAction.status || 'Action logged' : 'No action log fetched'],
+    ['Action log', lastAction ? lastAction.action || 'Repository data refreshed' : '-', lastAction && lastAction.summary ? `Latest month ${lastAction.summary.latestMonth || '-'}` : 'Use Fetch Synced Data'],
     ['Pending apply', hasPendingUploadData() ? 'Ready' : 'None', _syncedParseRunning ? 'Parser running' : 'Parser idle']
   ];
   grid.innerHTML = items.map(([label, value, note]) => `
@@ -6616,15 +6642,164 @@ function _mC(id,cfg){_dC(id);const ctx=document.getElementById(id);if(!ctx)retur
 const FOCUS_PUS = Array.from(IMPORTANT_PUS);
 const FOCUS_DESC={'27':'Materials from stock','28':'Materials-Dir. purchase','30':'Cost Of Elec. Energy/Traction Energy Procurement','32':'Contractual payments','60':'Fuel/Power'};
 
+function drawFallbackChart(id, title, labels, series, kind='bar') {
+  const canvas = document.getElementById(id);
+  if (!canvas || !canvas.getContext) return;
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(760, Math.round(rect.width || canvas.parentElement?.clientWidth || 900));
+  const height = Number(canvas.getAttribute('height')) || 220;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = '100%';
+  canvas.style.height = height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = '#0A1628';
+  ctx.font = '700 12px Segoe UI, Arial';
+  ctx.fillText(title, 12, 18);
+  const plot = {x:46, y:30, w:width - 66, h:height - 62};
+  const all = series.flatMap(s => s.data.map(v => Number(v) || 0));
+  const max = Math.max(...all.map(v => Math.abs(v)), 1);
+  ctx.strokeStyle = '#D8E5F2';
+  ctx.lineWidth = 1;
+  for (let i=0;i<=4;i++) {
+    const y = plot.y + plot.h - (plot.h * i / 4);
+    ctx.beginPath(); ctx.moveTo(plot.x, y); ctx.lineTo(plot.x + plot.w, y); ctx.stroke();
+    ctx.fillStyle = '#607080'; ctx.font = '9px Segoe UI, Arial';
+    ctx.fillText((max * i / 4).toFixed(0), 6, y + 3);
+  }
+  const colors = ['#1C6FD9', '#C9A84C', '#1A7A4A', '#E85D04', '#6A4C93'];
+  const n = Math.max(labels.length, 1);
+  if (kind === 'line') {
+    series.forEach((s, si) => {
+      ctx.strokeStyle = s.color || colors[si % colors.length];
+      ctx.lineWidth = si ? 1.8 : 2.6;
+      ctx.beginPath();
+      s.data.forEach((v, i) => {
+        const x = plot.x + (n === 1 ? plot.w / 2 : i * plot.w / (n - 1));
+        const y = plot.y + plot.h - ((Number(v) || 0) / max) * plot.h;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    });
+  } else {
+    const groupW = plot.w / n;
+    const barW = Math.max(4, Math.min(28, groupW / (series.length + 1)));
+    series.forEach((s, si) => {
+      ctx.fillStyle = s.color || colors[si % colors.length];
+      s.data.forEach((v, i) => {
+        const h = ((Number(v) || 0) / max) * plot.h;
+        const x = plot.x + i * groupW + (groupW - barW * series.length) / 2 + si * barW;
+        const y = plot.y + plot.h - h;
+        ctx.fillRect(x, y, barW - 1, Math.max(1, h));
+      });
+    });
+  }
+  ctx.fillStyle = '#496276';
+  ctx.font = '9px Segoe UI, Arial';
+  labels.forEach((label, i) => {
+    if (i % Math.ceil(labels.length / 10) !== 0) return;
+    const x = plot.x + (n === 1 ? plot.w / 2 : i * plot.w / Math.max(1, n - 1));
+    ctx.save();
+    ctx.translate(x, height - 22);
+    ctx.rotate(-Math.PI / 8);
+    ctx.fillText(String(label).slice(0, 12), 0, 0);
+    ctx.restore();
+  });
+  let lx = plot.x;
+  series.forEach((s, si) => {
+    ctx.fillStyle = s.color || colors[si % colors.length];
+    ctx.fillRect(lx, height - 12, 8, 8);
+    ctx.fillStyle = '#0A1628';
+    ctx.font = '9px Segoe UI, Arial';
+    ctx.fillText(s.label, lx + 12, height - 5);
+    lx += 120;
+  });
+}
+
+function renderTrendFallback() {
+  const puSel  =(document.getElementById('trendPUSelect') ||{}).value||'ALL';
+  const useBPSelection = !!((document.getElementById('trendUseBPPU') || {}).checked);
+  const topNv  =(document.getElementById('trendTopN') ||{}).value||'10';
+  const topN   =topNv==='999'?999:parseInt(topNv, 10);
+  const activePUs=activePUMeta().filter(p => passesPUFocus(p.code));
+  const trendSelectedCodes = useBPSelection ? bpSelectedCodes() : (puSel === 'ALL' ? ['all'] : [puSel]);
+  const puList=trendSelectedCodes.includes('all') ? activePUs : activePUs.filter(p=>trendSelectedCodes.includes(p.code));
+  const trendScopeLabel = useBPSelection
+    ? (trendSelectedCodes.includes('all') ? 'BP ticks: All PUs' : `BP ticks: ${trendSelectedCodes.length} PU(s)`)
+    : (puSel==='ALL'?'All PUs':'PU-'+puSel);
+  const monthStatus = getMonthStatus();
+  const labels = FY_MONTH_LABELS.map((m,i)=>m+(i<=8?' 26':' 27'));
+  const cyV = FY_MONTHS.map(m => puList.reduce((s,p)=>s + Number((MONTH[p.code]||{})[m] || 0), 0) / 10000);
+  const pyV = FY_MONTHS.map(m => puList.reduce((s,p)=>s + Number((MONTH_PY[p.code]||{})[m] || 0), 0) / 10000);
+  const totB=puList.reduce((s,p)=>(s + Number((BUDGET[p.code]||{}).bg_isl || 0)),0);
+  const totA=puList.reduce((s,p)=>(s + Number((BUDGET[p.code]||{}).actuals_till || 0)),0);
+  const strip=document.getElementById('trendKPIStrip');
+  if(strip){
+    strip.innerHTML=[
+      ['Budget BG_ISL',detailCr(totB),trendScopeLabel],
+      ['Actuals Till Date',detailCr(totA),totB ? (totA/totB*100).toFixed(1)+'% utilised' : 'No budget'],
+      ['Balance',detailCr(totB - totA),(totB - totA) < 0 ? 'Over Budget' : 'Remaining'],
+      ['Latest Month',`${monthStatus.cur.label} ${monthStatus.cur.year}`,'Local canvas fallback']
+    ].map(([l,v,s])=>`<div class="trend-kpi"><div class="tk-lbl">${l}</div><div class="tk-val">${v}</div><div class="tk-sub">${s}</div></div>`).join('');
+  }
+  const note=document.getElementById('trendDataNote');
+  const pyNote = hasPYTrendData() ? 'PY comparison loaded' : 'PY data not loaded';
+  if(note) note.textContent=`Data: latest local sync | Current month ${monthStatus.cur.label} ${monthStatus.cur.year} | ${pyNote}`;
+  const titleEl=document.getElementById('mainChartTitle');
+  if(titleEl) titleEl.textContent='Monthly Actuals Trend - '+trendScopeLabel;
+  drawFallbackChart('trendMainChart', 'CY vs PY Monthly Actuals (Rs Cr)', labels, [
+    {label:'CY 2026-27', data:cyV, color:'#1C6FD9'},
+    {label:'PY 2025-26', data:pyV, color:'#C9A84C'}
+  ], 'bar');
+  const topU=activePUs.filter(p=>BUDGET[p.code] && BUDGET[p.code].bg_isl>0).sort((a,b)=>((BUDGET[b.code].actuals_till||0)/(BUDGET[b.code].bg_isl||1))-((BUDGET[a.code].actuals_till||0)/(BUDGET[a.code].bg_isl||1))).slice(0,10);
+  drawFallbackChart('trendUtilChart', 'Top Utilisation PUs (%)', topU.map(p=>'PU-'+p.code), [{label:'Utilisation %', data:topU.map(p=>Math.min(150, (BUDGET[p.code].actuals_till||0)/(BUDGET[p.code].bg_isl||1)*100)), color:'#1A7A4A'}], 'bar');
+  const topA=activePUs.filter(p=>BUDGET[p.code] && (BUDGET[p.code].actuals_till||0)>0).sort((a,b)=>(BUDGET[b.code].actuals_till||0)-(BUDGET[a.code].actuals_till||0)).slice(0,Math.min(topN,15));
+  drawFallbackChart('trendTopPUChart', 'Top PUs Budget vs Actuals (Rs Cr)', topA.map(p=>'PU-'+p.code), [
+    {label:'Budget', data:topA.map(p=>(BUDGET[p.code].bg_isl||0)/10000), color:'#1C6FD9'},
+    {label:'Actual', data:topA.map(p=>(BUDGET[p.code].actuals_till||0)/10000), color:'#1A7A4A'}
+  ], 'bar');
+  drawFallbackChart('trendFocusChart', 'Important PU CY Monthly Trend (Rs Cr)', labels, FOCUS_PUS.map((code,i)=>({label:'PU-'+code, data:FY_MONTHS.map(m=>((MONTH[code]||{})[m]||0)/10000), color:['#1C6FD9','#1A7A4A','#E85D04','#9B2226','#6A4C93'][i%5]})), 'line');
+  const pressureRows = trendDecisionRows().filter(r => r.over || r.noExpense || r.utilPct >= 85).sort((a,b) => {
+    const av = a.over ? Math.abs(a.balance) : a.noExpense ? a.budget : a.actual;
+    const bv = b.over ? Math.abs(b.balance) : b.noExpense ? b.budget : b.actual;
+    return bv - av;
+  }).slice(0,12);
+  drawFallbackChart('trendRiskChart', 'Budget Pressure - Over Budget / No Expense (Rs Cr)', pressureRows.map(r=>'PU-'+r.pu.code), [
+    {label:'Budget', data:pressureRows.map(r=>r.budget/10000), color:'#1C6FD9'},
+    {label:'Actual', data:pressureRows.map(r=>r.actual/10000), color:'#E85D04'}
+  ], 'bar');
+  const controlRows = trendControlRows().filter(r => r.askAmount > 0 || r.surrenderAmount > 0).sort((a,b) => (b.askAmount || b.surrenderAmount) - (a.askAmount || a.surrenderAmount)).slice(0,12);
+  drawFallbackChart('trendControlChart', 'Budget Control - Ask vs Surrender (Rs Cr)', controlRows.map(r=>'PU-'+r.pu.code), [
+    {label:'Ask', data:controlRows.map(r=>(r.askAmount || 0)/10000), color:'#9B2226'},
+    {label:'Surrender', data:controlRows.map(r=>(r.surrenderAmount || 0)/10000), color:'#1A7A4A'}
+  ], 'bar');
+  const hmDiv=document.getElementById('trendHeatmap');
+  if(hmDiv) {
+    const hmPUs=activePUs.filter(p=>FY_MONTHS.some(m=>(MONTH[p.code]||{})[m])).slice(0,18);
+    hmDiv.innerHTML='<table><thead><tr><th>PU</th>'+FY_MONTH_LABELS.map(m=>`<th>${m}</th>`).join('')+'</tr></thead><tbody>'+
+      hmPUs.map(p=>`<tr><td>PU-${p.code}</td>`+FY_MONTHS.map(m=>`<td>${((MONTH[p.code]||{})[m]||0) ? (((MONTH[p.code]||{})[m]||0)/10000).toFixed(1) : '-'}</td>`).join('')+'</tr>').join('')+
+      '</tbody></table>';
+  }
+  refreshBIViewSoon();
+}
+
 function renderTrend(){
-  if(!window.Chart)return;
+  if(!window.Chart){
+    renderTrendFallback();
+    return;
+  }
   const puSel  =(document.getElementById('trendPUSelect') ||{}).value||'ALL';
   const useBPSelection = !!((document.getElementById('trendUseBPPU') || {}).checked);
   const cType  =(document.getElementById('trendChartType')||{}).value||'monthly';
   const topNv  =(document.getElementById('trendTopN')     ||{}).value||'10';
   const showPY =((document.getElementById('trendShowPY')  ||{}).checked!==false);
   const topN   =topNv==='999'?999:parseInt(topNv);
-  const hasPY  =Object.keys(MONTH_PY).length>0||Object.keys(BUDGET_PY).length>0;
+  const hasPY  =hasPYTrendData();
   const MK=FY_MONTHS, ML=FY_MONTH_LABELS;
   const monthStatus = getMonthStatus();
   const CUR_IDX = monthStatus.cur.idx;
@@ -6659,11 +6834,11 @@ function renderTrend(){
       ['Balance',fCr(Math.abs(bal)),(bal<0?'Warning Over Budget':'Remaining')],
       ['Months Active',activeMths+'/12','APR 2026 to MAR 2027'],
       yoy!==null?['YoY Change',(yoy>=0?'+':'')+yoy.toFixed(1)+'%','vs full year PY 2025-26']:
-                 ['PY Data','Pre-loaded OK','27-Jun-2026 static file'],
+                 ['PY Data',hasPY ? 'Loaded' : 'Not loaded',hasPY ? 'Comparison active' : 'Upload PY files in Admin'],
     ].map(([l,v,s])=>`<div class="trend-kpi"><div class="tk-lbl">${l}</div><div class="tk-val">${v}</div><div class="tk-sub">${s}</div></div>`).join('');
   }
   const note=document.getElementById('trendDataNote');
-  if(note) note.textContent='Data: 29-Jun-2026 (CY) | PY: 2025-26 full year';
+  if(note) note.textContent=`Data: latest local sync | Current month ${monthStatus.cur.label} ${monthStatus.cur.year} | ${hasPY ? 'PY: 2025-26 comparison' : 'PY data not loaded'}`;
 
   // ── Main Chart ────────────────────────────────────────────────
   const titleEl=document.getElementById('mainChartTitle');
@@ -6723,6 +6898,28 @@ function renderTrend(){
     if(cType==='pubar'){
       _mC('trendMainChart',{type:'bar',data:{labels:sorted.map(p2=>'PU-'+p2.code),datasets:[{label:'Budget',data:sorted.map(p2=>(BUDGET[p2.code].bg_isl/10000).toFixed(0)),backgroundColor:'rgba(26,74,138,.45)',borderRadius:3},{label:'Actuals',data:sorted.map(p2=>(BUDGET[p2.code].actuals_till/10000).toFixed(0)),backgroundColor:'rgba(26,122,74,.75)',borderRadius:3}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:10}}}}}});
       if(titleEl) titleEl.textContent='Top '+sorted.length+' PUs - Budget vs Actuals (Rs Cr)';
+    } else if(cType==='riskbar'){
+      const riskRows=trendDecisionRows().filter(r=>r.over||r.noExpense||r.utilPct>=85).sort((a,b)=>{
+        const av=a.over?Math.abs(a.balance):a.noExpense?a.budget:a.actual;
+        const bv=b.over?Math.abs(b.balance):b.noExpense?b.budget:b.actual;
+        return bv-av;
+      }).slice(0,Math.min(topN,20));
+      _mC('trendMainChart',{type:'bar',data:{labels:riskRows.map(r=>'PU-'+r.pu.code),datasets:[
+        {label:'Budget',data:riskRows.map(r=>(r.budget/10000).toFixed(1)),backgroundColor:'rgba(28,111,217,.35)',borderRadius:3},
+        {label:'Actual',data:riskRows.map(r=>(r.actual/10000).toFixed(1)),backgroundColor:riskRows.map(r=>r.over?'rgba(204,0,0,.78)':r.noExpense?'rgba(184,135,0,.68)':'rgba(232,93,4,.68)'),borderRadius:3}
+      ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}},tooltip:{callbacks:{afterLabel:c=>{const r=riskRows[c.dataIndex];return r?r.over?'Over budget':r.noExpense?'Budget available, no expense':'High utilisation':'';}}}},scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:10}}}}}});
+      if(titleEl) titleEl.textContent='Budget Pressure Ranking - Over Budget / No Expense';
+    } else if(cType==='askbar'){
+      const controlRows=trendControlRows().filter(r=>r.askAmount>0||r.surrenderAmount>0).sort((a,b)=>(b.askAmount||b.surrenderAmount)-(a.askAmount||a.surrenderAmount)).slice(0,Math.min(topN,20));
+      _mC('trendMainChart',{type:'bar',data:{labels:controlRows.map(r=>'PU-'+r.pu.code),datasets:[
+        {label:'Amount to Ask',data:controlRows.map(r=>((r.askAmount||0)/10000).toFixed(1)),backgroundColor:'rgba(155,34,38,.78)',borderRadius:3},
+        {label:'Possible Surrender',data:controlRows.map(r=>((r.surrenderAmount||0)/10000).toFixed(1)),backgroundColor:'rgba(26,122,74,.75)',borderRadius:3}
+      ]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:10}}}}}});
+      if(titleEl) titleEl.textContent='Budget Control Projection - Ask vs Surrender';
+    } else if(cType==='noexpense'){
+      const noExpRows=trendDecisionRows().filter(r=>r.noExpense).sort((a,b)=>b.budget-a.budget).slice(0,Math.min(topN,20));
+      _mC('trendMainChart',{type:'bar',data:{labels:noExpRows.map(r=>'PU-'+r.pu.code),datasets:[{label:'Budget with No Expense',data:noExpRows.map(r=>(r.budget/10000).toFixed(1)),backgroundColor:'rgba(184,135,0,.72)',borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:10}}}}}});
+      if(titleEl) titleEl.textContent='Budget Available but No Expense Booked';
     } else {
       const utD=sorted.map(p2=>Math.min(150,Math.round((BUDGET[p2.code].actuals_till||0)/Math.max(BUDGET[p2.code].bg_isl||1,1)*100)));
       _mC('trendMainChart',{type:'bar',data:{labels:sorted.map(p2=>'PU-'+p2.code),datasets:[{label:'Utilisation %',data:utD,backgroundColor:utD.map(u=>u>100?'rgba(204,0,0,.75)':u>85?'rgba(232,93,4,.75)':u>60?'rgba(192,112,0,.65)':'rgba(26,122,74,.75)'),borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:35}},y:{max:155,title:{display:true,text:'%'},ticks:{callback:v=>v+'%',font:{size:10}}}}}});
@@ -6762,6 +6959,22 @@ function renderTrend(){
   _mC('trendFocusChart',{type:'line',data:{labels:ML_S.map((m,i)=>m+(i<=8?'\'26':'\'27')),datasets:focusDs},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:8},filter:i=>!i.text.includes('PY')||showPY}}},scales:{x:{ticks:{font:{size:9}}},y:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:9}}}}}});
 
   // ── Analytics Table ───────────────────────────────────────────
+  const pressureRows=trendDecisionRows().filter(r=>r.over||r.noExpense||r.utilPct>=85).sort((a,b)=>{
+    const av=a.over?Math.abs(a.balance):a.noExpense?a.budget:a.actual;
+    const bv=b.over?Math.abs(b.balance):b.noExpense?b.budget:b.actual;
+    return bv-av;
+  }).slice(0,12);
+  _mC('trendRiskChart',{type:'bar',data:{labels:pressureRows.map(r=>'PU-'+r.pu.code+': '+r.pu.desc.substring(0,12)),datasets:[
+    {label:'Budget',data:pressureRows.map(r=>(r.budget/10000).toFixed(1)),backgroundColor:'rgba(28,111,217,.35)',borderRadius:3},
+    {label:'Actual',data:pressureRows.map(r=>(r.actual/10000).toFixed(1)),backgroundColor:pressureRows.map(r=>r.over?'rgba(204,0,0,.78)':r.noExpense?'rgba(184,135,0,.68)':'rgba(232,93,4,.68)'),borderRadius:3}
+  ]},options:{indexAxis:'y',responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}},tooltip:{callbacks:{afterLabel:c=>{const r=pressureRows[c.dataIndex];return r?r.over?'Over budget':r.noExpense?'Budget available, no expense':'High utilisation':'';}}}},scales:{x:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:9}}},y:{ticks:{font:{size:8}}}}}});
+
+  const controlRows=trendControlRows().filter(r=>r.askAmount>0||r.surrenderAmount>0).sort((a,b)=>(b.askAmount||b.surrenderAmount)-(a.askAmount||a.surrenderAmount)).slice(0,12);
+  _mC('trendControlChart',{type:'bar',data:{labels:controlRows.map(r=>'PU-'+r.pu.code+': '+r.pu.desc.substring(0,12)),datasets:[
+    {label:'Amount to Ask',data:controlRows.map(r=>((r.askAmount||0)/10000).toFixed(1)),backgroundColor:'rgba(155,34,38,.78)',borderRadius:3},
+    {label:'Possible Surrender',data:controlRows.map(r=>((r.surrenderAmount||0)/10000).toFixed(1)),backgroundColor:'rgba(26,122,74,.75)',borderRadius:3}
+  ]},options:{indexAxis:'y',responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:10}}}},scales:{x:{title:{display:true,text:'Rs Cr'},ticks:{font:{size:9}}},y:{ticks:{font:{size:8}}}}}});
+
   const thead=document.getElementById('trendTHead'),tbody=document.getElementById('trendTBody');
   if(thead&&tbody){
     thead.innerHTML='<tr><th style="text-align:left">PU</th><th style="text-align:left">Description</th><th>Type</th><th>Budget</th><th>Actuals CY</th><th>Util%</th><th>Status</th><th>PY Actuals</th><th>YoY</th>'+MK.map((mk,i)=>'<th>'+ML[i]+'</th>').join('')+'<th>Total</th></tr>';
@@ -6907,6 +7120,10 @@ function renderAll() {
   renderBudgetControl();
   renderRemarks();
   renderBIView();
+  setTimeout(() => {
+    if (typeof renderTrend === 'function') renderTrend();
+    if (typeof renderAITrendSummary === 'function') renderAITrendSummary();
+  }, 120);
   document.getElementById('rgNote').textContent=isRGActive()?'RG Active':'BG_ISL';
   const {cur:_cur}=getMonthStatus();
   const _cmb=document.getElementById('curMonBadge'); if(_cmb) _cmb.textContent=_cur.label+' '+_cur.year;
@@ -6979,5 +7196,3 @@ setTimeout(hydrateDemandSMHActualMonthsFromSyncedFile, 250);
     o.textContent='PU-'+pu.code+' - '+pu.desc; sel.appendChild(o);
   });
 })();
-
-

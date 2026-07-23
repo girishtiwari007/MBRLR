@@ -7,9 +7,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="portal-build" content="rlp-mbd-2026-07-20-division-setup">
+<meta name="portal-build" content="rlp-mbd-2026-07-23-local-sync">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260720-division-setup-1">
+<link rel="stylesheet" href="assets/css/main.css?v=20260723-data-refresh-2">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -64,7 +64,7 @@
   </div>
   <div class="hdr-r">
     <span class="fy-badge">FY 2026-27</span>
-    <span class="as-on" id="asOnLabel">As on: 13-Jul-2026 10:50</span>
+    <span class="as-on" id="asOnLabel">As on: 23-Jul-2026 12:36</span>
   </div>
 </div>
 
@@ -437,6 +437,13 @@
       </div>
       <div class="synced-file-list" id="syncedDataList"></div>
     </div>
+    <div class="local-sync-help">
+      <div>
+        <strong>Permanent Local Repo Upload</strong>
+        <span>For GitHub-ready update, place latest XLS/XLSX files in <code>LOCAL-PORTAL-UPLOAD</code> and run <code>RUN-LOCAL-DATA-SYNC.bat</code>. File names can vary; the local sync detects each report by sheet columns, parses, verifies, recalculates and mirrors to GitHub Desktop.</span>
+      </div>
+      <small>Browser drag/drop below is for admin session testing; it cannot rewrite GitHub-hosted files directly.</small>
+    </div>
     <div style="margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:8px">
       <span style="background:#1C3A5E;color:#C9A84C;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">FY 2026-27 - CURRENT YEAR</span>
     </div>
@@ -588,6 +595,9 @@
         <option value="yoy">Year-on-Year %</option>
         <option value="pubar">Top PUs - Budget vs Actuals</option>
         <option value="utilbar">Utilisation Ranking</option>
+        <option value="riskbar">Budget Pressure Ranking</option>
+        <option value="askbar">Ask / Surrender Projection</option>
+        <option value="noexpense">Budget Available, No Expense</option>
       </select>
       <select id="trendTopN" class="trend-sel" onchange="renderTrend()">
         <option value="10">Top 10 PUs</option>
@@ -623,15 +633,13 @@
         <div class="tchart-title">Important PUs - CY vs PY</div>
         <canvas id="trendFocusChart" height="200"></canvas>
       </div>
-    </div>
-
-    <div style="margin-top:14px;background:#fff;border-radius:8px;border:1px solid #E0EAF4;overflow:hidden">
-      <div style="background:#0A1628;color:#C9A84C;padding:10px 16px;font-size:11px;font-weight:700">Full PU-wise Analytics Table</div>
-      <div style="overflow-x:auto">
-        <table id="trendTable" style="width:100%;border-collapse:collapse">
-          <thead id="trendTHead"></thead>
-          <tbody id="trendTBody"></tbody>
-        </table>
+      <div class="tchart-wrap">
+        <div class="tchart-title">Budget Pressure - Over Budget / No Expense</div>
+        <canvas id="trendRiskChart" height="200"></canvas>
+      </div>
+      <div class="tchart-wrap">
+        <div class="tchart-title">Budget Control - Ask vs Surrender</div>
+        <canvas id="trendControlChart" height="200"></canvas>
       </div>
     </div>
   </div>
@@ -1111,16 +1119,14 @@
   Revenue Liability Portal &nbsp;-&nbsp; Moradabad Division / Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
 </div>
 
-<script src="assets/js/detail-data.js"></script>
-<script src="assets/js/demand-smh-data.js"></script>
-<script src="assets/js/admin-config.js?v=20260720-division-setup-1"></script>
+<script src="assets/js/detail-data.js?v=20260723-data-refresh-2"></script>
+<script src="assets/js/demand-smh-data.js?v=20260723-data-refresh-2"></script>
+<script src="assets/js/admin-config.js?v=20260723-data-refresh-2"></script>
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260720-division-setup-1"></script>
+<script src="assets/js/app.js?v=20260723-data-refresh-2"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>
 </html>
-
-

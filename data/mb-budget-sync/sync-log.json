@@ -1,55 +1,26 @@
 [
   {
-    "syncedAt": "2026-07-14T15:49:49",
-    "financialYear": "2026-2027",
-    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
-    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
-    "copiedFiles": 9,
-    "selectedFiles": 9,
-    "warnings": []
-  },
-  {
-    "syncedAt": "2026-07-14T14:32:29",
-    "financialYear": "2026-2027",
-    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
-    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
-    "copiedFiles": 9,
-    "selectedFiles": 9,
-    "warnings": []
-  },
-  {
-    "syncedAt": "2026-07-14T14:27:42",
-    "financialYear": "2026-2027",
-    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
-    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
-    "copiedFiles": 9,
-    "selectedFiles": 9,
-    "warnings": []
-  },
-  {
-    "syncedAt": "2026-07-14T13:53:50",
-    "financialYear": "2026-2027",
-    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
-    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
-    "copiedFiles": 9,
-    "selectedFiles": 9,
-    "warnings": []
-  },
-  {
-    "syncedAt": "2026-07-14T13:51:07",
-    "financialYear": "2026-2027",
-    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
-    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
-    "copiedFiles": 2,
-    "selectedFiles": 2,
-    "warnings": []
-  },
-  {
-    "syncedAt": "2026-07-14T13:41:48",
-    "financialYear": "2026-2027",
-    "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MB-BUDGET",
-    "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
-    "copiedFiles": 15,
-    "warnings": []
+    "at": "2026-07-23T12:36:45+05:30",
+    "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
+    "status": "confirmed",
+    "files": [
+      "PU-wise Budget Available: PU-BUDGET.xls",
+      "PU-wise Month-wise Actual: PU-MONTH-ACTUAL.xls",
+      "DEPT-Demand/SMH PU-wise Budget: PU-DEPT-DEMAND-SMH-BUDGET.xls",
+      "DEPT-Demand/SMH PU-wise Month-wise Actual: PU-DEPT-DEMAND-SMH-ACTUAL.xls",
+      "Demand/SMH Budget Summary: DEMAND-SMH-BUGDET.xls",
+      "Demand/SMH Month-wise Actual Summary: DEMAND-SMH-ACTUAL.xls"
+    ],
+    "summary": {
+      "puBudgetRows": 47,
+      "puMonthRows": 38,
+      "detailRows": 900,
+      "detailBudget": 34145286,
+      "detailActual": 11375560,
+      "demandRows": 12,
+      "latestMonth": "JUL 2026",
+      "demandMainAECompleted": 10030024,
+      "demandMainBPCompleted": 8148971
+    }
   }
 ]
