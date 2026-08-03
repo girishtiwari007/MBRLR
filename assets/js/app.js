@@ -5,6 +5,7 @@ const PORTAL_THEMES = Object.freeze({
   default: '',
   'gov-command': 'assets/css/theme-gov-command.css',
   'digital-india': 'assets/css/theme-digital-india.css',
+  'cpgrams-gov': 'assets/css/theme-cpgrams-gov.css',
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
@@ -24,7 +25,9 @@ function setPortalTheme(themeName) {
 }
 
 function initPortalTheme() {
-  setPortalTheme('digital-india');
+  let requested = '';
+  try { requested = new URLSearchParams(location.search).get('theme') || ''; } catch(e) {}
+  setPortalTheme(PORTAL_THEMES[requested] !== undefined ? requested : 'digital-india');
 }
 
 function setBlockStyle(styleName) {
@@ -51,7 +54,7 @@ function initPopup() {
 
 // ── LOGIN SYSTEM ─────────────────────────────────────────────
 const AUTH_DIGESTS = Object.freeze({
-  ADMIN: 'b8824be5a97f2673f084e8d91336ffa24752344e361e9f25655e70aeeb12d104'
+  ADMIN: 'bc2bc320b6b63f5852d72b647b2c546d4173cc04936749652b6e975f1b607ac9'
 });
 let _pendingUploadAfterLogin = false;
 let _pendingAdminTab = null;
@@ -3214,6 +3217,7 @@ const BACKUP_FILE_LIST = Object.freeze([
   'README.md',
   'assets/css/main.css',
   'assets/css/theme-digital-india.css',
+  'assets/css/theme-cpgrams-gov.css',
   'assets/css/theme-control-room.css',
   'assets/css/theme-executive-light.css',
   'assets/css/theme-gov-command.css',
