@@ -339,7 +339,25 @@ def parse_detail(budget_path: Path, actual_path: Path, pu_names, dept_names):
     return {"source": "PORTAL DATA local sync", "rules": "Department 00 and PU 72/73/74/75/98 skipped for display", "monthLabels": MONTH_LABELS, "monthKeys": MONTH_KEYS, "totals": totals, "rows": rows}
 
 
-def parse_demand(budget_path: Path, actual_path: Path, generated_at: str):
+def fy_month_label(idx: int) -> str:
+    if idx < 0:
+        return "No completed month"
+    return f"{MONTH_LABELS[idx]} {'2026' if idx <= 8 else '2027'}"
+
+
+def current_fy_month_idx(now: datetime) -> int:
+    month = now.month
+    return month - 4 if month >= 4 else month + 8
+
+
+def bp_mode_note(completed: int, current_idx: int, latest_idx: int) -> str:
+    completed_label = fy_month_label(completed - 1)
+    current_label = fy_month_label(current_idx)
+    latest_label = fy_month_label(latest_idx)
+    return f"Completed through {completed_label}; {current_label} is current running month; latest uploaded actual month detected as {latest_label}"
+
+
+def parse_demand(budget_path: Path, actual_path: Path, generated_at: str, completed: int, current_idx: int, latest_idx: int):
     bsh = read_sheet(budget_path)
     bhr, bheaders = find_header(bsh, ["AU", "SMH"])
     c_smh, c_bg = col(bheaders, "SMH"), col(bheaders, "BGISL", "BUDGET", "OBA")
@@ -363,7 +381,6 @@ def parse_demand(budget_path: Path, actual_path: Path, generated_at: str):
             if c is not None:
                 vals[MONTH_KEYS[i]] += as_number(ash.cell_value(r, c))
 
-    completed = 3
     rows = []
     for smh in sorted(set(oba) | set(actual), key=lambda x: (x.endswith("N"), x)):
         months = actual.get(smh, {m: 0 for m in MONTH_KEYS})
@@ -394,9 +411,9 @@ def parse_demand(budget_path: Path, actual_path: Path, generated_at: str):
         "sourceActual": SOURCE_NAMES["demand_actual"],
         "sourceCode": "Built-in Demand/SMH mapping",
         "generatedAt": generated_at,
-        "asOn": "JUN 2026",
+        "asOn": fy_month_label(completed - 1),
         "completedMonths": completed,
-        "note": "OBA uses uploaded BG_ISL/OBA. Static source retains JUL month column as current-month till-date, but BP and default Demand/SMH summary use completed months through JUN because JUL is running. Demand 12N/10N Suspense Heads is shown separately and is not netted from main total.",
+        "note": f"OBA uses uploaded BG_ISL/OBA. BP and default Demand/SMH summary use {completed} completed month(s) through {fy_month_label(completed - 1)}. {fy_month_label(current_idx)} is treated as current running month. Latest uploaded actual month detected as {fy_month_label(latest_idx)}. Demand 12N/10N Suspense Heads is shown separately and is not netted from main total.",
         "rows": rows,
         "totals": totals,
     }
@@ -408,7 +425,8 @@ def replace_js_assignment(text: str, name: str, value: str) -> str:
 
 
 def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
-    generated_at = datetime.now(IST).replace(microsecond=0).isoformat()
+    now = datetime.now(IST).replace(microsecond=0)
+    generated_at = now.isoformat()
     version = "20260723-data-refresh-2"
     source_paths, detected_profiles = discover_source_files(source_dir)
 
@@ -419,7 +437,10 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
         budget.setdefault(code, {"bg_isl": 0, "rg": 0, "actuals_till": 0})
         budget[code]["actuals_till"] = sum(vals.values())
     detail = parse_detail(source_paths["detail_budget"], source_paths["detail_actual"], pu_names, dept_names)
-    demand = parse_demand(source_paths["demand_budget"], source_paths["demand_actual"], generated_at)
+    current_idx = current_fy_month_idx(now)
+    completed_count = max(0, min(latest_idx, current_idx - 1) + 1)
+    mode_note = bp_mode_note(completed_count, current_idx, latest_idx)
+    demand = parse_demand(source_paths["demand_budget"], source_paths["demand_actual"], generated_at, completed_count, current_idx, latest_idx)
     detail["generatedAt"] = generated_at
 
     (root / "assets/js/detail-data.js").write_text("window.DETAIL_SMH_DATA = " + json.dumps(detail, separators=(",", ":")) + ";\n", encoding="utf-8", newline="\n")
@@ -430,6 +451,23 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
     app = re.sub(r"const ASSET_VERSION = '[^']+';", f"const ASSET_VERSION = '{version}';", app, count=1)
     app = replace_js_assignment(app, "BUDGET", json.dumps(budget, separators=(",", ":")))
     app = replace_js_assignment(app, "MONTH", json.dumps(month, separators=(",", ":")))
+    stamp = now.strftime("%d-%b-%Y")
+    latest_label = fy_month_label(latest_idx)
+    latest_month_short = MONTH_LABELS[latest_idx] if latest_idx >= 0 else "latest"
+    source_updates = {
+        "budgetCY": f"Repository source refreshed from PORTAL DATA on {stamp}; actual till date aligned to APR-{latest_month_short} month-wise file.",
+        "monthCY": f"Repository source refreshed from PORTAL DATA on {stamp}; latest loaded month {latest_label}.",
+        "smhBudgetCY": f"Repository source refreshed from PORTAL DATA on {stamp}.",
+        "smhMonthCY": f"Repository source refreshed from PORTAL DATA on {stamp}; latest loaded month {latest_label}.",
+        "demandSmhCY": f"Repository source refreshed from PORTAL DATA on {stamp}. {mode_note}. Demand 12N/10N Suspense Heads is shown separately.",
+    }
+    for key, remark in source_updates.items():
+        app = re.sub(
+            rf"({key}: \{{label:'[^']+', fy:'[^']+', source:'[^']+', used:'[^']+', remarks:')[^']*('}})",
+            rf"\1{remark}\2",
+            app,
+            count=1,
+        )
     if "const FY_MONTHS =" not in app:
         app = app.replace("const DEFAULT_DATA_AS_ON_DATE", "const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];\nconst FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];\nconst DEFAULT_DATA_AS_ON_DATE", 1)
     app = re.sub(r"const DEFAULT_DATA_AS_ON_DATE = new Date\('[^']+'\);", f"const DEFAULT_DATA_AS_ON_DATE = new Date('{generated_at}');", app, count=1)
@@ -473,7 +511,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
         "source": "PORTAL DATA local sync",
     }
     (processed / "current_payload.js").write_text("window.CURRENT_PAYLOAD = " + json.dumps(current_payload, separators=(",", ":")) + ";\n", encoding="utf-8", newline="\n")
-    reports = {"budget": {"demand": {f"Demand {r['demand']} / SMH {r['smh']}": {FY_SHORT: {"oba": r["oba"], "ae": r["ae"], "bp": r["bp"]}} for r in demand["rows"]}}, "summary": {"generatedAt": generated_at, "latestMonth": MONTH_LABELS[latest_idx] + " 2026" if latest_idx <= 8 else MONTH_LABELS[latest_idx] + " 2027", "bpMode": "Completed through JUN 2026; JUL 2026 retained as current-month till-date column", "demandRows": len(demand["rows"]), "demandMainOBA": demand["totals"]["oba"], "demandMainBP": demand["totals"]["bp"], "demandMainAE": demand["totals"]["ae"]}}
+    reports = {"budget": {"demand": {f"Demand {r['demand']} / SMH {r['smh']}": {FY_SHORT: {"oba": r["oba"], "ae": r["ae"], "bp": r["bp"]}} for r in demand["rows"]}}, "summary": {"generatedAt": generated_at, "latestMonth": fy_month_label(latest_idx), "bpMode": mode_note, "demandRows": len(demand["rows"]), "demandMainOBA": demand["totals"]["oba"], "demandMainBP": demand["totals"]["bp"], "demandMainAE": demand["totals"]["ae"]}}
     (processed / "reports-data.json").write_text(json.dumps(reports, indent=2), encoding="utf-8", newline="\n")
     detected_map = {role: {"detectedFile": source_paths[role].name, "storedAs": TARGET_NAMES[role], "label": ROLE_LABELS[role]} for role in SOURCE_NAMES}
     (processed / "year-sources.json").write_text(json.dumps({"financialYear": FY, "generatedAt": generated_at, "sourceFolder": str(source_dir), "files": detected_map}, indent=2), encoding="utf-8", newline="\n")
@@ -517,7 +555,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
         ],
         "selectedTargets": [f["targetPath"] for f in source_file_entries],
         "actionLog": [{"at": generated_at, "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data", "status": "confirmed", "files": [f"{f['roleLabel']}: {f['originalName']}" for f in source_file_entries], "summary": summary}],
-        "bpMode": "Completed through JUN 2026; JUL 2026 retained as current-month till-date column",
+        "bpMode": mode_note,
     }
     (root / "data/mb-budget-sync/sync-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
     (root / "data/mb-budget-sync/sync-log.json").write_text(json.dumps(manifest["actionLog"], indent=2), encoding="utf-8", newline="\n")

@@ -1,6 +1,6 @@
 [
   {
-    "at": "2026-07-23T12:36:45+05:30",
+    "at": "2026-08-03T12:10:17+05:30",
     "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
     "status": "confirmed",
     "files": [
@@ -13,14 +13,14 @@
     ],
     "summary": {
       "puBudgetRows": 47,
-      "puMonthRows": 38,
-      "detailRows": 900,
+      "puMonthRows": 39,
+      "detailRows": 904,
       "detailBudget": 34145286,
-      "detailActual": 11375560,
+      "detailActual": 13052131,
       "demandRows": 12,
       "latestMonth": "JUL 2026",
-      "demandMainAECompleted": 10030024,
-      "demandMainBPCompleted": 8148971
+      "demandMainAECompleted": 12479934,
+      "demandMainBPCompleted": 10865291
     }
   }
 ]
