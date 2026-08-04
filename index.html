@@ -444,6 +444,13 @@
       </div>
       <small>Browser drag/drop below is for admin session testing; it cannot rewrite GitHub-hosted files directly.</small>
     </div>
+    <div class="hosted-upload-guard" id="hostedUploadGuard">
+      <div>
+        <strong id="hostedUploadTitle">GitHub Pages Upload Rule</strong>
+        <span id="hostedUploadMsg">Browser upload refreshes this open session. For public GitHub Pages, download the GitHub Update Pack after OK Apply, extract it into the repo, then commit and push.</span>
+      </div>
+      <button type="button" id="downloadHostedPackBtn" onclick="downloadHostedUpdatePack()" disabled>Download GitHub Update Pack</button>
+    </div>
     <div style="margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:8px">
       <span style="background:#1C3A5E;color:#C9A84C;font-size:10px;font-weight:700;padding:3px 12px;border-radius:12px">FY 2026-27 - CURRENT YEAR</span>
     </div>

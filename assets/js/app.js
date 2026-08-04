@@ -3166,7 +3166,7 @@ function switchTab(name) {
   });
   if(_pp){ _pp.style.opacity='0'; _pp.style.transform='translateY(6px)'; }
   if(['liability','monthwise','pumaster'].includes(name)){setTimeout(renderAll,50);}
-  if(name==='upload') renderCurDataGrid();
+  if(name==='upload') { renderCurDataGrid(); updateHostedUploadGuard(); }
   if(name==='backup') renderBackupPage();
   if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
   setTimeout(applyMobileTableLabels, 140);
@@ -3363,6 +3363,189 @@ async function downloadPortalBackup() {
       btn.disabled = false;
       btn.textContent = 'Download Portal Backup ZIP';
     }
+  }
+}
+
+let _hostedUpdatePackReady = false;
+
+function hostedUploadModeLabel() {
+  const host = String(location.hostname || '').toLowerCase();
+  if (host.endsWith('github.io')) return 'GitHub Pages live portal';
+  if (host === '127.0.0.1' || host === 'localhost') return 'Local test server';
+  if (location.protocol === 'file:') return 'Local file preview';
+  return 'Static browser portal';
+}
+
+function updateHostedUploadGuard(ready) {
+  if (typeof ready === 'boolean') _hostedUpdatePackReady = ready;
+  const wrap = document.getElementById('hostedUploadGuard');
+  const title = document.getElementById('hostedUploadTitle');
+  const msg = document.getElementById('hostedUploadMsg');
+  const btn = document.getElementById('downloadHostedPackBtn');
+  if (!wrap || !title || !msg || !btn) return;
+  const mode = hostedUploadModeLabel();
+  wrap.classList.toggle('session-ready', _hostedUpdatePackReady);
+  title.textContent = _hostedUpdatePackReady ? 'Session data applied - export for GitHub' : `${mode} upload rule`;
+  msg.textContent = _hostedUpdatePackReady
+    ? 'The open portal has been refreshed in this browser. Download the GitHub Update Pack to make this data permanent on the hosted site.'
+    : 'Browser upload refreshes this open session only. GitHub Pages cannot rewrite repository files by itself; use local sync or download an update pack after OK Apply.';
+  btn.disabled = !_hostedUpdatePackReady && !isUploadAdminUnlocked();
+}
+
+function jsonForPortal(value) {
+  return JSON.stringify(value, null, 2).replace(/</g, '\\u003c');
+}
+
+function replaceRequiredBlock(text, pattern, replacement, label) {
+  if (!pattern.test(text)) throw new Error(`Could not update ${label} in app.js`);
+  return text.replace(pattern, replacement);
+}
+
+function demandCurrentPayload() {
+  const rows = demandSMHRows().map(r => ({
+    Name: isDemandSMHSuspense(r) ? `Demand ${r.demand || '12N'} / ${r.smh || '10N'}` : `Demand ${r.demand} / SMH ${r.smh}`,
+    OBA:Number(r.oba) || 0,
+    BP:Number(r.bp) || 0,
+    AE:Number(r.ae) || 0,
+    Variation:Number(r.variation) || 0,
+    BPPercent:Number(r.bpPct) || 0,
+    Remaining:Number(r.budgetRemaining) || 0,
+    OBAPercent:Number(r.obaUtil) || 0,
+    Months:Number(demandSMHData().completedMonths) || getBPModeStatus().bpMonthCount,
+    Department:r.dept || r.description || ''
+  }));
+  const totals = demandSMHTotals();
+  rows.push({
+    Name:'Total',
+    OBA:totals.oba,
+    BP:totals.bp,
+    AE:totals.ae,
+    Variation:totals.variation,
+    BPPercent:totals.bpPct,
+    Remaining:totals.budgetRemaining,
+    OBAPercent:totals.obaUtil,
+    Months:Number(demandSMHData().completedMonths) || getBPModeStatus().bpMonthCount
+  });
+  return {
+    demand:{title:'Demand / SMH Wise Current Year', rows},
+    generatedAt:(_dataAsOnDate instanceof Date ? _dataAsOnDate : new Date()).toISOString(),
+    source:'Browser upload export pack'
+  };
+}
+
+function reportsDataSnapshot() {
+  const budgetDemand = {};
+  demandSMHRows().forEach(r => {
+    const key = isDemandSMHSuspense(r) ? `Demand ${r.demand || '12N'} / SMH ${r.smh || '10N'}` : `Demand ${r.demand} / SMH ${r.smh}`;
+    budgetDemand[key] = {'2026-27':{oba:Number(r.oba)||0, ae:Number(r.ae)||0, bp:Number(r.bp)||0}};
+  });
+  const latest = getMonthStatus().latestActual;
+  return {
+    budget:{demand:budgetDemand},
+    generatedAt:(_dataAsOnDate instanceof Date ? _dataAsOnDate : new Date()).toISOString(),
+    latestMonth:latest ? `${latest.label} ${latest.year}` : ''
+  };
+}
+
+function syncManifestSnapshot() {
+  const status = getMonthStatus();
+  const detail = window.DETAIL_SMH_DATA || {};
+  const demandRows = demandSMHRows();
+  const demandTotals = demandSMHTotals();
+  const generatedAt = (_dataAsOnDate instanceof Date ? _dataAsOnDate : new Date()).toISOString();
+  return {
+    portal:'Revenue Liability Portal',
+    division:'Moradabad Division',
+    railway:'Northern Railway',
+    financialYear:'2026-2027',
+    generatedAt,
+    confirmedAt:generatedAt,
+    source:'Browser upload export pack',
+    latestMonth:status.latestActual ? `${status.latestActual.label} ${status.latestActual.year}` : '',
+    currentMonth:`${status.cur.label} ${status.cur.year}`,
+    rows:{
+      puBudget:Object.keys(BUDGET || {}).length,
+      puMonth:Object.keys(MONTH || {}).length,
+      detail:Array.isArray(detail.rows) ? detail.rows.length : 0,
+      demandSmh:demandRows.length
+    },
+    totals:{
+      grossBudget:(BUDGET.TOTAL && BUDGET.TOTAL.bg_isl) || 0,
+      actualTillDate:(BUDGET.TOTAL && BUDGET.TOTAL.actuals_till) || 0,
+      detailBudget:(detail.totals && detail.totals.budget) || 0,
+      detailActual:(detail.totals && detail.totals.actualTill) || 0,
+      demandMainAECompleted:demandTotals.ae,
+      demandMainBPCompleted:demandTotals.bp
+    },
+    bpMode:getBPModeStatus().formulaLabel
+  };
+}
+
+async function buildHostedAppJs() {
+  const response = await fetch(`assets/js/app.js?export=${Date.now()}`, {cache:'no-store'});
+  if (!response.ok) throw new Error(`Cannot read assets/js/app.js (${response.status})`);
+  let app = await response.text();
+  const buildDate = new Date();
+  const buildId = `rlp-mbd-${buildDate.toISOString().slice(0,10)}-browser-upload`;
+  app = replaceRequiredBlock(app, /const SOURCE_REGISTER = \{[\s\S]*?\};\r?\n\r?\n\/\/ Budget data from BudgetReport/, `const SOURCE_REGISTER = ${jsonForPortal(SOURCE_REGISTER)};\n\n// Budget data from BudgetReport`, 'SOURCE_REGISTER');
+  app = replaceRequiredBlock(app, /let BUDGET = [\s\S]*?;\r?\n\r?\n\/\/ Month-wise actuals from MONTH WISE report - Rs'000s/, `let BUDGET = ${jsonForPortal(BUDGET)};\n\n// Month-wise actuals from MONTH WISE report - Rs'000s`, 'BUDGET');
+  app = replaceRequiredBlock(app, /let MONTH = [\s\S]*?;\r?\nlet BUDGET_PY = /, `let MONTH = ${jsonForPortal(MONTH)};\nlet BUDGET_PY = `, 'MONTH');
+  app = replaceRequiredBlock(app, /let BUDGET_PY = [\s\S]*?;\r?\nlet MONTH_PY = /, `let BUDGET_PY = ${jsonForPortal(BUDGET_PY)};\nlet MONTH_PY = `, 'BUDGET_PY');
+  app = replaceRequiredBlock(app, /let MONTH_PY = [\s\S]*?;\r?\n\r?\n\/\/[\s\S]*?CURRENT MONTH DETECTION/, `let MONTH_PY = ${jsonForPortal(MONTH_PY)};\n\n// CURRENT MONTH DETECTION`, 'MONTH_PY');
+  app = replaceRequiredBlock(app, /const DEFAULT_DATA_AS_ON_DATE = new Date\('[^']+'\);/, `const DEFAULT_DATA_AS_ON_DATE = new Date('${(_dataAsOnDate instanceof Date ? _dataAsOnDate : new Date()).toISOString()}');`, 'DEFAULT_DATA_AS_ON_DATE');
+  app = replaceRequiredBlock(app, /const RLP_BUILD_ID = '[^']+';/, `const RLP_BUILD_ID = '${buildId}';`, 'RLP_BUILD_ID');
+  return app;
+}
+
+async function downloadHostedUpdatePack() {
+  if (!isUploadAdminUnlocked()) {
+    requestUploadAdmin('upload');
+    return;
+  }
+  const btn = document.getElementById('downloadHostedPackBtn');
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Creating Pack...';
+    }
+    const now = new Date();
+    const fileDate = now.toISOString().slice(0,10);
+    const encoder = new TextEncoder();
+    const detailData = window.DETAIL_SMH_DATA || {rows:[], totals:{}, generatedAt:now.toISOString()};
+    const demandData = window.DEMAND_SMH_SUMMARY_DATA || {rows:[], totals:{}, generatedAt:now.toISOString()};
+    const appJs = await buildHostedAppJs();
+    const entries = [
+      {name:'assets/js/app.js', bytes:encoder.encode(appJs)},
+      {name:'assets/js/detail-data.js', bytes:encoder.encode(`window.DETAIL_SMH_DATA = ${jsonForPortal({...detailData, generatedAt:now.toISOString()})};\n`)},
+      {name:'assets/js/demand-smh-data.js', bytes:encoder.encode(`window.DEMAND_SMH_SUMMARY_DATA = ${jsonForPortal({...demandData, generatedAt:now.toISOString()})};\n`)},
+      {name:'data/mb-budget-sync/processed/current_payload.js', bytes:encoder.encode(`window.CURRENT_PAYLOAD = ${jsonForPortal(demandCurrentPayload())};\n`)},
+      {name:'data/mb-budget-sync/processed/reports-data.json', bytes:encoder.encode(jsonForPortal(reportsDataSnapshot()))},
+      {name:'data/mb-budget-sync/sync-manifest.json', bytes:encoder.encode(jsonForPortal(syncManifestSnapshot()))},
+      {name:'GITHUB_UPDATE_README.txt', bytes:encoder.encode([
+        'Revenue Liability Portal - GitHub Update Pack',
+        `Created: ${now.toLocaleString('en-IN')}`,
+        `Mode: ${hostedUploadModeLabel()}`,
+        '',
+        'How to publish:',
+        '1. Extract this ZIP into the GitHub repository root.',
+        '2. Replace existing files when asked.',
+        '3. Commit in GitHub Desktop.',
+        '4. Push origin and wait for GitHub Pages deployment.',
+        '',
+        'Note: GitHub Pages is static hosting. Browser upload cannot write repository files directly; this pack carries the parsed session data into commit-ready files.'
+      ].join('\n'))}
+    ];
+    saveBlob(createZipBlob(entries), `Revenue_Liability_GitHub_Update_Pack_${fileDate}.zip`);
+    showPortalNotice('GitHub Update Pack downloaded. Extract into repo root, then commit and push.', 'ok');
+  } catch (err) {
+    console.error('GitHub update pack failed', err);
+    showPortalNotice('Could not create GitHub Update Pack: ' + (err.message || err), 'err');
+  } finally {
+    if (btn) {
+      btn.disabled = !_hostedUpdatePackReady;
+      btn.textContent = 'Download GitHub Update Pack';
+    }
+    updateHostedUploadGuard();
   }
 }
 
@@ -5195,6 +5378,7 @@ async function downloadPDFReport() {
 
 window.downloadExcel = downloadExcel;
 window.downloadPDFReport = downloadPDFReport;
+window.downloadHostedUpdatePack = downloadHostedUpdatePack;
 
 function initExportButtons() {
   const excelBtn = document.getElementById('downloadExcelBtn');
@@ -6511,6 +6695,7 @@ function applyUploads() {
       detail:parts.join(', ') || 'Portal data refreshed',
       files
     });
+    updateHostedUploadGuard(true);
   }
   renderAll();
   renderCurDataGrid();
@@ -7127,6 +7312,7 @@ function renderAll() {
   renderBudgetControl();
   renderRemarks();
   renderBIView();
+  updateHostedUploadGuard();
   setTimeout(() => {
     if (typeof renderTrend === 'function') renderTrend();
     if (typeof renderAITrendSummary === 'function') renderAITrendSummary();
