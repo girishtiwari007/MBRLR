@@ -267,6 +267,11 @@ def parse_pu_budget(path: Path):
             "rg": as_number(sh.cell_value(r, c_rg)) if c_rg is not None else 0,
             "actuals_till": as_number(sh.cell_value(r, c_actual)) if c_actual is not None else 0,
         }
+    detail_rows = [values for code, values in out.items() if code != "TOTAL"]
+    out["TOTAL"] = {
+        field: sum(values[field] for values in detail_rows)
+        for field in ("bg_isl", "rg", "actuals_till")
+    }
     return out
 
 
@@ -287,6 +292,11 @@ def parse_pu_month(path: Path):
             if vals[MONTH_KEYS[i]]:
                 latest = max(latest, i)
         out[code] = vals
+    detail_rows = [values for code, values in out.items() if code != "TOTAL"]
+    out["TOTAL"] = {
+        month: sum(values[month] for values in detail_rows)
+        for month in MONTH_KEYS
+    }
     return out, latest
 
 
@@ -427,7 +437,7 @@ def replace_js_assignment(text: str, name: str, value: str) -> str:
 def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
     now = datetime.now(IST).replace(microsecond=0)
     generated_at = now.isoformat()
-    version = "20260723-data-refresh-2"
+    version = "20260810-total-audit-1"
     source_paths, detected_profiles = discover_source_files(source_dir)
 
     pu_names, dept_names = load_existing_maps(root)
