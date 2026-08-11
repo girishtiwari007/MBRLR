@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260811-pdf-audit-1';
+const ASSET_VERSION = '20260811-month-audit-3';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -46,7 +46,7 @@ function initPopup() {
   if (_pp) return; // already initialised
   _pp = document.createElement('div');
   _pp.id='puPopup';
-  _pp.style.cssText='position:fixed;z-index:9999;pointer-events:none;background:#fff;border:1px solid #C0D4F0;border-radius:8px;padding:0;box-shadow:0 8px 32px rgba(10,22,40,.20),0 2px 8px rgba(10,22,40,.10);min-width:270px;max-width:320px;opacity:0;transform:translateY(6px);transition:opacity .15s,transform .15s;font-size:11px;color:#0A1628;overflow:hidden';
+  _pp.style.cssText='position:fixed;z-index:9999;pointer-events:none;background:#fff;border:1px solid #C0D4F0;border-radius:8px;padding:0;box-shadow:0 8px 32px rgba(10,22,40,.20),0 2px 8px rgba(10,22,40,.10);min-width:270px;max-width:320px;max-height:calc(100vh - 24px);opacity:0;transform:translateY(6px);transition:opacity .15s,transform .15s;font-size:11px;color:#0A1628;overflow-x:hidden;overflow-y:auto';
   document.body.appendChild(_pp);
   _pp.addEventListener('mouseenter', function(){ clearTimeout(_ppTimer); });
   _pp.addEventListener('mouseleave', hidePUPopup);
@@ -808,12 +808,12 @@ function renderCards() {
 // JUNE (CURRENT MONTH) PROGRESS BARS
 // ═══════════════════════════════════════════════
 function renderLiabilityHeader() {
-  const {cur, pastMonths, futureMonths} = getMonthStatus();
-  const topPast = pastMonths.map(m => {
+  const {cur, actualMonths, futureMonths} = getMonthStatus();
+  const topPast = actualMonths.map(m => {
     const idx = FY_MONTHS.indexOf(m), lbl = FY_MONTH_LABELS[idx], yr = idx <= 8 ? 2026 : 2027;
     return `<th class="sub" colspan="1">${lbl} ${yr}</th>`;
   }).join('');
-  const subPast = pastMonths.map(m => {
+  const subPast = actualMonths.map(m => {
     const idx = FY_MONTHS.indexOf(m), lbl = FY_MONTH_LABELS[idx];
     return `<th class="sub" style="min-width:90px">${lbl} Actual<br>(Rs'000s)</th>`;
   }).join('');
@@ -843,7 +843,7 @@ function renderLiabilityHeader() {
 }
 
 function renderJuneBars() {
-  const {cur, pastMonths, futureMonths} = getMonthStatus();
+  const {cur, actualMonths, futureMonths} = getMonthStatus();
   document.getElementById('curMonLabel').textContent = `${cur.label} ${cur.year}`;
   const badge = document.getElementById('curMonBadge');
   if (badge) badge.textContent = `${cur.label} ${cur.year}`;
@@ -851,7 +851,7 @@ function renderJuneBars() {
   if (asOn) asOn.textContent = `As on: ${formatAsOnDate(_dataAsOnDate)}`;
   const noteFormula = document.getElementById('noteFormulaText');
   if (noteFormula) {
-    const actualText = pastMonths.map(m => `${FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]} Actual`).join(' + ');
+    const actualText = actualMonths.map(m => `${FY_MONTH_LABELS[FY_MONTHS.indexOf(m)]} Actual`).join(' + ') || 'No completed-month actual';
     const nextText = futureMonths.length
       ? `Balance after ${cur.label} Total / ${futureMonths.length} remaining months (${FY_MONTH_LABELS[FY_MONTHS.indexOf(futureMonths[0])]}-MAR) = Projected per month`
       : `FY completed after ${cur.label}`;
@@ -1478,14 +1478,14 @@ function initReportViewMode() {
 // ═══════════════════════════════════════════════
 function renderLiability() {
   const pus = getFiltered();
-  const {cur, pastMonths} = getMonthStatus();
+  const {cur, actualMonths} = getMonthStatus();
   renderLiabilityHeader();
   let rows='', tB=0,tC=0,tBal=0,tPast={},tJunC=0,tJunR=0,tJunT=0;
-  pastMonths.forEach(m => tPast[m]=0);
+  actualMonths.forEach(m => tPast[m]=0);
   pus.forEach(pu => {
     const c = compute(pu.code);
     const md = MONTH[pu.code]||{};
-    const pastCells = pastMonths.map(m => {
+    const pastCells = actualMonths.map(m => {
       const v = md[m] || 0;
       tPast[m] += v;
       return `<td class="n">${fmtT(v)}</td>`;
@@ -1524,7 +1524,7 @@ function renderLiability() {
     tJunC+=c.curCommitted;tJunR+=c.curRemaining;tJunT+=c.curMonthTotal;
   });
   const tUtil = pct(tC,tB); const tc2 = utilColor(tUtil);
-  const totalPastCells = pastMonths.map(m => `<td class="n">${fmtT(tPast[m]||0)}</td>`).join('');
+  const totalPastCells = actualMonths.map(m => `<td class="n">${fmtT(tPast[m]||0)}</td>`).join('');
   rows += `<tr class="tot">
     <td colspan="4" style="text-align:left">GRAND TOTAL (excl. Recoveries)</td>
     <td class="n">${fmtT(tB)}</td>
@@ -4079,7 +4079,7 @@ function renderSMHDetail() {
   let lastActualIdx = 2;
   monthKeys.forEach((m, idx) => { if ((data.totals.months[m] || 0) !== 0) lastActualIdx = idx; });
   lastActualIdx = Math.max(2, lastActualIdx);
-  const visibleMonthKeys = monthKeys.slice(0, Math.min(4, lastActualIdx + 1));
+  const visibleMonthKeys = monthKeys.slice(0, lastActualIdx + 1);
   const rows = data.rows.filter(r =>
     !isSkippedDisplayPU(r.puCode) &&
     passesPUFocus(r.puCode) &&
@@ -5738,33 +5738,33 @@ function showPUPopup(e,code){
   clearTimeout(_ppTimer);
   const pu=PU_META.find(p=>p.code===code); if(!pu) return;
   const cv=compute(code); const md=MONTH[code]||{};
-  const {futureMonths}=getMonthStatus();
+  const {actualMonths,futureMonths}=getMonthStatus();
   const pctVal=cv.utilisedPct!=null?Math.abs(cv.utilisedPct):0;
   const pctStr=cv.utilisedFlag==='no-budget'?'No Budget':cv.utilisedFlag==='none'?'Nil':pctVal.toFixed(1)+'%';
   const col=cv.utilisedFlag==='over'||cv.utilisedFlag==='no-budget'?'#CC0000':pctVal>85?'#E85D04':pctVal>60?'#C07000':'#1A7A4A';
   const r=22,circ=2*Math.PI*r,dash=(Math.min(100,pctVal)/100)*circ;
-  const vals=[md.apr||0,md.may||0,cv.curCommitted];
+  const vals=actualMonths.map(month => Number(md[month]) || 0);
   const maxV=Math.max(...vals,cv.projPerMonth,1);
-  const bars=['APR','MAY','JUN'].map((m,i)=>`
+  const bars=actualMonths.map((month,i)=>`
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-      <div style="font-size:8px;color:#607080;width:36px">${m}</div>
+      <div style="font-size:10px;color:#607080;width:36px">${FY_MONTH_LABELS[FY_MONTHS.indexOf(month)]}</div>
       <div style="flex:1;background:#EDF1F7;border-radius:2px;height:7px;overflow:hidden">
-        <div style="width:${Math.min(100,vals[i]/maxV*100)}%;height:100%;background:${i===2?'#F4A932':'#1C3A5E'};border-radius:2px"></div>
+        <div style="width:${Math.min(100,Math.abs(vals[i])/Math.abs(maxV)*100)}%;height:100%;background:#1C3A5E;border-radius:2px"></div>
       </div>
-      <div style="font-size:8px;width:55px;text-align:right;font-family:'Times New Roman',Times,serif">${vals[i]?vals[i].toLocaleString('en-IN'):'-'}</div>
-    </div>`).join('');
+      <div style="font-size:10px;width:62px;text-align:right;font-family:'Times New Roman',Times,serif">${vals[i]?vals[i].toLocaleString('en-IN'):'-'}</div>
+    </div>`).join('') || '<div style="font-size:9px;color:#607080">No completed-month actuals loaded.</div>';
   const projBar=`<div style="display:flex;align-items:center;gap:6px">
-    <div style="font-size:8px;color:#607080;width:36px">Proj</div>
+    <div style="font-size:10px;color:#607080;width:36px">Proj</div>
     <div style="flex:1;background:#EDF1F7;border-radius:2px;height:7px;overflow:hidden">
       <div style="width:${Math.min(100,cv.projPerMonth/maxV*100)}%;height:100%;background:#0FBCB0;border-radius:2px"></div>
     </div>
-    <div style="font-size:8px;width:55px;text-align:right;font-family:'Times New Roman',Times,serif">${cv.projPerMonth>0?Math.round(cv.projPerMonth).toLocaleString('en-IN'):'-'}</div>
+    <div style="font-size:10px;width:62px;text-align:right;font-family:'Times New Roman',Times,serif">${cv.projPerMonth>0?Math.round(cv.projPerMonth).toLocaleString('en-IN'):'-'}</div>
   </div>`;
   const typeCol = pu.puType.includes('Staff PU')&&!pu.puType.includes('Non')?'#1A7A4A':pu.puType.includes('Contractual')?'#C07000':'#1C3A5E';
   _pp.innerHTML=`
     <div style="background:${typeCol};padding:8px 14px 7px;display:flex;align-items:center;gap:8px">
       <div style="font-size:15px;font-weight:700;color:#fff;min-width:36px">PU-${pu.code}</div>
-      <div><div style="font-size:11px;font-weight:700;color:#fff">${pu.desc}</div><div style="font-size:8px;color:rgba(255,255,255,.75);margin-top:1px">${pu.puType} - ${pu.liab}</div></div>
+      <div><div style="font-size:11px;font-weight:700;color:#fff">${pu.desc}</div><div style="font-size:10px;color:rgba(255,255,255,.75);margin-top:1px">${pu.puType} - ${pu.liab}</div></div>
     </div>
     <div style="padding:12px 14px">
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
@@ -5775,9 +5775,9 @@ function showPUPopup(e,code){
             stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
             stroke-dashoffset="${(circ/4).toFixed(1)}" style="transition:stroke-dasharray .4s"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${col}">${pctStr}</div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${col}">${pctStr}</div>
       </div>
-      <div style="flex:1;font-size:9px">
+      <div style="flex:1;font-size:10px">
         <div style="margin-bottom:3px">Budget: <strong>${cv.budget?(cv.budget*1000/10000000).toFixed(2)+' Cr':'-'}</strong></div>
         <div style="margin-bottom:3px">Committed: <strong>${(cv.totalCommitted*1000/10000000).toFixed(2)} Cr</strong></div>
         <div style="margin-bottom:3px">Balance: <strong style="color:${cv.balanceBudget<0?'#CC0000':'#1A7A4A'}">${(cv.balanceBudget*1000/10000000).toFixed(2)} Cr</strong></div>
@@ -5785,19 +5785,23 @@ function showPUPopup(e,code){
       </div>
     </div>
     <div style="border-top:1px solid #E0EAF4;padding-top:8px">
-      <div style="font-size:8px;color:#607080;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Monthly Spend (Rs'000s)</div>
+      <div style="font-size:10px;color:#607080;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Monthly Spend (Rs'000s)</div>
       ${bars}${projBar}
     </div>
     </div>
     <div style="background:#F5F8FC;border-top:1px solid #E0EAF4;padding:6px 14px;display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:8px;color:#8AAAC8">Quick Summary View</span>
-      <span style="font-size:8px;color:#1A7A4A;font-weight:700">Click PU Code cell for Full Details</span>
+      <span style="font-size:10px;color:#8AAAC8">Quick Summary View</span>
+      <span style="font-size:10px;color:#1A7A4A;font-weight:700">Click PU Code cell for Full Details</span>
     </div>
     </div>`;
   const vw=window.innerWidth,vh=window.innerHeight;
+  const popupW=Math.min(_pp.offsetWidth||320,Math.max(270,vw-24));
+  const popupH=Math.min(_pp.offsetHeight||320,Math.max(120,vh-24));
   let x=e.clientX+14, y=e.clientY+8;
-  if(x+320>vw) x=e.clientX-320;
-  if(y+320>vh) y=e.clientY-320;
+  if(x+popupW>vw-12) x=e.clientX-popupW-14;
+  if(y+popupH>vh-12) y=vh-popupH-12;
+  x=Math.max(12,Math.min(x,vw-popupW-12));
+  y=Math.max(12,Math.min(y,vh-popupH-12));
   _pp.style.left=x+'px'; _pp.style.top=y+'px';
   _pp.style.opacity='1'; _pp.style.transform='translateY(0)'; _pp.style.pointerEvents='auto';
 }
@@ -7237,9 +7241,9 @@ function renderTrend(){
 
 function renderMonthwise() {
   const pus = getFiltered();
-  const {pastMonths, futureMonths, cur} = getMonthStatus();
+  const {actualMonths, futureMonths, cur} = getMonthStatus();
   const futurePadCount = Math.max(0, 9 - futureMonths.length);
-  const pastHdr = pastMonths.map(m => {
+  const pastHdr = actualMonths.map(m => {
     const idx = FY_MONTHS.indexOf(m);
     return `<th>${FY_MONTH_LABELS[idx]}<br>Actual</th>`;
   }).join('');
@@ -7268,14 +7272,14 @@ function renderMonthwise() {
 
   let rows = '';
   const tots = {curC:0, curR:0, curT:0, tB:0, tC:0, tBal:0};
-  pastMonths.forEach(m => tots[m] = 0);
+  actualMonths.forEach(m => tots[m] = 0);
   futureMonths.forEach(m => tots[m] = 0);
 
   pus.forEach(pu => {
     const md = MONTH[pu.code] || {};
     const c = compute(pu.code);
     const proj = c.projPerMonth;
-    const pastCells = pastMonths.map(m => {
+    const pastCells = actualMonths.map(m => {
       const v = md[m] || 0;
       tots[m] += v;
       return `<td class="n">${fmtT(v)}</td>`;
@@ -7314,7 +7318,7 @@ function renderMonthwise() {
     `<td class="n" style="color:#1A4A8A;background:#E8F0FF;font-weight:700">${fmtT(tots[m] || 0)}</td>`).join('');
   let ftPad = futTotCells;
   for (let i = 0; i < futurePadCount; i++) ftPad += '<td class="n" style="color:#aaa">-</td>';
-  const totalPastCells = pastMonths.map(m => `<td class="n">${fmtT(tots[m] || 0)}</td>`).join('');
+  const totalPastCells = actualMonths.map(m => `<td class="n">${fmtT(tots[m] || 0)}</td>`).join('');
   const tUtil = pct(tots.tC, tots.tB);
   rows += `<tr class="tot">
     <td colspan="2" style="text-align:left">GRAND TOTAL</td>
