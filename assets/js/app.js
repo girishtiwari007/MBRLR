@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260810-total-audit-1';
+const ASSET_VERSION = '20260811-pdf-audit-1';
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -2931,6 +2931,13 @@ function openTopUtilisationBrief() {
     .tu-val{font-size:14px;font-weight:900;text-align:right}
     .tu-bal{font-size:11px;font-weight:800;color:#33485F;text-align:right}
     .tu-footer{padding:10px 18px;border-top:1px solid #E3ECF6;font-size:10px;color:#607080;text-align:center}
+    @page{size:A4 landscape;margin:10mm}
+    @media print{
+      body{background:#fff;padding:0;font-size:10pt}
+      .brief-page{max-width:none;border-radius:0;box-shadow:none}
+      .tu-kpi span,.tu-note,.tu-footer{font-size:10pt}
+      .tu-row{break-inside:avoid;padding:7px;margin-bottom:5px}
+    }
     @media(max-width:700px){.tu-row{grid-template-columns:1fr}.tu-val,.tu-bal{text-align:left}.tu-head{display:block}.tu-kpi{margin-top:10px}}
   </style></head><body><div class="brief-page">
     <div class="tu-head">
@@ -3002,7 +3009,7 @@ function openOfficerBriefPDF() {
     .cards{grid-template-columns:repeat(3,1fr)}
     .kpi,.ob-card{border:1px solid #D8E5F2;border-left:4px solid #1A4E9A;border-radius:8px;background:#F8FBFF;padding:10px}
     .ob-card:nth-child(2),.ob-card:nth-child(4){border-left-color:#B00020}.ob-card:nth-child(3){border-left-color:#B88700}.ob-card:nth-child(5){border-left-color:#1A7A4A}.ob-card:nth-child(6){border-left-color:#E85D04}
-    span{display:block;font-size:8px;font-weight:900;color:#607080;text-transform:uppercase}
+    span{display:block;font-size:10px;font-weight:900;color:#607080;text-transform:uppercase}
     strong{display:block;font-size:17px;color:#0A1628;margin:4px 0;font-weight:900}
     small{display:block;font-size:10px;color:#496276;line-height:1.35}
     .sec{margin-top:12px;border:1px solid #D8E5F2;border-radius:8px;overflow:hidden}
@@ -3011,9 +3018,9 @@ function openOfficerBriefPDF() {
     table th,table td{font-family:"Times New Roman",Times,serif}
     th{background:#2474B8;color:#fff;text-align:left;padding:7px;border:1px solid #B8D0E8}
     td{padding:7px;border:1px solid #D2E0EF;vertical-align:top;line-height:1.35}
-    .foot{text-align:center;font-size:9px;color:#607080;padding:10px;border-top:1px solid #D8E5F2}
+    .foot{text-align:center;font-size:10px;color:#607080;padding:10px;border-top:1px solid #D8E5F2}
     @page{size:A4 landscape;margin:10mm}
-    @media print{body{background:#fff;padding:0}.page{box-shadow:none;border-radius:0}.print{display:none}.body{padding:10px}.sec{break-inside:avoid}.kpis,.cards{gap:6px}.kpi,.ob-card{padding:8px}strong{font-size:14px}td,th{font-size:8.5px;padding:5px}}
+    @media print{body{background:#fff;padding:0;font-size:10pt}.page{max-width:none;box-shadow:none;border-radius:0}.print{display:none}.body{padding:10px}.sec{break-inside:auto}.kpis,.cards{gap:6px}.kpi,.ob-card{padding:8px}span,small,.foot{font-size:10pt}strong{font-size:14pt}table{table-layout:fixed;width:100%}td,th{font-size:10pt;padding:5px;overflow-wrap:anywhere}thead{display:table-header-group}}
   </style></head><body><div class="page">
     <div class="head"><div><h1>Officer Brief</h1><p>Revenue Liability Portal - Moradabad Division / Northern Railway<br>FY 2026-27 | Current month: ${cur.label} ${cur.year} | Completed months: ${actualMonths.length} | Generated: ${generated}</p></div><button class="print" onclick="window.print()">Print / Save PDF</button></div>
     <div class="body">
@@ -5119,12 +5126,12 @@ async function downloadPDFReport() {
     doc.setFontSize(13);
     doc.text(title, margin, 27);
     doc.setTextColor(201, 168, 76);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.text(`FY 2026-27 | As on ${formatAsOnDate(_dataAsOnDate)} | Current Month ${cur.label} ${cur.year}`, pageW - margin, 27, {align:'right'});
   }
   function footer() {
     doc.setTextColor(96, 112, 128);
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.text('Revenue Liability Portal - Moradabad Division / Northern Railway - For Official Use Only', margin, pageH - 16);
     doc.text(String(doc.internal.getNumberOfPages()), pageW - margin, pageH - 16, {align:'right'});
   }
@@ -5134,11 +5141,16 @@ async function downloadPDFReport() {
     footer();
   }
   function autoTable(opts) {
+    const PDF_MIN_FONT_SIZE = 10;
     const callerDidParseCell = opts.didParseCell;
     const mergedOpts = Object.assign({
       theme:'grid',
-      margin:{left:margin, right:margin},
-      styles:{font:'times', fontSize:8, cellPadding:3, lineColor:[190,205,225], lineWidth:.4, overflow:'linebreak'},
+      margin:{top:52, bottom:30, left:margin, right:margin},
+      tableWidth:'auto',
+      horizontalPageBreak:true,
+      horizontalPageBreakRepeat:0,
+      showHead:'everyPage',
+      styles:{font:'times', fontSize:PDF_MIN_FONT_SIZE, cellPadding:2.5, lineColor:[190,205,225], lineWidth:.4, overflow:'linebreak'},
       headStyles:{fillColor:[26,58,106], textColor:[255,255,255], fontStyle:'bold', font:'times'},
       alternateRowStyles:{fillColor:[246,250,254]},
       didParseCell: data => {
@@ -5154,7 +5166,19 @@ async function downloadPDFReport() {
       },
       didDrawPage: () => { header(opts.pageTitle || 'Revenue Liability Report'); footer(); }
     }, opts);
+    mergedOpts.margin = Object.assign({top:52, bottom:30, left:margin, right:margin}, mergedOpts.margin || {});
+    mergedOpts.styles = Object.assign({}, mergedOpts.styles || {}, {
+      fontSize:Math.max(PDF_MIN_FONT_SIZE, Number((mergedOpts.styles || {}).fontSize) || 0),
+      overflow:'linebreak'
+    });
+    mergedOpts.headStyles = Object.assign({}, mergedOpts.headStyles || {}, {
+      fontSize:Math.max(PDF_MIN_FONT_SIZE, Number((mergedOpts.headStyles || {}).fontSize) || 0)
+    });
+    mergedOpts.footStyles = Object.assign({}, mergedOpts.footStyles || {}, {
+      fontSize:Math.max(PDF_MIN_FONT_SIZE, Number((mergedOpts.footStyles || {}).fontSize) || 0)
+    });
     mergedOpts.didParseCell = data => {
+      data.cell.styles.fontSize = Math.max(PDF_MIN_FONT_SIZE, Number(data.cell.styles.fontSize) || 0);
       const first = Array.isArray(data.row.raw) ? String(data.row.raw[0] || '') : '';
       if (data.section === 'body' && /^PU-(27|28|30|32|60)\b/.test(first)) {
         data.cell.styles.fillColor = [255, 248, 216];
@@ -5271,7 +5295,7 @@ async function downloadPDFReport() {
       r.stage.askLabel,
       r.remark
     ]),
-    styles:{fontSize:7.2, cellPadding:2.5, overflow:'linebreak'},
+    styles:{fontSize:10, cellPadding:2.5, overflow:'linebreak'},
     columnStyles:{1:{cellWidth:150},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},8:{cellWidth:215}}
   });
 
@@ -5281,7 +5305,7 @@ async function downloadPDFReport() {
     pageTitle:'Revenue Liability Report - PU-wise Liability Annexure',
     head:[['PU','Description','Type','Liability','Budget','Actual','Balance','Util %','Status']],
     body:liabilityAnnexure,
-    styles:{fontSize:7, cellPadding:2.5, overflow:'linebreak'},
+    styles:{fontSize:10, cellPadding:2.5, overflow:'linebreak'},
     columnStyles:{1:{cellWidth:170},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'}}
   });
 
@@ -5291,7 +5315,7 @@ async function downloadPDFReport() {
     pageTitle:'Revenue Liability Report - Month-wise Actual Annexure',
     head:[['PU','Description'].concat(completedMonthKeys.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)])).concat(['Total Actual','Balance'])],
     body:monthWiseAnnexure,
-    styles:{fontSize:7, cellPadding:2.5, overflow:'linebreak'},
+    styles:{fontSize:10, cellPadding:2.5, overflow:'linebreak'},
     columnStyles:{1:{cellWidth:170}}
   });
 
@@ -5301,7 +5325,7 @@ async function downloadPDFReport() {
     pageTitle:'Revenue Liability Report - PU Master Annexure',
     head:[['PU','Description','PU Type','Liability','Budget','Actual','Balance','Util %']],
     body:puMasterAnnexure,
-    styles:{fontSize:7, cellPadding:2.5, overflow:'linebreak'},
+    styles:{fontSize:10, cellPadding:2.5, overflow:'linebreak'},
     columnStyles:{1:{cellWidth:210},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'}}
   });
 
@@ -5311,7 +5335,7 @@ async function downloadPDFReport() {
     pageTitle:'Revenue Liability Report - Sources and Clarifications',
     head:[['Data Area','FY','Source / File','Used In','Remarks']],
     body:sourceRows,
-    styles:{fontSize:7.5, cellPadding:3, overflow:'linebreak'},
+    styles:{fontSize:10, cellPadding:3, overflow:'linebreak'},
     columnStyles:{2:{cellWidth:210},3:{cellWidth:170},4:{cellWidth:190}}
   });
   autoTable({
@@ -5335,7 +5359,7 @@ async function downloadPDFReport() {
     pageTitle:'Revenue Liability Report - DEPT-Demand Summary',
     head:[['Department','Demand','Primary Unit','Budget','Actual','Balance','Status','BP Status']],
     body:smhDetailAnnexure,
-    styles:{fontSize:6.8, cellPadding:2.2, overflow:'linebreak'},
+    styles:{fontSize:10, cellPadding:2.2, overflow:'linebreak'},
     columnStyles:{0:{cellWidth:120},2:{cellWidth:185},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
   });
   if (smhNoExpenseAnnexure.length) {
@@ -5345,7 +5369,7 @@ async function downloadPDFReport() {
       pageTitle:'Revenue Liability Report - Budget Available No Expense',
       head:[['Department','Demand','Primary Unit','Budget','Remark']],
       body:smhNoExpenseAnnexure,
-      styles:{fontSize:7.5, cellPadding:3, overflow:'linebreak'},
+      styles:{fontSize:10, cellPadding:3, overflow:'linebreak'},
       columnStyles:{2:{cellWidth:260},3:{halign:'right'},4:{cellWidth:230}}
     });
   }
@@ -5359,8 +5383,8 @@ async function downloadPDFReport() {
       body:demandAnnexure
         .concat([['Total','', detailCr(demandTotals.oba), detailCr(demandTotals.bp), detailCr(demandTotals.ae), signedCr(demandTotals.variation), detailNum(demandTotals.bpPct) + '%', detailCr(demandTotals.budgetRemaining), detailNum(demandTotals.obaUtil) + '%']])
         .concat(demandSuspenseAnnexure),
-      styles:{font:'times', fontSize:8, cellPadding:2.5, overflow:'linebreak', minCellHeight:14},
-      headStyles:{fillColor:[26,58,106], textColor:[255,255,255], fontStyle:'bold', font:'times', fontSize:8},
+      styles:{font:'times', fontSize:10, cellPadding:2.5, overflow:'linebreak', minCellHeight:14},
+      headStyles:{fillColor:[26,58,106], textColor:[255,255,255], fontStyle:'bold', font:'times', fontSize:10},
       columnStyles:{
         0:{cellWidth:82},
         1:{cellWidth:190},
@@ -5414,7 +5438,7 @@ function openPUDetail(code) {
   const cv   = compute(code);
   const md   = MONTH[code] || {};
   const b    = BUDGET[code] || {};
-  const {futureMonths, cur} = getMonthStatus();
+  const {actualMonths, futureMonths, cur} = getMonthStatus();
 
   // ── Helpers ──────────────────────────────────────────────
   function fCr(n)  { if(!n||n===0) return '-'; return (Math.abs(n)*1000/10000000).toFixed(2)+' Cr'; }
@@ -5459,12 +5483,15 @@ function openPUDetail(code) {
   }).join('');
 
   // ── Budget breakdown rows ────────────────────────────────
+  const completedActualRows = actualMonths.map(month => {
+    const idx = FY_MONTHS.indexOf(month);
+    return [`${FY_MONTH_LABELS[idx]} ${idx <= 8 ? 2026 : 2027} Actuals`, Number(md[month]) || 0, '#607080'];
+  });
   const summaryRows = [
     ['BG_ISL Budget', b.bg_isl||0, '#0A1628'],
     ['Revised Grant (RG)', b.rg||0, '#1C3A5E'],
     ['Current Budget (Active)', cv.budget, '#1A4E9A'],
-    ['APR 2026 Actuals', md.apr||0, '#607080'],
-    ['MAY 2026 Actuals', md.may||0, '#607080'],
+    ...completedActualRows,
     [`${cur.label} ${cur.year} Committed`, cv.curCommitted, '#8A5A00'],
     [`${cur.label} Remaining (this month)`, cv.curRemaining, '#1A7A4A'],
     ['Total Committed (Till Date)', cv.totalCommitted, '#1A4E9A'],
@@ -5512,9 +5539,9 @@ function openPUDetail(code) {
   .sec-title{font-size:13px;font-weight:700;color:#1C3A5E;border-bottom:2px solid #E0EAF4;padding-bottom:8px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
   .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
   .kpi{background:#F5F8FC;border-radius:6px;padding:14px 16px;border-left:3px solid ${typeCol}}
-  .kpi-lbl{font-size:9px;color:#607080;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .kpi-lbl{font-size:10px;color:#607080;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
   .kpi-val{font-size:18px;font-weight:700;color:#0A1628;margin:4px 0 2px}
-  .kpi-sub{font-size:9px;color:#607080}
+  .kpi-sub{font-size:10px;color:#607080}
   .ring-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
   .ring-info{flex:1;min-width:200px}
   .ring-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #EEF2F8;font-size:12px}
@@ -5534,18 +5561,19 @@ function openPUDetail(code) {
     .page-hdr{padding:10px 16px;border-bottom:2px solid #C9A84C}
     .pu-num{font-size:28px}
     .pu-info h1{font-size:15px}
-    .pu-info p{font-size:9px}
+    .pu-info p{font-size:10pt}
     .section{box-shadow:none;border:1px solid #CBD7E5;margin:8px 10px;padding:10px 12px;break-inside:avoid}
     .sec-title{font-size:11px;margin-bottom:8px;padding-bottom:5px}
-    .kpi-grid{grid-template-columns:repeat(6,1fr);gap:6px}
+    .kpi-grid{grid-template-columns:repeat(3,1fr);gap:6px}
     .kpi{padding:8px 9px}
     .kpi-val{font-size:13px}
-    .kpi-lbl,.kpi-sub{font-size:7px}
+    .kpi-lbl,.kpi-sub{font-size:10pt}
     .ring-wrap{gap:14px}
     .ring-wrap svg{width:100px;height:100px}
-    table.data-tbl thead th{font-size:8px;padding:5px 7px}
-    table.data-tbl td{font-size:9px!important;padding:5px 7px!important}
-    footer{font-size:8px;padding:8px}
+    table.data-tbl{table-layout:fixed;width:100%}
+    table.data-tbl thead th{font-size:10pt;padding:5px 7px;overflow-wrap:anywhere}
+    table.data-tbl td{font-size:10pt!important;padding:5px 7px!important;overflow-wrap:anywhere}
+    footer{font-size:10pt;padding:8px}
     body.print-one .print-detail{display:none!important}
     body.print-one .section{margin:7px 10px;padding:9px 11px}
     body.print-two .print-page-2{break-before:page;page-break-before:always}
@@ -5609,8 +5637,10 @@ function openPUDetail(code) {
     </svg>
     <div class="ring-info">
       <div class="ring-row"><span class="lbl">BG_ISL Budget</span><span class="val">${fCr(b.bg_isl||0)}</span></div>
-      <div class="ring-row"><span class="lbl">APR Actuals</span><span class="val">${fCr(md.apr||0)}</span></div>
-      <div class="ring-row"><span class="lbl">MAY Actuals</span><span class="val">${fCr(md.may||0)}</span></div>
+      ${actualMonths.map(month => {
+        const idx = FY_MONTHS.indexOf(month);
+        return `<div class="ring-row"><span class="lbl">${FY_MONTH_LABELS[idx]} Actuals</span><span class="val">${fCr(Number(md[month]) || 0)}</span></div>`;
+      }).join('')}
       <div class="ring-row"><span class="lbl">${cur.label} Committed</span><span class="val">${fCr(cv.curCommitted)}</span></div>
       <div class="ring-row"><span class="lbl">Total Committed</span><span class="val" style="color:${typeCol}">${fCr(cv.totalCommitted)}</span></div>
       <div class="ring-row"><span class="lbl">Balance</span><span class="val" style="color:${cv.balanceBudget<0?'#CC0000':'#1A7A4A'}">${fCr(cv.balanceBudget)}</span></div>
