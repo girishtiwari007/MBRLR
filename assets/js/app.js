@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260813-browser-protection-1';
+const ASSET_VERSION = '20260813-browser-protection-2';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -49,14 +49,6 @@ function showSecurityNotice(message) {
 
 function installSecurityUI() {
   document.documentElement.classList.add('portal-copy-guard');
-  if (!document.getElementById('portalWatermark')) {
-    const watermark = document.createElement('div');
-    watermark.id = 'portalWatermark';
-    watermark.className = 'portal-security-watermark';
-    watermark.setAttribute('aria-hidden', 'true');
-    watermark.innerHTML = Array.from({length:12}, () => `<span>CONFIDENTIAL &bull; ${securitySessionId()} &bull; FOR OFFICIAL USE ONLY</span>`).join('');
-    document.body.appendChild(watermark);
-  }
   if (!document.getElementById('securityLockOverlay')) {
     const lock = document.createElement('div');
     lock.id = 'securityLockOverlay';
