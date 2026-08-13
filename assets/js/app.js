@@ -9,7 +9,137 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260811-month-audit-3';
+const ASSET_VERSION = '20260813-browser-protection-1';
+
+// Browser-side deterrence only. Sensitive code/data delivered to a browser can
+// still be inspected by a determined user; real confidentiality needs server-side access control.
+const PORTAL_SECURITY = Object.freeze({
+  idleLockMs: 15 * 60 * 1000,
+  warningMs: 60 * 1000,
+  blockContextMenu: true,
+  blockCopyShortcuts: true
+});
+let _securityIdleTimer = null;
+let _securityWarnTimer = null;
+let _portalLocked = false;
+let _exportConfirmedUntil = 0;
+
+function securitySessionId() {
+  let id = sessionStorage.getItem('rlp_security_session');
+  if (!id) {
+    id = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(16).toUpperCase().padStart(8,'0')}`;
+    sessionStorage.setItem('rlp_security_session', id);
+  }
+  return id;
+}
+
+function showSecurityNotice(message) {
+  let el = document.getElementById('securityNotice');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'securityNotice';
+    el.className = 'security-notice';
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function installSecurityUI() {
+  document.documentElement.classList.add('portal-copy-guard');
+  if (!document.getElementById('portalWatermark')) {
+    const watermark = document.createElement('div');
+    watermark.id = 'portalWatermark';
+    watermark.className = 'portal-security-watermark';
+    watermark.setAttribute('aria-hidden', 'true');
+    watermark.innerHTML = Array.from({length:12}, () => `<span>CONFIDENTIAL &bull; ${securitySessionId()} &bull; FOR OFFICIAL USE ONLY</span>`).join('');
+    document.body.appendChild(watermark);
+  }
+  if (!document.getElementById('securityLockOverlay')) {
+    const lock = document.createElement('div');
+    lock.id = 'securityLockOverlay';
+    lock.className = 'security-lock-overlay';
+    lock.innerHTML = `<div class="security-lock-card">
+      <div class="security-lock-mark">NR</div>
+      <h2>Portal Session Locked</h2>
+      <p>Locked after inactivity to reduce unattended access.</p>
+      <small>Session ${securitySessionId()}</small>
+      <button type="button" id="securityResumeBtn">Resume Session</button>
+      <div class="security-caveat">Browser controls deter casual copying. They do not replace authenticated server-side protection.</div>
+    </div>`;
+    document.body.appendChild(lock);
+    document.getElementById('securityResumeBtn').addEventListener('click', unlockPortalSession);
+  }
+}
+
+function lockPortalSession() {
+  if (_portalLocked) return;
+  _portalLocked = true;
+  document.body.classList.add('portal-session-locked');
+  const overlay = document.getElementById('securityLockOverlay');
+  if (overlay) overlay.classList.add('show');
+}
+
+function unlockPortalSession() {
+  _portalLocked = false;
+  document.body.classList.remove('portal-session-locked');
+  const overlay = document.getElementById('securityLockOverlay');
+  if (overlay) overlay.classList.remove('show');
+  resetSecurityIdleTimer();
+}
+
+function resetSecurityIdleTimer() {
+  if (_portalLocked) return;
+  clearTimeout(_securityIdleTimer);
+  clearTimeout(_securityWarnTimer);
+  _securityWarnTimer = setTimeout(() => showSecurityNotice('Portal will lock in 1 minute due to inactivity.'), PORTAL_SECURITY.idleLockMs - PORTAL_SECURITY.warningMs);
+  _securityIdleTimer = setTimeout(lockPortalSession, PORTAL_SECURITY.idleLockMs);
+}
+
+function isEditableSecurityTarget(target) {
+  return !!(target && target.closest && target.closest('input, textarea, select, [contenteditable="true"]'));
+}
+
+function confirmProtectedExport(label) {
+  const now = Date.now();
+  if (now < _exportConfirmedUntil) return true;
+  const ok = window.confirm(`${label} contains official financial data.\n\nSession: ${securitySessionId()}\nThe export will be traceable by this session reference. Continue?`);
+  if (ok) _exportConfirmedUntil = now + 60 * 1000;
+  return ok;
+}
+
+function initBrowserProtection() {
+  installSecurityUI();
+  if (PORTAL_SECURITY.blockContextMenu) {
+    document.addEventListener('contextmenu', event => {
+      if (isEditableSecurityTarget(event.target)) return;
+      event.preventDefault();
+      showSecurityNotice('Right-click is disabled for this official-use portal.');
+    });
+  }
+  document.addEventListener('keydown', event => {
+    if (isEditableSecurityTarget(event.target)) return;
+    const key = String(event.key || '').toLowerCase();
+    const blocked = key === 'f12' || ((event.ctrlKey || event.metaKey) && ['u','s','p','c','x','a'].includes(key)) || (event.ctrlKey && event.shiftKey && ['i','j','c'].includes(key));
+    if (blocked) {
+      event.preventDefault();
+      event.stopPropagation();
+      showSecurityNotice('This browser action is restricted for official-use data.');
+    }
+  }, true);
+  if (PORTAL_SECURITY.blockCopyShortcuts) {
+    ['copy','cut','dragstart'].forEach(type => document.addEventListener(type, event => {
+      if (isEditableSecurityTarget(event.target)) return;
+      event.preventDefault();
+      showSecurityNotice('Copying portal content is restricted. Use authorized exports.');
+    }));
+  }
+  ['pointerdown','keydown','scroll','touchstart'].forEach(type => document.addEventListener(type, resetSecurityIdleTimer, {passive:true}));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) resetSecurityIdleTimer(); });
+  resetSecurityIdleTimer();
+}
 
 function setPortalTheme(themeName) {
   const theme = PORTAL_THEMES[themeName] !== undefined ? themeName : 'default';
@@ -4320,6 +4450,7 @@ function renderDemandSMHSummary() {
 // EXCEL DOWNLOAD
 // ═══════════════════════════════════════════════
 async function downloadExcel() {
+  if (!confirmProtectedExport('Excel export')) return;
   document.body.dataset.exportStatus = 'excel-started';
   try {
   const useExcelJS = !!window.ExcelJS;
@@ -4964,6 +5095,7 @@ function makeGroupedBarChart(title, labels, budgetValues, actualValues) {
 }
 
 async function downloadPDFReport() {
+  if (!confirmProtectedExport('PDF export')) return;
   document.body.dataset.exportStatus = 'pdf-started';
   try {
   const jsPDF = window.jspdf && window.jspdf.jsPDF;
@@ -5132,7 +5264,7 @@ async function downloadPDFReport() {
   function footer() {
     doc.setTextColor(96, 112, 128);
     doc.setFontSize(10);
-    doc.text('Revenue Liability Portal - Moradabad Division / Northern Railway - For Official Use Only', margin, pageH - 16);
+    doc.text(`Revenue Liability Portal - For Official Use Only - Session ${securitySessionId()}`, margin, pageH - 16);
     doc.text(String(doc.internal.getNumberOfPages()), pageW - margin, pageH - 16, {align:'right'});
   }
   function addPage(title) {
@@ -7411,6 +7543,7 @@ function applyMobileTableLabels() {
 // SheetJS embedded inline above
 
 // INIT
+initBrowserProtection();
 initPortalTheme();
 initBlockStyle();
 loadCYUploadState();

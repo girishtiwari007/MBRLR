@@ -437,7 +437,7 @@ def replace_js_assignment(text: str, name: str, value: str) -> str:
 def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
     now = datetime.now(IST).replace(microsecond=0)
     generated_at = now.isoformat()
-    version = "20260811-month-audit-3"
+    version = "20260813-browser-protection-1"
     source_paths, detected_profiles = discover_source_files(source_dir)
 
     pu_names, dept_names = load_existing_maps(root)
