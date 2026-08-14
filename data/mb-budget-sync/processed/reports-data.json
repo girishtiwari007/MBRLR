@@ -4,14 +4,14 @@
       "Demand 03 / SMH 01": {
         "2026-27": {
           "oba": 641522,
-          "ae": 232594,
+          "ae": 236563,
           "bp": 213841
         }
       },
       "Demand 04 / SMH 02": {
         "2026-27": {
           "oba": 3608902,
-          "ae": 1467818,
+          "ae": 1473830,
           "bp": 1202967
         }
       },
@@ -25,49 +25,49 @@
       "Demand 06 / SMH 04": {
         "2026-27": {
           "oba": 1353581,
-          "ae": 722606,
+          "ae": 765059,
           "bp": 451194
         }
       },
       "Demand 07 / SMH 05": {
         "2026-27": {
           "oba": 2059950,
-          "ae": 800112,
+          "ae": 838163,
           "bp": 686650
         }
       },
       "Demand 08 / SMH 06": {
         "2026-27": {
           "oba": 3352566,
-          "ae": 1562963,
+          "ae": 1617389,
           "bp": 1117522
         }
       },
       "Demand 09 / SMH 07": {
         "2026-27": {
           "oba": 4428766,
-          "ae": 1777301,
+          "ae": 1782151,
           "bp": 1476255
         }
       },
       "Demand 10 / SMH 08": {
         "2026-27": {
           "oba": 11607206,
-          "ae": 3545214,
+          "ae": 4605644,
           "bp": 3869069
         }
       },
       "Demand 11 / SMH 09": {
         "2026-27": {
           "oba": 1392832,
-          "ae": 807750,
+          "ae": 810746,
           "bp": 464277
         }
       },
       "Demand 12 / SMH 10": {
         "2026-27": {
           "oba": 994638,
-          "ae": 355866,
+          "ae": 356768,
           "bp": 331546
         }
       },
@@ -81,19 +81,19 @@
       "Demand 12N / SMH 10N": {
         "2026-27": {
           "oba": -13045,
-          "ae": 1569032,
+          "ae": 1569443,
           "bp": -4348
         }
       }
     }
   },
   "summary": {
-    "generatedAt": "2026-08-03T12:10:17+05:30",
-    "latestMonth": "JUL 2026",
-    "bpMode": "Completed through JUL 2026; AUG 2026 is current running month; latest uploaded actual month detected as JUL 2026",
+    "generatedAt": "2026-08-14T12:39:47+05:30",
+    "latestMonth": "AUG 2026",
+    "bpMode": "Completed through JUL 2026; AUG 2026 is current running month; latest uploaded actual month detected as AUG 2026",
     "demandRows": 12,
     "demandMainOBA": 32595873,
     "demandMainBP": 10865291,
-    "demandMainAE": 12479934
+    "demandMainAE": 13694023
   }
 }

@@ -1,12 +1,12 @@
 {
   "ok": true,
   "mode": "local-portal-sync",
-  "sourceRepo": "C:\\Users\\HP\\Downloads\\PORTAL DATA",
-  "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\revenue laibility",
+  "sourceRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR\\LOCAL-PORTAL-UPLOAD",
+  "targetRepo": "C:\\Users\\HP\\OneDrive\\Documents\\GitHub\\MBRLR",
   "financialYear": "2026-2027",
-  "generatedAt": "2026-08-03T12:10:17+05:30",
-  "syncedAt": "2026-08-03T12:10:17+05:30",
-  "confirmedAt": "2026-08-03T12:10:17+05:30",
+  "generatedAt": "2026-08-14T12:39:47+05:30",
+  "syncedAt": "2026-08-14T12:39:47+05:30",
+  "confirmedAt": "2026-08-14T12:39:47+05:30",
   "counts": {
     "sourceFiles": 6,
     "processedFiles": 3,
@@ -21,7 +21,7 @@
       "roleLabel": "PU-wise Budget Available",
       "relativePath": "data/source-files/2026-2027/pu-budget.xls",
       "size": 22016,
-      "modifiedAt": "2026-08-03T11:27:13",
+      "modifiedAt": "2026-08-14T12:39:38",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls"
     },
     {
@@ -31,7 +31,7 @@
       "roleLabel": "PU-wise Month-wise Actual",
       "relativePath": "data/source-files/2026-2027/pu-month-actual.xls",
       "size": 16384,
-      "modifiedAt": "2026-08-03T11:27:32",
+      "modifiedAt": "2026-08-14T12:39:38",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls"
     },
     {
@@ -40,8 +40,8 @@
       "role": "detail_budget",
       "roleLabel": "DEPT-Demand/SMH PU-wise Budget",
       "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
-      "size": 1491456,
-      "modifiedAt": "2026-08-03T11:27:54",
+      "size": 1496064,
+      "modifiedAt": "2026-08-14T12:39:38",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-budget.xls"
     },
     {
@@ -50,8 +50,8 @@
       "role": "detail_actual",
       "roleLabel": "DEPT-Demand/SMH PU-wise Month-wise Actual",
       "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
-      "size": 508416,
-      "modifiedAt": "2026-08-03T11:28:10",
+      "size": 517632,
+      "modifiedAt": "2026-08-14T12:39:38",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-actual.xls"
     },
     {
@@ -61,7 +61,7 @@
       "roleLabel": "Demand/SMH Budget Summary",
       "relativePath": "data/source-files/2026-2027/demand-smh-budget.xls",
       "size": 9216,
-      "modifiedAt": "2026-08-03T11:28:36",
+      "modifiedAt": "2026-08-14T12:39:38",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-budget.xls"
     },
     {
@@ -71,7 +71,7 @@
       "roleLabel": "Demand/SMH Month-wise Actual Summary",
       "relativePath": "data/source-files/2026-2027/demand-smh-actual.xls",
       "size": 8192,
-      "modifiedAt": "2026-08-03T11:28:46",
+      "modifiedAt": "2026-08-14T12:39:38",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls"
     }
   ],
@@ -143,7 +143,7 @@
   ],
   "actionLog": [
     {
-      "at": "2026-08-03T12:10:17+05:30",
+      "at": "2026-08-14T12:39:47+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [
@@ -157,15 +157,15 @@
       "summary": {
         "puBudgetRows": 47,
         "puMonthRows": 39,
-        "detailRows": 904,
+        "detailRows": 905,
         "detailBudget": 34145286,
-        "detailActual": 13052131,
+        "detailActual": 14457217,
         "demandRows": 12,
-        "latestMonth": "JUL 2026",
-        "demandMainAECompleted": 12479934,
+        "latestMonth": "AUG 2026",
+        "demandMainAECompleted": 13694023,
         "demandMainBPCompleted": 10865291
       }
     }
   ],
-  "bpMode": "Completed through JUL 2026; AUG 2026 is current running month; latest uploaded actual month detected as JUL 2026"
+  "bpMode": "Completed through JUL 2026; AUG 2026 is current running month; latest uploaded actual month detected as AUG 2026"
 }
