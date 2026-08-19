@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260813-browser-protection-2';
+const ASSET_VERSION = '20260819-export-freshness-1';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -368,13 +368,13 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 17-Aug-2026; actual till date aligned to APR-AUG month-wise file.'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 17-Aug-2026; latest loaded month AUG 2026.'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026; actual till date aligned to APR-AUG month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026; latest loaded month AUG 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 17-Aug-2026.'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 17-Aug-2026; latest loaded month AUG 2026.'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 17-Aug-2026. Completed through JUL 2026; AUG 2026 is current running month; latest uploaded actual month detected as AUG 2026. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026.'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026; latest loaded month AUG 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026. Completed through JUL 2026; AUG 2026 is current running month; latest uploaded actual month detected as AUG 2026. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -488,9 +488,9 @@ let _uploadedMonthIdx = null; // latest completed month detected from uploaded C
 let _latestActualMonthIdx = null;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-08-17T11:14:08+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-08-19T11:08:09+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-08-17-local-sync';
+const RLP_BUILD_ID = 'rlp-mbd-2026-08-19-local-sync';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -4441,10 +4441,53 @@ function renderDemandSMHSummary() {
 // ═══════════════════════════════════════════════
 // EXCEL DOWNLOAD
 // ═══════════════════════════════════════════════
+function sumMonthValues(row) {
+  return FY_MONTHS.reduce((sum, month) => sum + (Number((row || {})[month]) || 0), 0);
+}
+
+function refreshCalculatedSourceData() {
+  const budgetCodes = Object.keys(BUDGET).filter(code => code !== 'TOTAL');
+  const monthCodes = Object.keys(MONTH).filter(code => code !== 'TOTAL');
+  monthCodes.forEach(code => {
+    MONTH[code].total = sumMonthValues(MONTH[code]);
+    if (BUDGET[code]) BUDGET[code].actuals_till = MONTH[code].total;
+  });
+  BUDGET.TOTAL = budgetCodes.reduce((total, code) => {
+    const row = BUDGET[code] || {};
+    total.bg_isl += Number(row.bg_isl) || 0;
+    total.rg += Number(row.rg) || 0;
+    total.actuals_till += Number(row.actuals_till) || 0;
+    return total;
+  }, {bg_isl:0, rg:0, actuals_till:0});
+  MONTH.TOTAL = FY_MONTHS.reduce((total, month) => {
+    total[month] = monthCodes.reduce((sum, code) => sum + (Number(MONTH[code][month]) || 0), 0);
+    return total;
+  }, {});
+  MONTH.TOTAL.total = sumMonthValues(MONTH.TOTAL);
+  const detailRows = window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows) ? window.DETAIL_SMH_DATA.rows : [];
+  detailRows.forEach(row => { row.actualTill = sumMonthValues(row.months || row); });
+  if (window.DETAIL_SMH_DATA && detailRows.length) window.DETAIL_SMH_DATA.totals = makeDetailTotal(detailRows);
+}
+
+function prepareFreshExport(kind) {
+  refreshCalculatedSourceData();
+  renderAll();
+  const checks = portalValidationChecks();
+  const errors = checks.filter(check => check.state === 'err');
+  if (errors.length) throw new Error(`${kind} blocked: ${errors.map(e => e.title).join(', ')}`);
+  const status = getMonthStatus();
+  const generated = new Date();
+  const latestMonth = status.latestActual ? `${status.latestActual.label} ${status.latestActual.year}` : 'No actual month';
+  const id = `${ASSET_VERSION}-${generated.toISOString().replace(/[-:.TZ]/g,'').slice(0,14)}`;
+  document.body.dataset.exportFreshness = id;
+  return {kind, id, generatedAt:generated.toISOString(), latestMonth, checks};
+}
+
 async function downloadExcel() {
   if (!confirmProtectedExport('Excel export')) return;
   document.body.dataset.exportStatus = 'excel-started';
   try {
+  const exportAudit = prepareFreshExport('Excel');
   const useExcelJS = !!window.ExcelJS;
   const wb = useExcelJS ? new ExcelJS.Workbook() : XLSX.utils.book_new();
   if (useExcelJS) {
@@ -4475,8 +4518,9 @@ async function downloadExcel() {
     const textCols = new Set(sheetOpts.textCols || [1, 2]);
     if (useExcelJS) {
       const ws = wb.addWorksheet(sheetName, {
-        views: [{state:'frozen', ySplit:4}],
-        pageSetup: {orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:9}
+        views: [{state:'frozen', ySplit:4, showGridLines:false}],
+        pageSetup: {orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:9,
+          margins:{left:.25,right:.25,top:.5,bottom:.5,header:.2,footer:.2}, horizontalCentered:true}
       });
       ws.addRow([titleRow]);
       ws.addRow([subRow]);
@@ -4505,13 +4549,13 @@ async function downloadExcel() {
       ws.getRow(2).height = 18;
       ws.getRow(2).eachCell(cell => {
         cell.fill = fill('1C3A5E');
-        cell.font = font('DDEEFF', true, 9);
+        cell.font = font('DDEEFF', true, 10);
         cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
       });
       ws.getRow(4).height = 22;
       ws.getRow(4).eachCell(cell => {
         cell.fill = fill('1A3A6A');
-        cell.font = font('FFFFFF', true, 9);
+        cell.font = font('FFFFFF', true, 10);
         cell.border = border;
         cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
       });
@@ -4573,8 +4617,8 @@ async function downloadExcel() {
           const addr = XLSX.utils.encode_cell({r:R,c:C});
           if (!ws[addr]) ws[addr]={v:'',t:'s'};
           if (R===0) ws[addr].s = mkStyle({bold:true,sz:13,bg:'0A1628',fc:'C9A84C',h:'center',wrap:true});
-          else if (R===1) ws[addr].s = mkStyle({bold:true,sz:9,bg:'1C3A5E',fc:'B8D0F0',h:'center',wrap:true});
-          else if (R===3) ws[addr].s = mkStyle({bold:true,sz:9,bg:'1A3A6A',fc:'FFFFFF',h:'center'});
+          else if (R===1) ws[addr].s = mkStyle({bold:true,sz:10,bg:'1C3A5E',fc:'B8D0F0',h:'center',wrap:true});
+          else if (R===3) ws[addr].s = mkStyle({bold:true,sz:10,bg:'1A3A6A',fc:'FFFFFF',h:'center'});
           else {
             // Data rows - color by row type
             const rowData = dataRows[R-4];
@@ -4599,6 +4643,8 @@ async function downloadExcel() {
         {s:{r:1,c:0},e:{r:1,c:maxC}},
       ];
       ws['!rows'] = [{hpt:22},{hpt:16},{hpt:6},{hpt:18}];
+      ws['!margins'] = {left:.25,right:.25,top:.5,bottom:.5,header:.2,footer:.2};
+      ws['!pageSetup'] = {orientation:'landscape', fitToWidth:1, fitToHeight:0, paperSize:9};
     } catch(e) { /* style not supported - data still exports fine */ }
 
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
@@ -4908,6 +4954,7 @@ async function downloadExcel() {
   sourceRows.push(['Excluded PU Codes','PU-72, 73, 74, 75 and PU-98','Portal rule','All normal expenditure reports','GST/tax heads and recovery PU are excluded from normal operational expenditure display.']);
   sourceRows.push(['Upload retention','Current Year / Previous Year','Browser storage rule','Upload Centre','Current year upload is kept for this browser session. Previous year upload is kept in local browser storage until admin confirms overwrite.']);
   sourceRows.push(['Previous Year Status','2025-2026', _pyUploadMeta ? `Uploaded and confirmed ${indianDateTime(_pyUploadMeta.confirmedAt)}` : 'Pre-loaded static file', 'Trend and PY comparison', _pyUploadMeta ? 'Admin confirmed previous year data is being used.' : 'No admin PY overwrite confirmed in this browser.']);
+  sourceRows.push(['Export Freshness', exportAudit.id, exportAudit.generatedAt, 'Excel / PDF / PowerPoint', `Validated against live portal data through ${exportAudit.latestMonth}. Minimum font 10 pt; landscape best-fit page rule.`]);
   addSheet(wb,'Sources Remarks',HDR_TITLE,`As on ${formatAsOnDate(_dataAsOnDate)} | Upload confirmations, exclusions and report rules`,sourceHdrs,sourceRows,
     [24,18,34,38,58]);
 
@@ -5090,6 +5137,7 @@ async function downloadPDFReport() {
   if (!confirmProtectedExport('PDF export')) return;
   document.body.dataset.exportStatus = 'pdf-started';
   try {
+  const exportAudit = prepareFreshExport('PDF');
   const jsPDF = window.jspdf && window.jspdf.jsPDF;
   if (!jsPDF || !jsPDF.API.autoTable) {
     document.body.dataset.exportStatus = 'pdf-error';
@@ -5176,6 +5224,7 @@ async function downloadPDFReport() {
     ];
   });
   const sourceRows = Object.values(SOURCE_REGISTER).map(s => [s.label, s.fy, s.source, s.used || '', s.remarks || 'Pre-loaded / uploaded portal source']);
+  sourceRows.push(['Export Freshness', exportAudit.id, exportAudit.generatedAt, `Validated through ${exportAudit.latestMonth}`, 'Live portal memory reconciled immediately before PDF generation; minimum 10 pt and page-fit margins enforced.']);
   _uploadConfirmHistory.slice(0, 2).forEach((h, idx) => {
     sourceRows.push([
       `Upload Confirmation ${idx + 1}`,
@@ -5532,13 +5581,81 @@ async function downloadPDFReport() {
   }
 }
 
+function pptEscape(value) {
+  return String(value == null ? '' : value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+
+function pptTextShape(id, name, x, y, cx, cy, lines, size=1000, color='203040', bold=false) {
+  const paragraphs = lines.map(line => `<a:p><a:r><a:rPr lang="en-IN" sz="${Math.max(1000,size)}" b="${bold?1:0}" dirty="0"><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:latin typeface="Arial"/></a:rPr><a:t>${pptEscape(line)}</a:t></a:r><a:endParaRPr lang="en-IN" sz="${Math.max(1000,size)}"/></a:p>`).join('');
+  return `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="${pptEscape(name)}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr><p:txBody><a:bodyPr wrap="square" lIns="91440" tIns="45720" rIns="91440" bIns="45720" anchor="t"/><a:lstStyle/>${paragraphs}</p:txBody></p:sp>`;
+}
+
+function pptSlideXml(title, lines) {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/><p:sp><p:nvSpPr><p:cNvPr id="2" name="Header band"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="12192000" cy="900000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="0A1628"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr></p:sp>${pptTextShape(3,'Title',457200,170000,11277600,600000,[title],2200,'FFFFFF',true)}${pptTextShape(4,'Content',548640,1120000,11094720,5000000,lines,1000,'203040',false)}</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`;
+}
+
+function buildPowerPointBlob(audit) {
+  const status = getMonthStatus();
+  const actualMonths = status.actualMonths.length ? status.actualMonths : FY_MONTHS.slice(0, Math.max(1,status.cur.idx));
+  const rows = reportRowsForActivePUs();
+  const totals = rows.reduce((t,r) => ({budget:t.budget+r.budget,actual:t.actual+r.actual,balance:t.balance+r.balance}), {budget:0,actual:0,balance:0});
+  const top = rows.slice().sort((a,b)=>b.utilPct-a.utilPct).slice(0,10);
+  const slides = [
+    ['Revenue Liability Portal - Fresh Export', [`Financial Year 2026-27 | Moradabad Division`,`Generated: ${indianDateTime(audit.generatedAt)}`,`Actual data through: ${audit.latestMonth}`,`Validation ID: ${audit.id}`,`Rule: live data reconciled before export; minimum font 10 pt; all content within 0.5 inch margins.`]],
+    ['Executive Summary', [`Active expenditure PUs: ${rows.length}`,`Gross budget: ${textCr(totals.budget)}`,`Actual / committed: ${textCr(totals.actual)}`,`Balance: ${textCr(totals.balance)}`,`Utilisation: ${totals.budget ? (totals.actual/totals.budget*100).toFixed(1) : '0.0'}%`]],
+    ['Month-wise Actuals', actualMonths.map(month => `${FY_MONTH_LABELS[FY_MONTHS.indexOf(month)]}: ${textCr(Object.keys(MONTH).filter(c=>c!=='TOTAL').reduce((s,c)=>s+(Number(MONTH[c][month])||0),0))}`).concat([`Total actual: ${textCr(totals.actual)}`])],
+    ['PU Utilisation - Highest', top.map(r => `PU-${r.pu.code} | ${r.pu.desc.slice(0,46)} | ${r.budget ? r.utilPct.toFixed(1)+'%' : 'No budget'} | Actual ${textCr(r.actual)}`)],
+    ['Validation and Fixed Export Rules', audit.checks.map(c => `${c.state.toUpperCase()}: ${c.title} - ${c.detail}`).concat(['Excel: landscape, fit-to-one-page-wide, print margins, minimum 10 pt.','PDF: landscape A4, repeating headers, horizontal page breaks, minimum 10 pt.','PowerPoint: 16:9, 0.5 inch safe margins, minimum 10 pt.','Exports are created on demand from current portal memory; old downloaded files are not reused.'])]
+  ];
+  const enc = new TextEncoder();
+  const entry = (name, xml) => ({name, bytes:enc.encode(xml)});
+  const slideOverrides = slides.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('');
+  const sldIds = slides.map((_,i)=>`<p:sldId id="${256+i}" r:id="rId${i+2}"/>`).join('');
+  const presRels = [`<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>`].concat(slides.map((_,i)=>`<Relationship Id="rId${i+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`)).join('');
+  const entries = [
+    entry('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>${slideOverrides}</Types>`),
+    entry('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`),
+    entry('docProps/core.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Revenue Liability Portal Fresh Report</dc:title><dc:creator>Revenue Liability Portal</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created></cp:coreProperties>`),
+    entry('docProps/app.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Revenue Liability Portal</Application><Slides>${slides.length}</Slides><PresentationFormat>Widescreen</PresentationFormat></Properties>`),
+    entry('ppt/presentation.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst>${sldIds}</p:sldIdLst><p:sldSz cx="12192000" cy="6858000" type="screen16x9"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>`),
+    entry('ppt/_rels/presentation.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${presRels}</Relationships>`),
+    entry('ppt/slideMasters/slideMaster1.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:clrMap accent1="1A3A6A" accent2="1A7A4A" accent3="C9A84C" accent4="607080" accent5="4472C4" accent6="70AD47" bg1="lt1" bg2="lt2" folHlink="folHlink" hlink="hlink" tx1="dk1" tx2="dk2"/><p:sldLayoutIdLst><p:sldLayoutId id="1" r:id="rId1"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle/><p:bodyStyle/><p:otherStyle/></p:txStyles></p:sldMaster>`),
+    entry('ppt/slideMasters/_rels/slideMaster1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/></Relationships>`),
+    entry('ppt/slideLayouts/slideLayout1.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank"><p:cSld name="Blank"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>`),
+    entry('ppt/slideLayouts/_rels/slideLayout1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>`),
+    entry('ppt/theme/theme1.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Portal"><a:themeElements><a:clrScheme name="Portal"><a:dk1><a:srgbClr val="0A1628"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="203040"/></a:dk2><a:lt2><a:srgbClr val="F3F7FB"/></a:lt2><a:accent1><a:srgbClr val="1A3A6A"/></a:accent1><a:accent2><a:srgbClr val="1A7A4A"/></a:accent2><a:accent3><a:srgbClr val="C9A84C"/></a:accent3><a:accent4><a:srgbClr val="607080"/></a:accent4><a:accent5><a:srgbClr val="4472C4"/></a:accent5><a:accent6><a:srgbClr val="70AD47"/></a:accent6><a:hlink><a:srgbClr val="0563C1"/></a:hlink><a:folHlink><a:srgbClr val="954F72"/></a:folHlink></a:clrScheme><a:fontScheme name="Portal"><a:majorFont><a:latin typeface="Arial"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="Arial"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme><a:fmtScheme name="Portal"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>`)
+  ];
+  slides.forEach((slide,i) => {
+    entries.push(entry(`ppt/slides/slide${i+1}.xml`,pptSlideXml(slide[0],slide[1])));
+    entries.push(entry(`ppt/slides/_rels/slide${i+1}.xml.rels`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`));
+  });
+  return createZipBlob(entries);
+}
+
+function downloadPowerPoint() {
+  if (!confirmProtectedExport('PowerPoint export')) return;
+  document.body.dataset.exportStatus = 'ppt-started';
+  try {
+    const audit = prepareFreshExport('PowerPoint');
+    const fileDate = new Date().toISOString().slice(0,10);
+    saveBlob(buildPowerPointBlob(audit), `Revenue_Liability_MBD_FY2026-27_${fileDate}.pptx`);
+    document.body.dataset.exportStatus = 'ppt-finished';
+  } catch (err) {
+    console.error('PowerPoint export failed', err);
+    document.body.dataset.exportStatus = 'ppt-error';
+    showPortalNotice('PowerPoint export failed: ' + (err.message || err), 'err');
+  }
+}
+
 window.downloadExcel = downloadExcel;
 window.downloadPDFReport = downloadPDFReport;
+window.downloadPowerPoint = downloadPowerPoint;
 window.downloadHostedUpdatePack = downloadHostedUpdatePack;
 
 function initExportButtons() {
   const excelBtn = document.getElementById('downloadExcelBtn');
   const pdfBtn = document.getElementById('downloadPdfBtn');
+  const pptBtn = document.getElementById('downloadPptBtn');
   const backupBtn = document.getElementById('downloadBackupBtn');
   if (excelBtn && !excelBtn.dataset.bound) {
     excelBtn.dataset.bound = '1';
@@ -5547,6 +5664,10 @@ function initExportButtons() {
   if (pdfBtn && !pdfBtn.dataset.bound) {
     pdfBtn.dataset.bound = '1';
     pdfBtn.addEventListener('click', downloadPDFReport);
+  }
+  if (pptBtn && !pptBtn.dataset.bound) {
+    pptBtn.dataset.bound = '1';
+    pptBtn.addEventListener('click', downloadPowerPoint);
   }
   if (backupBtn && !backupBtn.dataset.bound) {
     backupBtn.dataset.bound = '1';
@@ -6006,6 +6127,24 @@ function portalValidationChecks() {
     state: budgetTotal > 0 ? 'ok' : 'err',
     title: 'Current year PU budget',
     detail: budgetTotal > 0 ? `${activeCodes.length} active PUs, ${textCr(budgetTotal)} gross budget, ${textCr(actualTotal)} actual till date.` : 'No active PU budget total found.'
+  });
+  const monthMismatchCodes = activeCodes.filter(code => {
+    if (!MONTH[code]) return false;
+    return Math.abs((Number((BUDGET[code] || {}).actuals_till) || 0) - sumMonthValues(MONTH[code])) > 0.5;
+  });
+  checks.push({
+    state: monthMismatchCodes.length ? 'err' : 'ok',
+    title: 'PU actual/month reconciliation',
+    detail: monthMismatchCodes.length ? `Mismatch in ${monthMismatchCodes.length} PU(s): ${monthMismatchCodes.slice(0,12).join(', ')}.` : 'Every loaded PU actual-till value equals the sum of its actual month values.'
+  });
+  const budgetGrand = Object.keys(BUDGET).filter(code => code !== 'TOTAL').reduce((sum, code) => sum + (Number(BUDGET[code].bg_isl) || 0), 0);
+  const monthGrand = Object.keys(MONTH).filter(code => code !== 'TOTAL').reduce((sum, code) => sum + sumMonthValues(MONTH[code]), 0);
+  const totalMismatch = Math.abs(budgetGrand - (Number((BUDGET.TOTAL || {}).bg_isl) || 0)) > 0.5 ||
+    Math.abs(monthGrand - sumMonthValues(MONTH.TOTAL || {})) > 0.5;
+  checks.push({
+    state: totalMismatch ? 'err' : 'ok',
+    title: 'Grand-total reconciliation',
+    detail: totalMismatch ? 'Stored total rows do not reconcile with PU rows.' : 'Budget and month grand totals reconcile with all loaded PU rows.'
   });
   const monthStatus = getMonthStatus();
   const monthRows = activeCodes.filter(code => MONTH[code] && monthStatus.actualMonths.some(m => Number(MONTH[code][m]) || 0));
@@ -6481,10 +6620,15 @@ function rebuildDemandSMHSummaryFromUploads(budgetUpload, actualUpload) {
   const data = demandSMHData();
   const currentRows = demandSMHRows();
   const map = {};
+  const mergeKey = (demand, smh) => {
+    const d = String(demand || '').trim().toUpperCase();
+    const s = String(smh || '').trim().toUpperCase();
+    return (d.includes('12N') || s === '10N') ? '12N/10N|10N' : `${d}|${s}`;
+  };
   currentRows.forEach(r => {
     const demand = String(r.demand || '').trim();
     const smh = String(r.smh || '').trim().toUpperCase();
-    if (demand && smh) map[`${demand}|${smh}`] = {...r};
+    if (demand && smh) map[mergeKey(demand, smh)] = {...r};
   });
   function mergeRows(upload, mode) {
     if (!upload || !Array.isArray(upload.rows)) return;
@@ -6492,7 +6636,7 @@ function rebuildDemandSMHSummaryFromUploads(budgetUpload, actualUpload) {
       const demand = String(r.demand || '').trim();
       const smh = String(r.smh || '').trim().toUpperCase();
       if (!demand || !smh) return;
-      const key = `${demand}|${smh}`;
+      const key = mergeKey(demand, smh);
       const meta = demandSmhMetaFor(demand, smh);
       if (!map[key]) map[key] = {demand, smh, dept:r.dept || meta.dept, description:r.description || meta.description, oba:0, ae:0, months:{}};
       if (r.dept) map[key].dept = r.dept;
@@ -6839,6 +6983,9 @@ function applyUploads() {
     _pendingDemandSMHBudget = null;
     _pendingDemandSMHActual = null;
   }
+  // Fixed freshness rule: portal display, saved upload state and every export must
+  // use the same PU actuals and recomputed total rows immediately after Apply.
+  if (hadCYUpdate || hadSMHUpdate || hadDemandSMHUpdate) refreshCalculatedSourceData();
   if(hadCYUpdate || hadSMHUpdate || hadDemandSMHUpdate) saveCYUploadState();
   if(hadPYUpdate) {
     savePYUploadState({

@@ -944,7 +944,7 @@ thead th.la { min-width:80px; }
   #activityFilter{grid-column:1/-1}
   .util-filter{grid-column:1/-1;width:100%;flex:1 1 100%;justify-content:space-between;min-height:38px;border-radius:8px}
   .util-input{flex:0 0 62px}
-  .export-actions{grid-column:1/-1;width:100%;margin-left:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .export-actions{grid-column:1/-1;width:100%;margin-left:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
   .export-actions .dl-btn{flex:1;justify-content:center}
   .status-main{justify-content:space-between}
   .rg-note,.cur-month-pill,.live-clock{display:flex;align-items:center;justify-content:center;text-align:center;min-height:34px;font-size:9px!important;white-space:normal}
