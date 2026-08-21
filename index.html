@@ -7,9 +7,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="portal-build" content="rlp-mbd-2026-08-19-local-sync">
+<meta name="portal-build" content="rlp-mbd-2026-08-21-visual-upload-export-user2-4de167193d87">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260819-export-freshness-1">
+<link rel="stylesheet" href="assets/css/main.css?v=20260821-visual-upload-export-user2-autoexports-4de167193d87">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -44,6 +44,23 @@
   </div>
 </div>
 
+<!-- EXPORT-ONLY USER LOGIN -->
+<div id="exportLoginOverlay" class="hidden export-login-overlay">
+  <div class="login-box export-login-box">
+    <div class="login-emblem">EX</div><div class="login-badge">EXPORT USER</div>
+    <div class="login-title">DOWNLOAD ACCESS</div>
+    <div class="login-sub">Excel, PDF and PowerPoint only. Upload and portal administration remain locked.</div>
+    <div class="login-field"><label>User ID</label><input class="login-inp" type="text" value="EXPORT" readonly></div>
+    <div class="login-field"><label>Password</label><div class="login-inp-wrap">
+      <input class="login-inp" type="password" id="exportLoginPwd" placeholder="Enter export password" autocomplete="off" onkeydown="if(event.key==='Enter')doExportLogin()">
+      <span class="login-eye" onclick="var i=document.getElementById('exportLoginPwd');i.type=i.type==='password'?'text':'password'">Show</span>
+    </div></div>
+    <button class="login-btn" type="button" onclick="doExportLogin()">UNLOCK EXPORTS</button>
+    <button class="login-cancel" type="button" onclick="closeExportLogin()">CANCEL</button>
+    <div class="login-err" id="exportLoginErr"></div>
+  </div>
+</div>
+
 
 <!-- HEADER -->
 <div class="hdr">
@@ -64,7 +81,7 @@
   </div>
   <div class="hdr-r">
     <span class="fy-badge">FY 2026-27</span>
-    <span class="as-on" id="asOnLabel">As on: 19-Aug-2026 11:08</span>
+    <span class="as-on" id="asOnLabel">As on: 21-Aug-2026 11:17</span>
   </div>
 </div>
 
@@ -405,6 +422,12 @@
       </div>
       <div class="upload-lock">ADMIN ACCESS ONLY</div>
     </div>
+    <div class="folder-upload-panel" id="folderUploadPanel">
+      <div class="folder-upload-head"><div><strong>Visual Data Folder Upload</strong><span>Choose one folder containing the six current-year XLS/XLSX reports. The portal senses each report, parses all files, applies them together, validates calculations and refreshes every view and export source.</span></div><span class="folder-upload-badge">AUTO SENSE + AUTO APPLY</span></div>
+      <div class="folder-upload-actions"><button type="button" id="chooseDataFolderBtn" onclick="choosePortalDataFolder()">Choose Data Folder</button><button type="button" onclick="runPortalValidation()">Validate Current Portal</button></div>
+      <div class="folder-upload-status" id="folderUploadStatus">No folder selected. Chrome/Edge folder permission is required.</div>
+      <div class="folder-upload-files" id="folderUploadFiles"></div>
+    </div>
     <div class="upload-top-grid">
       <div class="cur-data-box"><h4>Currently Loaded Data Snapshot</h4><div class="cdb-grid" id="curDataGrid"></div></div>
       <div class="upload-confirm-box">
@@ -441,8 +464,9 @@
     <div class="local-sync-help">
       <div>
         <strong>Permanent Local Repo Upload</strong>
-        <span>For GitHub-ready update, place latest XLS/XLSX files in <code>LOCAL-PORTAL-UPLOAD</code> and run <code>RUN-LOCAL-DATA-SYNC.bat</code>. File names can vary; the local sync detects each report by sheet columns, parses, verifies, recalculates and mirrors to GitHub Desktop.</span>
+        <span>For GitHub-ready update, open the visual local upload portal, choose the folder containing latest XLS/XLSX files, auto-sense, sync, verify and then commit/push in GitHub Desktop.</span>
       </div>
+      <a class="local-sync-open" href="/local-sync" target="_blank" rel="noopener">Open Visual Local Upload Portal</a>
       <small>Browser drag/drop below is for admin session testing; it cannot rewrite GitHub-hosted files directly.</small>
     </div>
     <div class="hosted-upload-guard" id="hostedUploadGuard">
@@ -1127,13 +1151,13 @@
   Revenue Liability Portal &nbsp;-&nbsp; Moradabad Division / Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
 </div>
 
-<script src="assets/js/detail-data.js?v=20260819-export-freshness-1"></script>
-<script src="assets/js/demand-smh-data.js?v=20260819-export-freshness-1"></script>
-<script src="assets/js/admin-config.js?v=20260819-export-freshness-1"></script>
+<script src="assets/js/detail-data.js?v=20260821-visual-upload-export-user2-autoexports-4de167193d87"></script>
+<script src="assets/js/demand-smh-data.js?v=20260821-visual-upload-export-user2-autoexports-4de167193d87"></script>
+<script src="assets/js/admin-config.js?v=20260821-visual-upload-export-user2-autoexports-4de167193d87"></script>
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/app.js?v=20260819-export-freshness-1"></script>
+<script src="assets/js/app.js?v=20260821-visual-upload-export-user2-autoexports-4de167193d87"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>

@@ -33,7 +33,7 @@ download_dir = pathlib.Path(__file__).resolve().parent.parent / ".export-validat
 download_dir.mkdir(exist_ok=True)
 command("Browser.setDownloadBehavior", {"behavior": "allow", "downloadPath": str(download_dir)})
 result = command("Runtime.evaluate", {
-    "expression": "window.confirm=()=>true; Promise.all([window.downloadExcel(),window.downloadPDFReport(),window.downloadPowerPoint()]).then(()=>JSON.stringify({ready:document.readyState,url:location.href,ppt:typeof window.downloadPowerPoint,excel:typeof window.downloadExcel,pdf:typeof window.downloadPDFReport,status:document.body.dataset.exportStatus,freshness:document.body.dataset.exportFreshness}))",
+    "expression": "sessionStorage.setItem('rlp_export_user_access','1');window.confirm=()=>true; Promise.all([window.downloadExcel(),window.downloadPDFReport(),window.downloadPowerPoint()]).then(()=>JSON.stringify({ready:document.readyState,url:location.href,ppt:typeof window.downloadPowerPoint,excel:typeof window.downloadExcel,pdf:typeof window.downloadPDFReport,status:document.body.dataset.exportStatus,freshness:document.body.dataset.exportFreshness}))",
     "awaitPromise": True,
     "returnByValue": True,
 })

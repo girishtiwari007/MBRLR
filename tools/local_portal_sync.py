@@ -10,6 +10,7 @@ write parsed data back into this repository from the browser.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -29,6 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
+PORTAL_CODE_REVISION = "visual-upload-export-user2"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -437,8 +439,15 @@ def replace_js_assignment(text: str, name: str, value: str) -> str:
 def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
     now = datetime.now(IST).replace(microsecond=0)
     generated_at = now.isoformat()
-    version = "20260819-export-freshness-1"
     source_paths, detected_profiles = discover_source_files(source_dir)
+    source_hasher = hashlib.sha256()
+    for role in sorted(source_paths):
+        source_hasher.update(role.encode("utf-8"))
+        with source_paths[role].open("rb") as source_file:
+            for chunk in iter(lambda: source_file.read(1024 * 1024), b""):
+                source_hasher.update(chunk)
+    source_revision = source_hasher.hexdigest()[:12]
+    version = f"20260821-{PORTAL_CODE_REVISION}-autoexports-{source_revision}"
 
     pu_names, dept_names = load_existing_maps(root)
     budget = parse_pu_budget(source_paths["pu_budget"])
@@ -481,13 +490,13 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
     if "const FY_MONTHS =" not in app:
         app = app.replace("const DEFAULT_DATA_AS_ON_DATE", "const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];\nconst FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];\nconst DEFAULT_DATA_AS_ON_DATE", 1)
     app = re.sub(r"const DEFAULT_DATA_AS_ON_DATE = new Date\('[^']+'\);", f"const DEFAULT_DATA_AS_ON_DATE = new Date('{generated_at}');", app, count=1)
-    app = re.sub(r"const RLP_BUILD_ID = '[^']+';", f"const RLP_BUILD_ID = 'rlp-mbd-{generated_at[:10]}-local-sync';", app, count=1)
+    app = re.sub(r"const RLP_BUILD_ID = '[^']+';", f"const RLP_BUILD_ID = 'rlp-mbd-{generated_at[:10]}-{PORTAL_CODE_REVISION}-{source_revision}';", app, count=1)
     app_path.write_text(app, encoding="utf-8", newline="\n")
 
     index_path = root / "index.html"
     index = index_path.read_text(encoding="utf-8")
     fallback = datetime.fromisoformat(generated_at).strftime("%d-%b-%Y %H:%M")
-    index = re.sub(r'<meta name="portal-build" content="[^"]+">', f'<meta name="portal-build" content="rlp-mbd-{generated_at[:10]}-local-sync">', index, count=1)
+    index = re.sub(r'<meta name="portal-build" content="[^"]+">', f'<meta name="portal-build" content="rlp-mbd-{generated_at[:10]}-{PORTAL_CODE_REVISION}-{source_revision}">', index, count=1)
     index = re.sub(r'As on: [0-9]{2}-[A-Za-z]{3}-[0-9]{4} [0-9]{2}:[0-9]{2}', f"As on: {fallback}", index, count=1)
     index = re.sub(r'v=2026[0-9A-Za-z-]+', f"v={version}", index)
     index_path.write_text(index, encoding="utf-8", newline="\n")
@@ -507,6 +516,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
             "relativePath": f"data/source-files/2026-2027/{TARGET_NAMES[key]}",
             "size": stat.st_size,
             "modifiedAt": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
+            "sha256": hashlib.sha256(src.read_bytes()).hexdigest(),
             "targetPath": f"data/mb-budget-sync/source-files/2026-2027/{TARGET_NAMES[key]}",
         })
 
@@ -542,6 +552,8 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
         "mode": "local-portal-sync",
         "sourceRepo": str(source_dir),
         "targetRepo": str(root),
+        "sourceRevision": source_revision,
+        "assetVersion": version,
         "financialYear": FY,
         "generatedAt": generated_at,
         "syncedAt": generated_at,

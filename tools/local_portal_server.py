@@ -27,6 +27,31 @@ GIT = Path(r"C:\Users\HP\AppData\Local\GitHubDesktop\app-3.6.2\resources\app\git
 ALLOWED_EXT = {".xls", ".xlsx"}
 
 
+def detect_upload_profile(path: Path):
+    """Use the portal parser's sheet detection so local status matches sync behavior."""
+    try:
+        sys.path.insert(0, str(ROOT / "tools"))
+        import local_portal_sync as sync  # type: ignore
+
+        profile = sync.sheet_profile(path)
+        role = profile.get("role")
+        return {
+            "role": role or "",
+            "roleLabel": sync.ROLE_LABELS.get(role, "Not detected"),
+            "score": profile.get("score", 0),
+            "reason": profile.get("reason", "Not detected"),
+            "storedAs": sync.TARGET_NAMES.get(role, ""),
+        }
+    except Exception as exc:
+        return {
+            "role": "",
+            "roleLabel": "Not detected",
+            "score": 0,
+            "reason": f"Detection pending/failed: {exc}",
+            "storedAs": "",
+        }
+
+
 def safe_filename(name: str) -> str:
     base = Path(name or "upload.xls").name
     base = re.sub(r"[^\w .()@+\-&\[\]]+", "_", base).strip(" .")
@@ -43,10 +68,12 @@ def list_uploads(upload_dir: Path):
     for path in sorted(upload_dir.glob("*")):
         if path.is_file() and path.suffix.lower() in ALLOWED_EXT:
             stat = path.stat()
+            profile = detect_upload_profile(path)
             rows.append({
                 "name": path.name,
                 "size": stat.st_size,
                 "modifiedAt": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
+                **profile,
             })
     return rows
 
@@ -105,8 +132,9 @@ LOCAL_SYNC_HTML = r"""<!doctype html>
     h1{font-size:18px;margin:0 0 3px}header p{margin:0;color:#c7d8ea;font-size:12px}
     main{max-width:1120px;margin:18px auto;padding:0 14px;display:grid;gap:14px}
     section{background:#fff;border:1px solid #cbd8e8;border-radius:10px;padding:14px;box-shadow:0 2px 12px rgba(10,22,40,.08)}
-    h2{font-size:14px;margin:0 0 8px;color:#0a315f}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    h2{font-size:14px;margin:0 0 8px;color:#0a315f}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}
     .drop{border:2px dashed #9db8d6;background:#f7fbff;border-radius:10px;padding:18px;text-align:center}
+    .drop.primary{border-color:#0e7a49;background:#eefaf3}
     input[type=file]{width:100%;padding:18px;background:#fff;border:1px solid #d4e0ee;border-radius:8px}
     button{border:0;border-radius:8px;background:#0a315f;color:#fff;padding:10px 14px;font-weight:800;cursor:pointer}
     button.green{background:#0e7a49}button.gold{background:#b88700}button:disabled{opacity:.55;cursor:not-allowed}
@@ -114,6 +142,8 @@ LOCAL_SYNC_HTML = r"""<!doctype html>
     table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-bottom:1px solid #e4edf6;text-align:left}
     th{background:#f1f6fb;color:#48627e}.status{white-space:pre-wrap;background:#f6f8fb;border-radius:8px;padding:10px;font-family:Consolas,monospace;font-size:12px;max-height:260px;overflow:auto}
     .ok{color:#0e7a49;font-weight:800}.warn{color:#9a6500;font-weight:800}.err{color:#a30000;font-weight:800}
+    .role-pill{display:inline-block;border-radius:999px;padding:2px 8px;background:#e8f3ff;color:#0a315f;font-weight:800;font-size:11px}.role-pill.ok{background:#e4f8ed;color:#0e7a49}.role-pill.err{background:#fff1f1;color:#a30000}
+    .sync-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.step{border:1px solid #d4e0ee;border-radius:8px;padding:10px;background:#f9fcff}.step strong{display:block;font-size:12px;color:#0a315f}.step span{display:block;font-size:11px;color:#52677e;margin-top:4px}
     @media(max-width:760px){.grid{grid-template-columns:1fr}.actions button{width:100%}}
   </style>
 </head>
@@ -124,11 +154,18 @@ LOCAL_SYNC_HTML = r"""<!doctype html>
 </header>
 <main>
   <section>
-    <h2>1. Upload Latest XLS/XLSX Files</h2>
+    <h2>1. Choose Folder or Upload Latest XLS/XLSX Files</h2>
     <div class="grid">
+      <div class="drop primary full">
+        <input id="folderFiles" type="file" webkitdirectory directory multiple accept=".xls,.xlsx">
+        <p class="note"><strong>Recommended:</strong> choose the folder containing latest MBRLR source files. After selection, click one button and the portal will upload, sense report types, sync local data and open the refreshed portal.</p>
+        <div class="actions" style="justify-content:center">
+          <button class="green" onclick="autoFolderSync()">Choose Folder Files, Sense & Refresh Portal</button>
+        </div>
+      </div>
       <div class="drop">
         <input id="files" type="file" multiple accept=".xls,.xlsx">
-        <p class="note">Select the six current-year source files. File names can vary; parser detects report type from sheet columns.</p>
+        <p class="note">Manual option: select the six current-year source files. File names can vary; parser detects report type from sheet columns.</p>
       </div>
       <div>
         <p class="note"><strong>Expected report types:</strong><br>PU Budget, PU Month Actual, DEPT-Demand Budget, DEPT-Demand Actual, Demand/SMH Budget, Demand/SMH Actual.</p>
@@ -137,6 +174,11 @@ LOCAL_SYNC_HTML = r"""<!doctype html>
           <button class="gold" onclick="clearUploads()">Clear Local Upload Folder</button>
         </div>
       </div>
+    </div>
+    <div class="sync-steps">
+      <div class="step"><strong>Select path</strong><span>Use the folder picker for PORTAL DATA or any local folder.</span></div>
+      <div class="step"><strong>Auto sense</strong><span>Each Excel file is classified as PU, DEPT-Demand or Demand/SMH.</span></div>
+      <div class="step"><strong>Refresh portal</strong><span>Parser updates local static data and opens the refreshed portal.</span></div>
     </div>
   </section>
   <section>
@@ -157,24 +199,32 @@ LOCAL_SYNC_HTML = r"""<!doctype html>
 const statusBox = document.getElementById('status');
 function writeStatus(text, cls=''){ statusBox.className = 'status ' + cls; statusBox.textContent = text; }
 async function api(path, opts){ const r = await fetch(path, opts); const j = await r.json(); if(!r.ok) throw new Error(j.error || r.statusText); return j; }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderStatus(data){
   const files = data.uploads || [];
-  document.getElementById('filesTable').innerHTML = files.length ? `<table><thead><tr><th>File</th><th>Size</th><th>Modified</th></tr></thead><tbody>${files.map(f=>`<tr><td>${f.name}</td><td>${f.size}</td><td>${f.modifiedAt}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No XLS/XLSX files uploaded yet.</p>';
+  document.getElementById('filesTable').innerHTML = files.length ? `<table><thead><tr><th>File</th><th>Sensed Report</th><th>Reason</th><th>GitHub Store Name</th><th>Size</th><th>Modified</th></tr></thead><tbody>${files.map(f=>`<tr><td>${esc(f.name)}</td><td><span class="role-pill ${f.role ? 'ok' : 'err'}">${esc(f.roleLabel || 'Not detected')}</span></td><td>${esc(f.reason || '-')}</td><td>${esc(f.storedAs || '-')}</td><td>${esc(f.size)}</td><td>${esc(f.modifiedAt)}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No XLS/XLSX files uploaded yet.</p>';
   writeStatus(`Upload folder: ${data.uploadDir}\nGitHub repo: ${data.githubDir}\n\nGit status:\n${data.git && data.git.text ? data.git.text : '-'}`, data.git && data.git.ok ? 'ok' : 'warn');
 }
 async function loadStatus(){ try{ renderStatus(await api('/api/status')); }catch(e){ writeStatus(e.message, 'err'); } }
-async function uploadFiles(){
-  const input = document.getElementById('files');
+async function uploadInputFiles(inputId, autoSync=false){
+  const input = document.getElementById(inputId);
   if(!input.files.length){ writeStatus('Select XLS/XLSX files first.', 'warn'); return; }
   const fd = new FormData();
-  [...input.files].forEach(f => fd.append('files', f));
+  [...input.files].filter(f => /\.(xls|xlsx)$/i.test(f.name)).forEach(f => fd.append('files', f, f.webkitRelativePath || f.name));
   writeStatus('Uploading files to LOCAL-PORTAL-UPLOAD...', 'warn');
-  try{ const data = await api('/api/upload', {method:'POST', body:fd}); renderStatus(data); writeStatus(`Uploaded ${data.saved.length} file(s).\nNow click Sync, Parse & Mirror.`, 'ok'); }
+  try{
+    const data = await api('/api/upload', {method:'POST', body:fd});
+    renderStatus(data);
+    writeStatus(`Uploaded ${data.saved.length} file(s).\n${autoSync ? 'Auto sync is starting now...' : 'Now click Sync, Parse & Mirror.'}`, 'ok');
+    if (autoSync) await runSync(true);
+  }
   catch(e){ writeStatus(e.message, 'err'); }
 }
+async function uploadFiles(){ return uploadInputFiles('files', false); }
+async function autoFolderSync(){ return uploadInputFiles('folderFiles', true); }
 async function runSync(){
   writeStatus('Running local parser and mirroring to GitHub Desktop. Please wait...', 'warn');
-  try{ const data = await api('/api/sync', {method:'POST'}); await loadStatus(); writeStatus(`SYNC OK\n\n${data.output}\n\nOpen portal and verify. Then commit/push in GitHub Desktop.`, 'ok'); }
+  try{ const data = await api('/api/sync', {method:'POST'}); await loadStatus(); writeStatus(`SYNC OK\n\n${data.output}\n\nOpening refreshed portal. Verify locally, then commit/push in GitHub Desktop.`, 'ok'); window.open('/index.html?localSync=' + Date.now(), '_blank'); }
   catch(e){ writeStatus(e.message, 'err'); }
 }
 async function clearUploads(){

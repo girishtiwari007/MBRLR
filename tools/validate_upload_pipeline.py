@@ -47,11 +47,11 @@ def evaluate(expression, await_promise=False):
 
 command("Runtime.enable")
 command("DOM.enable")
-command("Page.navigate", {"url": "http://127.0.0.1:8766/index.html?fresh=20260819-export-freshness-1-upload-test"})
+command("Page.navigate", {"url": f"http://127.0.0.1:8766/index.html?fresh=autoexport-upload-test-{int(time.time())}"})
 time.sleep(5)
 evaluate("sessionStorage.setItem('rlp_upload_admin','1')")
 
-for input_id, status_id, filename in UPLOADS:
+for upload_index, (input_id, status_id, filename) in enumerate(UPLOADS):
     document = command("DOM.getDocument", {"depth": -1})["root"]["nodeId"]
     node_id = command("DOM.querySelector", {"nodeId": document, "selector": f"#{input_id}"})["nodeId"]
     if not node_id:
@@ -67,10 +67,15 @@ for input_id, status_id, filename in UPLOADS:
     print(filename, "=>", status)
     if "Parsed" not in status:
         raise RuntimeError(f"Browser parser failed for {filename}: {status}")
+    if upload_index == 0:
+        pending_block = evaluate("(()=>{try{prepareFreshExport('Pending-test');return 'FAILED'}catch(e){return e.message}})()")
+        if "parsed but not applied" not in pending_block:
+            raise RuntimeError(f"Stale export was not blocked while upload was pending: {pending_block}")
+        print("Pending export guard =>", pending_block)
 
 evaluate("applyUploads()")
 time.sleep(5)
-summary = evaluate("JSON.stringify({checks:portalValidationChecks(),month:getMonthStatus(),budget:BUDGET.TOTAL,monthTotal:MONTH.TOTAL,detailRows:(window.DETAIL_SMH_DATA.rows||[]).length,demandRows:(window.DEMAND_SMH_SUMMARY_DATA.rows||[]).length,history:_uploadHistory.slice(0,6)})")
+summary = evaluate("(()=>{const ai=buildAITrendItems();return JSON.stringify({checks:portalValidationChecks(),fingerprint:exportDataFingerprint(),month:getMonthStatus(),ai:{rows:ai.length,completedThrough:ai[0]&&ai[0].actualMonthLabel,topScore:ai[0]&&ai[0].riskScore,topConfidence:ai[0]&&ai[0].confidence},budget:BUDGET.TOTAL,monthTotal:MONTH.TOTAL,detailRows:(window.DETAIL_SMH_DATA.rows||[]).length,demandRows:(window.DEMAND_SMH_SUMMARY_DATA.rows||[]).length,history:_uploadHistory.slice(0,6)})})()")
 print(summary)
 parsed = json.loads(summary)
 errors = [check for check in parsed["checks"] if check["state"] == "err"]
@@ -78,4 +83,6 @@ if errors:
     raise RuntimeError(f"Portal validation errors after upload: {errors}")
 if parsed["detailRows"] != 905 or parsed["demandRows"] != 12:
     raise RuntimeError(f"Unexpected applied row counts: {parsed['detailRows']} detail, {parsed['demandRows']} demand")
+if parsed["ai"]["completedThrough"] != "JUL" or not isinstance(parsed["ai"]["topScore"], int):
+    raise RuntimeError(f"AI analysis is not using completed-month scoring: {parsed['ai']}")
 ws.close()

@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260819-export-freshness-1';
+const ASSET_VERSION = '20260821-visual-upload-export-user2-autoexports-4de167193d87';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -23,6 +23,9 @@ let _securityIdleTimer = null;
 let _securityWarnTimer = null;
 let _portalLocked = false;
 let _exportConfirmedUntil = 0;
+let _pendingExportLabel = '';
+const EXPORT_USER_DIGEST = '605e2a9a5b09a900b3a780e3f1d9a11a4ca08cb06a149afc231cefd815be1abf';
+const EXPORT_USER_SESSION_KEY = 'rlp_export_user_access';
 
 function securitySessionId() {
   let id = sessionStorage.getItem('rlp_security_session');
@@ -94,7 +97,54 @@ function isEditableSecurityTarget(target) {
   return !!(target && target.closest && target.closest('input, textarea, select, [contenteditable="true"]'));
 }
 
+function isExportUserUnlocked() {
+  return sessionStorage.getItem(EXPORT_USER_SESSION_KEY) === '1' || (typeof isUploadAdminUnlocked === 'function' && isUploadAdminUnlocked());
+}
+
+function requestExportLogin(label) {
+  _pendingExportLabel = label || '';
+  const overlay = document.getElementById('exportLoginOverlay');
+  const pwd = document.getElementById('exportLoginPwd');
+  const err = document.getElementById('exportLoginErr');
+  if (pwd) pwd.value = '';
+  if (err) err.textContent = '';
+  if (overlay) overlay.classList.remove('hidden');
+  setTimeout(() => pwd && pwd.focus(), 30);
+}
+
+function closeExportLogin() {
+  const overlay = document.getElementById('exportLoginOverlay');
+  if (overlay) overlay.classList.add('hidden');
+  _pendingExportLabel = '';
+}
+
+async function doExportLogin() {
+  const pwd = document.getElementById('exportLoginPwd');
+  const err = document.getElementById('exportLoginErr');
+  const digest = await sha256Hex(`EXPORT:${pwd ? pwd.value : ''}`);
+  if (digest !== EXPORT_USER_DIGEST) {
+    if (err) err.textContent = 'Incorrect EXPORT password.';
+    if (pwd) pwd.value = '';
+    return;
+  }
+  sessionStorage.setItem(EXPORT_USER_SESSION_KEY, '1');
+  const pending = _pendingExportLabel;
+  const overlay = document.getElementById('exportLoginOverlay');
+  if (overlay) overlay.classList.add('hidden');
+  _pendingExportLabel = '';
+  showSecurityNotice('EXPORT user unlocked for this browser session.');
+  setTimeout(() => {
+    if (pending.includes('Excel')) downloadExcel();
+    else if (pending.includes('PDF')) downloadPDFReport();
+    else if (pending.includes('PowerPoint')) downloadPowerPoint();
+  }, 50);
+}
+
 function confirmProtectedExport(label) {
+  if (!isExportUserUnlocked()) {
+    requestExportLogin(label);
+    return false;
+  }
   const now = Date.now();
   if (now < _exportConfirmedUntil) return true;
   const ok = window.confirm(`${label} contains official financial data.\n\nSession: ${securitySessionId()}\nThe export will be traceable by this session reference. Continue?`);
@@ -368,13 +418,13 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026; actual till date aligned to APR-AUG month-wise file.'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026; latest loaded month AUG 2026.'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 21-Aug-2026; actual till date aligned to APR-AUG month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 21-Aug-2026; latest loaded month AUG 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026.'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026; latest loaded month AUG 2026.'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 19-Aug-2026. Completed through JUL 2026; AUG 2026 is current running month; latest uploaded actual month detected as AUG 2026. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 21-Aug-2026.'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 21-Aug-2026; latest loaded month AUG 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 21-Aug-2026. Completed through JUL 2026; AUG 2026 is current running month; latest uploaded actual month detected as AUG 2026. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -488,9 +538,9 @@ let _uploadedMonthIdx = null; // latest completed month detected from uploaded C
 let _latestActualMonthIdx = null;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-08-19T11:08:09+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-08-21T11:17:25+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-08-19-local-sync';
+const RLP_BUILD_ID = 'rlp-mbd-2026-08-21-visual-upload-export-user2-4de167193d87';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -3709,8 +3759,11 @@ function hasPYTrendData() {
 }
 
 function buildAITrendItems() {
-  const {cur, latestActual} = getMonthStatus();
-  const actualIdx = latestActual ? latestActual.idx : Math.max(0, cur.idx - 1);
+  const {cur, actualMonths} = getMonthStatus();
+  // Decision analysis must use completed months only. The running month can be
+  // partial and would otherwise distort month movement, YoY and annual forecast.
+  const completedKey = actualMonths.length ? actualMonths[actualMonths.length - 1] : FY_MONTHS[Math.max(0, cur.idx - 1)];
+  const actualIdx = Math.max(0, FY_MONTHS.indexOf(completedKey));
   const prevIdx = Math.max(0, actualIdx - 1);
   const prevKey = FY_MONTHS[prevIdx];
   const curKey = FY_MONTHS[actualIdx];
@@ -3746,23 +3799,48 @@ function buildAITrendItems() {
     const pyTotalAsOn = pySamePeriod;
     const ytdDiff = cyTotalAsOn - pyTotalAsOn;
     const avgCyMonth = monthRows.length ? cySamePeriod / monthRows.length : 0;
+    const forecastYearEnd = avgCyMonth * 12;
+    const forecastVariance = forecastYearEnd - budget;
     const utilPct = budget ? Math.abs((cv.totalCommitted / budget) * 100) : (cv.totalCommitted ? 999 : 0);
     const balanceRatio = budget ? cv.balanceBudget / Math.abs(budget) : 0;
     const overSpent = cv.balanceBudget < 0;
     const noBudgetSpend = budget === 0 && cv.totalCommitted !== 0;
     const projRise = avgCyMonth > 0 && cv.projPerMonth > avgCyMonth * 1.15;
     const budgetNoExpense = budget > 0 && Math.abs(cyTotalAsOn) === 0;
-    const risk = budgetNoExpense ? 'watch' : trendRiskClass({overSpent, noBudgetSpend, utilPct, balanceRatio, projRise});
+    const latestMovePct = Math.abs(cyPrev) > 0 ? ((cyCur - cyPrev) / Math.abs(cyPrev)) * 100 : (cyCur ? 100 : 0);
+    const yoyPct = pyTotalAsOn ? ((cyTotalAsOn - pyTotalAsOn) / Math.abs(pyTotalAsOn)) * 100 : null;
+    let riskScore = 0;
+    if (noBudgetSpend) riskScore += 55;
+    if (overSpent) riskScore += 45;
+    else if (utilPct >= 100) riskScore += 40;
+    else if (utilPct >= 85) riskScore += 28;
+    else if (utilPct >= 70) riskScore += 15;
+    if (budget && balanceRatio < .10) riskScore += 15;
+    if (forecastVariance > Math.max(budget * .05, 1000)) riskScore += 18;
+    if (projRise) riskScore += 8;
+    if (budgetNoExpense) riskScore += 18;
+    if (Math.abs(latestMovePct) >= 30) riskScore += 8;
+    if (yoyPct !== null && yoyPct >= 25) riskScore += 8;
+    riskScore = Math.min(100, Math.round(riskScore));
+    const risk = riskScore >= 60 ? 'high' : riskScore >= 30 ? 'watch' : 'ok';
+    const confidence = monthRows.length >= 3 && hasPYTrendData() ? 'High' : monthRows.length >= 3 ? 'Medium' : 'Low';
+    const recommendedAction = noBudgetSpend ? 'Arrange budget provision and verify booking immediately.'
+      : overSpent ? 'Restrict further booking and initiate budget re-appropriation/ask review.'
+      : forecastVariance > 0 ? `Review likely year-end excess of ${textCr(forecastVariance)} and pending liabilities.`
+      : budgetNoExpense ? 'Confirm work/order and pending bills; consider phased surrender if no liability exists.'
+      : utilPct >= 85 ? 'Monitor next booking cycle and validate remaining committed liability.'
+      : 'Continue monthly monitoring; no immediate budget intervention indicated.';
 
     return {
       pu, cv, budget, cyPrev, cyCur, pyPrev, pyCur, utilPct, balanceRatio,
       overSpent, noBudgetSpend, projRise, risk, prevLabel, curLabel,
       monthRows, cyTotalAsOn, pyTotalAsOn, ytdDiff, budgetNoExpense, avgCyMonth,
+      forecastYearEnd, forecastVariance, latestMovePct, yoyPct, riskScore, confidence, recommendedAction,
       actualIdx, actualMonthLabel:curLabel
     };
   }).sort((a,b) => {
     const riskScore = {high:3, watch:2, ok:1};
-    return (riskScore[b.risk] - riskScore[a.risk]) ||
+    return (b.riskScore - a.riskScore) || (riskScore[b.risk] - riskScore[a.risk]) ||
       (Math.abs(b.utilPct) - Math.abs(a.utilPct)) ||
       (Math.abs(b.cv.balanceBudget) - Math.abs(a.cv.balanceBudget));
   });
@@ -3802,7 +3880,7 @@ function renderAITrendSummary() {
   const digest = `<div class="ai-officer-digest">
     <div class="ai-digest-head">
       <strong>Officer AI Digest</strong>
-      <span>Latest completed actual month: ${htmlSafe(items[0].actualMonthLabel || 'JUN')}</span>
+      <span>Completed-month basis through ${htmlSafe(items[0].actualMonthLabel || 'JUN')} | Running month excluded</span>
     </div>
     <div class="ai-digest-grid">
       <div><span>High / Watch PUs</span><strong>${highItems.length + watchItems.length}</strong><small>High ${highItems.length}, Watch ${watchItems.length}</small></div>
@@ -3811,9 +3889,11 @@ function renderAITrendSummary() {
       <div><span>Amount to Ask</span><strong>${textCr(askRows.reduce((s,r)=>s+(r.askAmount||0),0))}</strong><small>${askRows[0] ? `Top PU-${htmlSafe(askRows[0].pu.code)} ${textCr(askRows[0].askAmount)}` : 'No ask signal'}</small></div>
       <div><span>Possible Surrender</span><strong>${textCr(surrenderRows.reduce((s,r)=>s+(r.surrenderAmount||0),0))}</strong><small>${surrenderRows[0] ? `Top PU-${htmlSafe(surrenderRows[0].pu.code)} ${textCr(surrenderRows[0].surrenderAmount)}` : 'No surrender signal'}</small></div>
       <div><span>Largest Month Move</span><strong>${moveItems[0] ? `PU-${htmlSafe(moveItems[0].pu.code)}` : '-'}</strong><small>${moveItems[0] ? `${signedCr(moveItems[0].cyCur-moveItems[0].cyPrev)} from ${htmlSafe(moveItems[0].prevLabel)} to ${htmlSafe(moveItems[0].curLabel)}` : 'No movement'}</small></div>
+      <div><span>Highest Risk Score</span><strong>${allItems[0] ? `${allItems[0].riskScore}/100` : '-'}</strong><small>${allItems[0] ? `PU-${htmlSafe(allItems[0].pu.code)} | ${htmlSafe(allItems[0].confidence)} confidence` : 'No scored PU'}</small></div>
     </div>
     <ul>
-      <li>Priority is based on overspend, utilisation pressure, budget-with-no-expense and projected liability pressure.</li>
+      <li>Risk score is rule-based and auditable: overspend, utilisation, forecast excess, low balance, month spike, YoY pressure and budget-with-no-expense.</li>
+      <li>Forecast and comparisons use completed months only; the current running month is deliberately excluded to avoid partial-month distortion.</li>
       <li>Staff PU with committed liability remains excluded from this AI Trend Summary to keep focus on controllable action points.</li>
       <li>Budget Control ask/surrender values are indicative and should be checked against pending bills before proposal.</li>
     </ul>
@@ -3869,20 +3949,21 @@ function renderAITrendSummary() {
         <div><span>PY Same Period</span><strong>${hasPY ? textCr(item.pyTotalAsOn) : 'Not loaded'}</strong></div>
         <div><span>Utilisation</span><strong>${item.utilPct.toFixed(1)}%</strong></div>
         <div><span>Balance</span><strong>${textCr(item.cv.balanceBudget)}</strong></div>
+        <div><span>Risk Score</span><strong>${item.riskScore}/100</strong></div>
+        <div><span>Year-end Forecast</span><strong>${textCr(item.forecastYearEnd)}</strong></div>
+        <div><span>Forecast Variance</span><strong>${signedCr(item.forecastVariance)}</strong></div>
+        <div><span>Confidence</span><strong>${htmlSafe(item.confidence)}</strong></div>
       </div>
-      <div class="ai-month-table-wrap">
-        <table class="ai-month-table">
-          <thead><tr><th>Month</th><th>CY</th><th>PY</th><th>Diff</th><th>YoY</th></tr></thead>
-          <tbody>${monthTable}</tbody>
-        </table>
-      </div>
-      <ul class="ai-bullets">
+      <div class="ai-decision-layout"><div class="ai-month-table-wrap">
+        <table class="ai-month-table"><thead><tr><th>Month</th><th>CY</th><th>PY</th><th>Diff</th><th>YoY</th></tr></thead><tbody>${monthTable}</tbody></table>
+      </div><ul class="ai-bullets">
+        <li class="ai-recommended-action"><strong>Recommended action:</strong> ${htmlSafe(item.recommendedAction)}</li>
         <li><strong>Latest actual month movement:</strong> CY ${item.prevLabel} to ${item.curLabel} moved from ${textCr(item.cyPrev)} to ${textCr(item.cyCur)} (${signedCr(cyMove)}).${hasPY ? ` PY moved ${signedCr(pyMove)} for the same completed-month pair.` : ' PY comparison will appear after previous-year file is confirmed.'}</li>
         <li><strong>CY vs PY as-on:</strong> CY total is ${textCr(item.cyTotalAsOn)}${hasPY ? ` against PY same-period ${textCr(item.pyTotalAsOn)} (${ytdPct}; difference ${signedCr(item.ytdDiff)})` : '; PY same-period data is not loaded in this browser'}.</li>
         <li><strong>Latest actual month vs PY:</strong> ${hasPY ? `${item.curLabel} CY is ${textCr(item.cyCur)} against ${textCr(item.pyCur)} in PY (${pctChangeText(item.cyCur, item.pyCur)}; difference ${signedCr(yoyMove)}).` : `PY month comparison is pending; current ${item.curLabel} CY amount is ${textCr(item.cyCur)}.`}</li>
         <li><strong>Budget and overspend:</strong> Budget ${textCr(item.budget)}, utilisation ${item.utilPct.toFixed(1)}%, balance ${textCr(item.cv.balanceBudget)}. ${spendStatus}</li>
         <li><strong>Liability AI analysis:</strong> ${projectionImpact} ${liabilityLine}</li>
-      </ul>
+      </ul></div>
     </div>`;
   }).join('');
 }
@@ -4469,7 +4550,33 @@ function refreshCalculatedSourceData() {
   if (window.DETAIL_SMH_DATA && detailRows.length) window.DETAIL_SMH_DATA.totals = makeDetailTotal(detailRows);
 }
 
+function exportDataFingerprint() {
+  const status = getMonthStatus();
+  const detail = window.DETAIL_SMH_DATA || {rows:[], totals:{}};
+  const demand = window.DEMAND_SMH_SUMMARY_DATA || {rows:[], totals:{}};
+  const core = JSON.stringify({
+    build:RLP_BUILD_ID,
+    asOn:_dataAsOnDate instanceof Date ? _dataAsOnDate.toISOString() : String(_dataAsOnDate || ''),
+    latest:status.latestActual ? status.latestActual.key : '',
+    budget:BUDGET.TOTAL || {}, month:MONTH.TOTAL || {},
+    detailGenerated:detail.generatedAt || '', detailRows:(detail.rows || []).length, detailTotals:detail.totals || {},
+    demandGenerated:demand.generatedAt || '', demandRows:(demand.rows || []).length, demandTotals:demand.totals || {}
+  });
+  let hash = 2166136261;
+  for (let i=0; i<core.length; i++) {
+    hash ^= core.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
 function prepareFreshExport(kind) {
+  if (typeof hasPendingUploadData === 'function' && hasPendingUploadData()) {
+    throw new Error(`${kind} blocked: uploaded file(s) are parsed but not applied. Click OK Apply All Uploaded Data & Refresh Portal first.`);
+  }
+  if (typeof hydrateDemandSMHActualMonthsFromSyncedFile === 'function' && hydrateDemandSMHActualMonthsFromSyncedFile.running) {
+    throw new Error(`${kind} blocked: synced Demand/SMH data is still refreshing. Please retry in a moment.`);
+  }
   refreshCalculatedSourceData();
   renderAll();
   const checks = portalValidationChecks();
@@ -4478,9 +4585,11 @@ function prepareFreshExport(kind) {
   const status = getMonthStatus();
   const generated = new Date();
   const latestMonth = status.latestActual ? `${status.latestActual.label} ${status.latestActual.year}` : 'No actual month';
-  const id = `${ASSET_VERSION}-${generated.toISOString().replace(/[-:.TZ]/g,'').slice(0,14)}`;
+  const fingerprint = exportDataFingerprint();
+  const id = `${ASSET_VERSION}-${fingerprint}-${generated.toISOString().replace(/[-:.TZ]/g,'').slice(0,14)}`;
   document.body.dataset.exportFreshness = id;
-  return {kind, id, generatedAt:generated.toISOString(), latestMonth, checks};
+  document.body.dataset.exportFingerprint = fingerprint;
+  return {kind, id, fingerprint, buildId:RLP_BUILD_ID, generatedAt:generated.toISOString(), latestMonth, checks};
 }
 
 async function downloadExcel() {
@@ -6072,6 +6181,110 @@ const SYNCED_BUDGET_ROLE_MAP = Object.freeze({
   'demand-smh-budget.xls': {type:'demandsmhbudget', year:'cy', label:'Demand / SMH Budget CY'},
   'demand-smh-actual.xls': {type:'demandsmhactual', year:'cy', label:'Demand / SMH Actual CY'}
 });
+
+const FOLDER_UPLOAD_ROLE_ORDER = Object.freeze([
+  {type:'budget', label:'PU Budget'}, {type:'month', label:'PU Month Actual'},
+  {type:'smhbudget', label:'DEPT/SMH Budget'}, {type:'smhmonth', label:'DEPT/SMH Actual'},
+  {type:'demandsmhbudget', label:'Demand/SMH Budget'}, {type:'demandsmhactual', label:'Demand/SMH Actual'}
+]);
+
+function folderRoleFromName(name) {
+  const n = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const isActual = n.includes('actual') || n.includes('month');
+  const isBudget = n.includes('budget') || n.includes('bugdet') || n.includes('bg-isl');
+  const isDetail = n.includes('pu-dept') || (n.includes('department') && n.includes('pu'));
+  const isDemand = n.includes('demand') && n.includes('smh');
+  if (isDetail && isActual) return 'smhmonth';
+  if (isDetail && isBudget) return 'smhbudget';
+  if (isDemand && !isDetail && isActual) return 'demandsmhactual';
+  if (isDemand && !isDetail && isBudget) return 'demandsmhbudget';
+  if (n.includes('pu') && isActual) return 'month';
+  if (n.includes('pu') && isBudget) return 'budget';
+  return '';
+}
+
+async function senseFolderFileRole(file) {
+  const byName = folderRoleFromName(file.name);
+  if (byName) return byName;
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const sample = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', range:0}).slice(0,14)
+    .flat().map(v => String(v || '').toUpperCase()).join(' | ');
+  const hasDept = sample.includes('DEPARTMENT');
+  const hasPU = sample.includes('PUCODE') || sample.includes('PU CODE');
+  const hasSMH = sample.includes('SMH') || sample.includes('DEMAND');
+  const monthCount = FY_MONTH_LABELS.filter(m => sample.includes(m)).length;
+  const hasBudget = sample.includes('BG_ISL') || sample.includes('BG ISL') || sample.includes('BUDGET') || sample.includes('OBA');
+  if (hasDept && hasPU && hasSMH) return monthCount >= 3 ? 'smhmonth' : hasBudget ? 'smhbudget' : '';
+  if (hasSMH && !hasPU) return monthCount >= 3 || sample.includes('ACTUAL') ? 'demandsmhactual' : hasBudget ? 'demandsmhbudget' : '';
+  if (hasPU) return monthCount >= 3 ? 'month' : hasBudget ? 'budget' : '';
+  return '';
+}
+
+function setFolderUploadStatus(message, state='') {
+  const el = document.getElementById('folderUploadStatus');
+  if (!el) return;
+  el.className = 'folder-upload-status' + (state ? ' ' + state : '');
+  el.textContent = message;
+}
+
+async function choosePortalDataFolder() {
+  if (!isUploadAdminUnlocked()) {
+    requestUploadAdmin('upload');
+    return;
+  }
+  if (!window.showDirectoryPicker) {
+    setFolderUploadStatus('Folder picker is unavailable. Use current Chrome/Edge on localhost, or use the six individual upload boxes.', 'err');
+    return;
+  }
+  const btn = document.getElementById('chooseDataFolderBtn');
+  const list = document.getElementById('folderUploadFiles');
+  try {
+    if (btn) btn.disabled = true;
+    setFolderUploadStatus('Waiting for folder selection...', 'loading');
+    const directory = await window.showDirectoryPicker({id:'mbrlr-data-folder', mode:'read'});
+    const detected = new Map();
+    const ignored = [];
+    for await (const handle of directory.values()) {
+      if (handle.kind !== 'file' || !/\.xlsx?$/i.test(handle.name)) continue;
+      const file = await handle.getFile();
+      const role = await senseFolderFileRole(file);
+      if (!role) { ignored.push(file.name); continue; }
+      const existing = detected.get(role);
+      if (!existing || file.lastModified > existing.lastModified) detected.set(role, file);
+    }
+    if (list) list.innerHTML = FOLDER_UPLOAD_ROLE_ORDER.map(role => {
+      const file = detected.get(role.type);
+      return `<div class="folder-file ${file ? 'ok' : 'err'}"><strong>${htmlSafe(role.label)}</strong><span>${file ? htmlSafe(file.name) : 'Missing report'}</span></div>`;
+    }).join('');
+    const missing = FOLDER_UPLOAD_ROLE_ORDER.filter(role => !detected.has(role.type));
+    if (missing.length) throw new Error(`Missing ${missing.length} report(s): ${missing.map(r => r.label).join(', ')}.${ignored.length ? ` Ignored: ${ignored.join(', ')}` : ''}`);
+    setFolderUploadStatus(`Folder "${directory.name}" detected all six reports. Parsing...`, 'loading');
+    _pendingBudget = _pendingMonth = _pendingSMHBudget = _pendingSMHMonth = _pendingDemandSMHBudget = _pendingDemandSMHActual = null;
+    for (const role of FOLDER_UPLOAD_ROLE_ORDER) {
+      const result = await parseUpload(detected.get(role.type), role.type, 'cy');
+      if (!result || result.ok === false) throw new Error(`${role.label} could not be parsed${result && result.error ? ': ' + result.error : ''}.`);
+    }
+    setFolderUploadStatus('All reports parsed. Applying, recalculating and refreshing portal...', 'loading');
+    applyUploads();
+    const checks = portalValidationChecks();
+    const errors = checks.filter(check => check.state === 'err');
+    if (errors.length) throw new Error(`Applied, but validation failed: ${errors.map(e => e.title).join(', ')}`);
+    const audit = prepareFreshExport('Folder refresh validation');
+    setFolderUploadStatus(`Updated successfully from "${directory.name}". Revision ${audit.fingerprint}; data through ${audit.latestMonth}. Excel, PDF and PowerPoint will use this refreshed data.`, 'ok');
+    showPortalNotice('Folder data applied and all portal views refreshed.', 'ok');
+  } catch (err) {
+    if (err && err.name === 'AbortError') setFolderUploadStatus('Folder selection cancelled.', '');
+    else {
+      console.error('Visual folder upload failed', err);
+      setFolderUploadStatus('Folder update failed: ' + (err.message || err), 'err');
+      showPortalNotice('Folder update failed: ' + (err.message || err), 'err');
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
 function setSyncedStatus(message, state){
   const el = document.getElementById('syncedDataStatus');
   if(!el) return;
