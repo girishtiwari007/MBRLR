@@ -2,7 +2,7 @@
   "ok": true,
   "mode": "local-portal-sync",
   "sourceRepo": "D:\\PORTAL DATA\\current year",
-  "targetRepo": "C:\\Users\\HP\\Documents\\Codex\\2026-08-10\\che\\MBRLR",
+  "targetRepo": "D:\\github\\MBRLR",
   "sourceRevision": "1089e87a2b78",
   "assetVersion": "20260831-desktop-sync-readonly1-autoexports-1089e87a2b78",
   "calculationValidation": {
@@ -14,9 +14,9 @@
     "demandMainAE": 13694023
   },
   "financialYear": "2026-2027",
-  "generatedAt": "2026-08-31T12:57:29+05:30",
-  "syncedAt": "2026-08-31T12:57:29+05:30",
-  "confirmedAt": "2026-08-31T12:57:29+05:30",
+  "generatedAt": "2026-08-31T17:48:54+05:30",
+  "syncedAt": "2026-08-31T17:48:54+05:30",
+  "confirmedAt": "2026-08-31T17:48:54+05:30",
   "counts": {
     "sourceFiles": 6,
     "processedFiles": 3,
@@ -159,7 +159,7 @@
   ],
   "actionLog": [
     {
-      "at": "2026-08-31T12:57:29+05:30",
+      "at": "2026-08-31T17:48:54+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [

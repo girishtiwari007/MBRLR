@@ -23,7 +23,7 @@ from local_portal_sync import write_outputs
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CY = Path(r"D:\PORTAL DATA\current year")
 DEFAULT_PY = Path(r"C:\Users\HP\Downloads\PORTAL DATA PY")
-DEFAULT_GITHUB = Path(r"C:\Users\HP\OneDrive\Documents\GitHub\MBRLR")
+DEFAULT_GITHUB = Path(r"D:\github\MBRLR")
 PORT = 8765
 
 
@@ -70,7 +70,7 @@ class SyncApp(tk.Tk):
 
         self._path_card(body, "Portal and GitHub Desktop working folders", [
             ("Portal source", self.repo_var, lambda: self._browse_dir(self.repo_var)),
-            ("OneDrive mirror", self.github_var, lambda: self._browse_dir(self.github_var)),
+            ("GitHub Desktop folder", self.github_var, lambda: self._browse_dir(self.github_var)),
         ]).pack(fill="x", pady=(0, 10))
 
         years = ttk.Frame(body)
