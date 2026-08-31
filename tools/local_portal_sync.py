@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "visual-upload-export-user2"
+PORTAL_CODE_REVISION = "desktop-sync-readonly1"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -237,6 +237,30 @@ def discover_source_files(source_dir: Path):
     return selected, profiles
 
 
+def discover_py_source_files(source_dir: Path):
+    candidates = []
+    for pattern in ("*.xls", "*.xlsx"):
+        candidates.extend(p for p in source_dir.glob(pattern) if not p.name.startswith("~$"))
+    profiles = []
+    for path in candidates:
+        try:
+            profile = sheet_profile(path)
+            if profile.get("role") in {"pu_budget", "pu_month"}:
+                profiles.append(profile)
+        except Exception:
+            continue
+    selected = {}
+    for role in ("pu_budget", "pu_month"):
+        matches = [p for p in profiles if p.get("role") == role]
+        if matches:
+            matches.sort(key=lambda p: (p["score"], p["path"].stat().st_mtime), reverse=True)
+            selected[role] = matches[0]["path"]
+    missing = [ROLE_LABELS[r] for r in ("pu_budget", "pu_month") if r not in selected]
+    if missing:
+        raise SystemExit("Could not detect Previous Year source files:\n" + "\n".join(f"- {m}" for m in missing))
+    return selected, profiles
+
+
 def load_existing_maps(root: Path):
     pu_names, dept_names = {}, {}
     detail_path = root / "assets/js/detail-data.js"
@@ -277,11 +301,11 @@ def parse_pu_budget(path: Path):
     return out
 
 
-def parse_pu_month(path: Path):
+def parse_pu_month(path: Path, start_year=2026):
     sh = read_sheet(path)
     hr, headers = find_header(sh, ["PUCODE"])
     c_pu = col(headers, "PUCODE")
-    month_cols = [month_col(headers, f"{m} 2026" if i <= 8 else f"{m} 2027") for i, m in enumerate(MONTH_LABELS)]
+    month_cols = [month_col(headers, f"{m} {start_year}" if i <= 8 else f"{m} {start_year + 1}") for i, m in enumerate(MONTH_LABELS)]
     out = {}
     latest = -1
     for r in range(hr + 1, sh.nrows):
@@ -436,18 +460,66 @@ def replace_js_assignment(text: str, name: str, value: str) -> str:
     return pattern.sub(f"let {name} = {value};\n", text, count=1)
 
 
-def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
+def validate_generated_outputs(root: Path):
+    app = (root / "assets/js/app.js").read_text(encoding="utf-8")
+    def assignment(name):
+        match = re.search(rf"let {name} = (.*?);\n", app, re.S)
+        if not match:
+            raise RuntimeError(f"Generated portal assignment missing: {name}")
+        return json.loads(match.group(1))
+
+    budget = assignment("BUDGET")
+    month = assignment("MONTH")
+    mismatches = []
+    for code, values in month.items():
+        if code == "TOTAL" or code not in budget:
+            continue
+        month_sum = sum(float(values.get(key, 0) or 0) for key in MONTH_KEYS)
+        if abs(month_sum - float(budget[code].get("actuals_till", 0) or 0)) > 0.5:
+            mismatches.append(code)
+    if mismatches:
+        raise RuntimeError("PU actual/month mismatch after generation: " + ", ".join(mismatches[:15]))
+
+    def window_data(path):
+        text = path.read_text(encoding="utf-8").strip()
+        return json.loads(text[text.index("=") + 1:].rstrip(";").strip())
+
+    detail = window_data(root / "assets/js/detail-data.js")
+    detail_month_sum = sum(float(detail.get("totals", {}).get("months", {}).get(key, 0) or 0) for key in MONTH_KEYS)
+    if abs(detail_month_sum - float(detail.get("totals", {}).get("actualTill", 0) or 0)) > 0.5:
+        raise RuntimeError("DEPT/Demand detail actual total does not equal its month total")
+    demand = window_data(root / "assets/js/demand-smh-data.js")
+    operational = [r for r in demand.get("rows", []) if str(r.get("smh", "")).upper() != "10N"]
+    demand_ae = sum(float(r.get("ae", 0) or 0) for r in operational)
+    if abs(demand_ae - float(demand.get("totals", {}).get("ae", 0) or 0)) > 0.5:
+        raise RuntimeError("Demand/SMH main AE total does not reconcile")
+    return {
+        "ok": True,
+        "puMonthMismatches": 0,
+        "detailRows": len(detail.get("rows", [])),
+        "detailActual": detail.get("totals", {}).get("actualTill", 0),
+        "demandRows": len(demand.get("rows", [])),
+        "demandMainAE": demand.get("totals", {}).get("ae", 0),
+    }
+
+
+def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_source_dir: Path | None = None):
     now = datetime.now(IST).replace(microsecond=0)
     generated_at = now.isoformat()
     source_paths, detected_profiles = discover_source_files(source_dir)
+    py_source_paths, py_profiles = ({}, [])
+    if py_source_dir:
+        py_source_paths, py_profiles = discover_py_source_files(py_source_dir)
     source_hasher = hashlib.sha256()
-    for role in sorted(source_paths):
+    all_revision_sources = [(f"cy:{role}", path) for role, path in source_paths.items()]
+    all_revision_sources += [(f"py:{role}", path) for role, path in py_source_paths.items()]
+    for role, path in sorted(all_revision_sources):
         source_hasher.update(role.encode("utf-8"))
-        with source_paths[role].open("rb") as source_file:
+        with path.open("rb") as source_file:
             for chunk in iter(lambda: source_file.read(1024 * 1024), b""):
                 source_hasher.update(chunk)
     source_revision = source_hasher.hexdigest()[:12]
-    version = f"20260821-{PORTAL_CODE_REVISION}-autoexports-{source_revision}"
+    version = f"{now.strftime('%Y%m%d')}-{PORTAL_CODE_REVISION}-autoexports-{source_revision}"
 
     pu_names, dept_names = load_existing_maps(root)
     budget = parse_pu_budget(source_paths["pu_budget"])
@@ -456,6 +528,15 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
         budget.setdefault(code, {"bg_isl": 0, "rg": 0, "actuals_till": 0})
         budget[code]["actuals_till"] = sum(vals.values())
     detail = parse_detail(source_paths["detail_budget"], source_paths["detail_actual"], pu_names, dept_names)
+    budget_py = month_py = None
+    if py_source_paths:
+        budget_py = parse_pu_budget(py_source_paths["pu_budget"])
+        month_py, _ = parse_pu_month(py_source_paths["pu_month"], start_year=2025)
+        for code, vals in month_py.items():
+            if code == "TOTAL":
+                continue
+            budget_py.setdefault(code, {"bg_isl": 0, "rg": 0, "actuals_till": 0})
+            budget_py[code]["actuals_till"] = sum(vals.values())
     current_idx = current_fy_month_idx(now)
     completed_count = max(0, min(latest_idx, current_idx - 1) + 1)
     mode_note = bp_mode_note(completed_count, current_idx, latest_idx)
@@ -470,6 +551,9 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
     app = re.sub(r"const ASSET_VERSION = '[^']+';", f"const ASSET_VERSION = '{version}';", app, count=1)
     app = replace_js_assignment(app, "BUDGET", json.dumps(budget, separators=(",", ":")))
     app = replace_js_assignment(app, "MONTH", json.dumps(month, separators=(",", ":")))
+    if budget_py is not None and month_py is not None:
+        app = replace_js_assignment(app, "BUDGET_PY", json.dumps(budget_py, separators=(",", ":")))
+        app = replace_js_assignment(app, "MONTH_PY", json.dumps(month_py, separators=(",", ":")))
     stamp = now.strftime("%d-%b-%Y")
     latest_label = fy_month_label(latest_idx)
     latest_month_short = MONTH_LABELS[latest_idx] if latest_idx >= 0 else "latest"
@@ -487,6 +571,15 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
             app,
             count=1,
         )
+    if py_source_paths:
+        py_stamp = now.strftime("%d-%b-%Y")
+        for key in ("budgetPY", "monthPY"):
+            app = re.sub(
+                rf"({key}: \{{label:'[^']+', fy:'[^']+', source:'[^']+', used:'[^']+', remarks:')[^']*('\}})",
+                rf"\1Previous year repository source refreshed by MBRLR Local Sync on {py_stamp}.\2",
+                app,
+                count=1,
+            )
     if "const FY_MONTHS =" not in app:
         app = app.replace("const DEFAULT_DATA_AS_ON_DATE", "const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];\nconst FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];\nconst DEFAULT_DATA_AS_ON_DATE", 1)
     app = re.sub(r"const DEFAULT_DATA_AS_ON_DATE = new Date\('[^']+'\);", f"const DEFAULT_DATA_AS_ON_DATE = new Date('{generated_at}');", app, count=1)
@@ -506,7 +599,8 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
     source_file_entries = []
     for key, src in source_paths.items():
         dst = target_source / TARGET_NAMES[key]
-        shutil.copy2(src, dst)
+        if src.resolve() != dst.resolve():
+            shutil.copy2(src, dst)
         stat = src.stat()
         source_file_entries.append({
             "name": TARGET_NAMES[key],
@@ -519,6 +613,26 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
             "sha256": hashlib.sha256(src.read_bytes()).hexdigest(),
             "targetPath": f"data/mb-budget-sync/source-files/2026-2027/{TARGET_NAMES[key]}",
         })
+    py_source_file_entries = []
+    if py_source_paths:
+        py_target = root / "data/mb-budget-sync/source-files/2025-2026"
+        py_target.mkdir(parents=True, exist_ok=True)
+        for key, src in py_source_paths.items():
+            target_name = TARGET_NAMES[key]
+            dst = py_target / target_name
+            if src.resolve() != dst.resolve():
+                shutil.copy2(src, dst)
+            stat = src.stat()
+            py_source_file_entries.append({
+                "name": target_name,
+                "originalName": src.name,
+                "role": f"py_{key}",
+                "roleLabel": f"Previous Year {ROLE_LABELS[key]}",
+                "size": stat.st_size,
+                "modifiedAt": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
+                "sha256": hashlib.sha256(src.read_bytes()).hexdigest(),
+                "targetPath": f"data/mb-budget-sync/source-files/2025-2026/{target_name}",
+            })
 
     processed = root / "data/mb-budget-sync/processed"
     processed.mkdir(parents=True, exist_ok=True)
@@ -546,7 +660,10 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
         "latestMonth": reports["summary"]["latestMonth"],
         "demandMainAECompleted": demand["totals"]["ae"],
         "demandMainBPCompleted": demand["totals"]["bp"],
+        "pyBudgetRows": len(budget_py) if budget_py is not None else 0,
+        "pyMonthRows": len(month_py) if month_py is not None else 0,
     }
+    calculation_validation = validate_generated_outputs(root)
     manifest = {
         "ok": True,
         "mode": "local-portal-sync",
@@ -554,12 +671,13 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
         "targetRepo": str(root),
         "sourceRevision": source_revision,
         "assetVersion": version,
+        "calculationValidation": calculation_validation,
         "financialYear": FY,
         "generatedAt": generated_at,
         "syncedAt": generated_at,
         "confirmedAt": generated_at,
-        "counts": {"sourceFiles": 6, "processedFiles": 3, "frFiles": 0, "totalFiles": 11},
-        "sourceFiles": source_file_entries,
+        "counts": {"sourceFiles": 6 + len(py_source_file_entries), "processedFiles": 3, "frFiles": 0, "totalFiles": 11 + len(py_source_file_entries)},
+        "sourceFiles": source_file_entries + py_source_file_entries,
         "detectedProfiles": [
             {
                 "file": p["path"].name,
@@ -575,7 +693,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
             {"name": "reports-data.json", "targetPath": "data/mb-budget-sync/processed/reports-data.json"},
             {"name": "year-sources.json", "targetPath": "data/mb-budget-sync/processed/year-sources.json"},
         ],
-        "selectedTargets": [f["targetPath"] for f in source_file_entries],
+        "selectedTargets": [f["targetPath"] for f in source_file_entries + py_source_file_entries],
         "actionLog": [{"at": generated_at, "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data", "status": "confirmed", "files": [f"{f['roleLabel']}: {f['originalName']}" for f in source_file_entries], "summary": summary}],
         "bpMode": mode_note,
     }
@@ -583,7 +701,19 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
     (root / "data/mb-budget-sync/sync-log.json").write_text(json.dumps(manifest["actionLog"], indent=2), encoding="utf-8", newline="\n")
 
     if github_dir:
-        for rel in ["index.html", "assets/js/app.js", "assets/js/detail-data.js", "assets/js/demand-smh-data.js", "data/mb-budget-sync"]:
+        for rel in [
+            "index.html",
+            "assets/css/main.css",
+            "assets/js/app.js",
+            "assets/js/detail-data.js",
+            "assets/js/demand-smh-data.js",
+            "data/mb-budget-sync",
+            "tools/local_portal_sync.py",
+            "tools/mbrlr_sync_gui.py",
+            "START-MBRLR-LOCAL-SYNC.bat",
+            "RUN-LOCAL-DATA-SYNC.bat",
+            "README.md",
+        ]:
             src = root / rel
             dst = github_dir / rel
             if src.is_dir():
@@ -594,6 +724,9 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None):
 
     assert detail["totals"]["actualTill"] == sum(detail["totals"]["months"].values())
     assert len(source_file_entries) == 6
+    if py_source_paths:
+        assert len(py_source_file_entries) == 2
+        assert all(abs((budget_py.get(code) or {}).get("actuals_till", 0) - sum(values.values())) < 0.5 for code, values in month_py.items() if code != "TOTAL")
     return summary
 
 
@@ -602,8 +735,14 @@ def main():
     parser.add_argument("--source", default=r"C:\Users\HP\Downloads\PORTAL DATA")
     parser.add_argument("--root", default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument("--github", default="")
+    parser.add_argument("--py-source", default="", help="Optional Previous Year folder containing PU budget and PU month-wise actual files")
     args = parser.parse_args()
-    summary = write_outputs(Path(args.root), Path(args.source), Path(args.github) if args.github else None)
+    summary = write_outputs(
+        Path(args.root),
+        Path(args.source),
+        Path(args.github) if args.github else None,
+        Path(args.py_source) if args.py_source else None,
+    )
     print(json.dumps(summary, indent=2))
 
 

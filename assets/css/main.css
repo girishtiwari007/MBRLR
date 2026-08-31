@@ -531,8 +531,6 @@ thead th.la { min-width:80px; }
 .local-sync-help strong{display:block;font-size:12px;letter-spacing:.02em;text-transform:uppercase;color:#092744}
 .local-sync-help span,.local-sync-help small{font-size:11px;line-height:1.35}
 .local-sync-help code{background:#E5EFFB;border:1px solid #B8D0EA;border-radius:4px;padding:1px 5px;font-weight:700;color:#092744}
-.local-sync-open{flex:0 0 auto;text-decoration:none;border:0;border-radius:7px;background:#0E7A49;color:#fff;padding:8px 12px;font-size:10px;font-weight:900;box-shadow:0 2px 8px rgba(10,22,40,.14)}
-.local-sync-open:hover{background:#095F38;color:#fff}
 @media(max-width:800px){.local-sync-help{align-items:flex-start;flex-direction:column}}
 .dz-icon{font-size:18px;margin-bottom:4px;display:block}
 .dz-text{font-size:11px;font-weight:600;color:#4A6A90}
