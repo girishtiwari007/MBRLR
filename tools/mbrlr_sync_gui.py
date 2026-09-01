@@ -186,10 +186,18 @@ class SyncApp(tk.Tk):
             validation = manifest.get("calculationValidation", {})
             if not validation.get("ok"):
                 raise RuntimeError("Generated calculation validation did not pass")
+            portal_validation = manifest.get("portalValidation", {})
+            export_validation = manifest.get("exportValidation", {})
+            if not portal_validation.get("ok") or portal_validation.get("viewCount") != 12:
+                raise RuntimeError("All portal pages did not pass the fixed refresh contract")
+            if not export_validation.get("ok") or export_validation.get("minimumFontPt") != 10:
+                raise RuntimeError("Excel/PDF/PowerPoint export contract did not pass")
             self.events.put(("log", json.dumps(summary, indent=2)))
             self.events.put(("log", f"PASS: calculation simulation; PU mismatches {validation.get('puMonthMismatches', 0)}"))
             self.events.put(("log", f"PASS: month sensing selected latest uploaded actual {summary.get('latestMonth', 'none')} using system month {datetime.now().strftime('%b %Y').upper()}"))
             self.events.put(("log", f"PASS: export sources refreshed under asset version {manifest.get('assetVersion')}"))
+            self.events.put(("log", f"PASS: {portal_validation.get('viewCount')} portal pages refreshed and validated"))
+            self.events.put(("log", f"PASS: XLSX/PDF/PPTX mock contract; minimum font {export_validation.get('minimumFontPt')} pt; freshness guards {export_validation.get('freshnessGuards')}"))
             portal_root = github if github and github.exists() else root
             self._ensure_server(portal_root)
             url = f"http://127.0.0.1:{PORT}/index.html?fresh={manifest.get('assetVersion', 'latest')}"

@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "uploaded-month-cutoff2"
+PORTAL_CODE_REVISION = "gui-full-contract3"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -503,6 +503,71 @@ def validate_generated_outputs(root: Path):
     }
 
 
+def validate_portal_export_contract(root: Path, version: str, reporting_month_idx: int):
+    """Block publishing unless every portal view and export fixed rule is present."""
+    html = (root / "index.html").read_text(encoding="utf-8")
+    app = (root / "assets/js/app.js").read_text(encoding="utf-8")
+    view_contract = {
+        "tab-summary": "function renderSummaryPage",
+        "tab-monthwise": "function renderMonthwise",
+        "tab-pumaster": "function renderPUMaster",
+        "tab-trend": "function renderTrend",
+        "tab-aitrend": "function renderAITrendSummary",
+        "tab-bpanalysis": "function renderBPAnalysis",
+        "tab-budgetcontrol": "function renderBudgetControl",
+        "tab-smhdetail": "function renderSMHDetail",
+        "tab-demandsmh": "function renderDemandSMHSummary",
+        "tab-remarks": "function renderRemarks",
+        "tab-backup": "function renderBackupPage",
+        "tab-admin": "function renderAdminDesign",
+    }
+    missing_views = [tab for tab, renderer in view_contract.items() if f'id="{tab}"' not in html or renderer not in app]
+    if missing_views:
+        raise RuntimeError("Portal view contract failed: " + ", ".join(missing_views))
+    if version not in app or f"let _reportingCurrentMonthIdx = {reporting_month_idx};" not in app:
+        raise RuntimeError("Portal freshness or reporting-month contract failed")
+    export_contract = {
+        "Excel generator": "function downloadExcel",
+        "PDF generator": "function downloadPDFReport",
+        "PowerPoint generator": "function downloadPowerPoint",
+        "Excel freshness": "prepareFreshExport('Excel')",
+        "PDF freshness": "prepareFreshExport('PDF')",
+        "PowerPoint freshness": "prepareFreshExport('PowerPoint')",
+        "Excel landscape": "orientation:'landscape'",
+        "Excel one-page width": "fitToWidth:1",
+        "PDF A4 landscape": "new jsPDF({orientation:'landscape', unit:'pt', format:'a4'})",
+        "PDF 10pt tables": "styles:{fontSize:10",
+        "PowerPoint 16:9": '<p:sldSz cx="12192000" cy="6858000" type="screen16x9"/>',
+        "PowerPoint minimum 10pt": "Math.max(1000,size)",
+    }
+    missing_exports = [label for label, token in export_contract.items() if token not in app]
+    if missing_exports:
+        raise RuntimeError("Export contract failed: " + ", ".join(missing_exports))
+    export_text = app[app.index("async function downloadExcel"):app.index("window.downloadHostedUpdatePack")]
+    pdf_fonts = [float(value) for value in re.findall(r"fontSize\s*:\s*(\d+(?:\.\d+)?)", export_text)]
+    excel_fonts = [float(value) for value in re.findall(r"font\s*:\s*\{[^}]*?size\s*:\s*(\d+(?:\.\d+)?)", export_text)]
+    low_fonts = [value for value in pdf_fonts + excel_fonts if value < 10]
+    if low_fonts:
+        raise RuntimeError("Export font contract failed; size below 10pt detected")
+    return {
+        "ok": True,
+        "viewCount": len(view_contract),
+        "views": list(view_contract),
+        "freshAsset": version,
+        "reportingMonthIndex": reporting_month_idx,
+        "uploadControls": html.count('type="file"'),
+    }, {
+        "ok": True,
+        "formats": ["xlsx", "pdf", "pptx"],
+        "minimumFontPt": 10,
+        "explicitFontRulesChecked": len(pdf_fonts) + len(excel_fonts),
+        "excel": "landscape, fit-to-one-page-wide",
+        "pdf": "A4 landscape, repeating tabular layout",
+        "powerPoint": "16:9 canvas, minimum 10pt",
+        "freshnessGuards": 3,
+    }
+
+
 def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_source_dir: Path | None = None,
                   running_month_idx: int | None = None, completed_through_idx: int | None = None):
     now = datetime.now(IST).replace(microsecond=0)
@@ -685,6 +750,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
         "pyMonthRows": len(month_py) if month_py is not None else 0,
     }
     calculation_validation = validate_generated_outputs(root)
+    portal_validation, export_validation = validate_portal_export_contract(root, version, current_idx)
     manifest = {
         "ok": True,
         "mode": "local-portal-sync",
@@ -693,6 +759,8 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
         "sourceRevision": source_revision,
         "assetVersion": version,
         "calculationValidation": calculation_validation,
+        "portalValidation": portal_validation,
+        "exportValidation": export_validation,
         "monthStatus": {
             "systemMonth": fy_month_label(system_idx),
             "reportingCurrentMonth": fy_month_label(current_idx),
