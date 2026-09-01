@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "desktop-sync-readonly1"
+PORTAL_CODE_REVISION = "uploaded-month-cutoff2"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -503,7 +503,8 @@ def validate_generated_outputs(root: Path):
     }
 
 
-def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_source_dir: Path | None = None):
+def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_source_dir: Path | None = None,
+                  running_month_idx: int | None = None, completed_through_idx: int | None = None):
     now = datetime.now(IST).replace(microsecond=0)
     generated_at = now.isoformat()
     source_paths, detected_profiles = discover_source_files(source_dir)
@@ -518,6 +519,8 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
         with path.open("rb") as source_file:
             for chunk in iter(lambda: source_file.read(1024 * 1024), b""):
                 source_hasher.update(chunk)
+    source_revision = source_hasher.hexdigest()[:12]
+    source_hasher.update(f"running:{running_month_idx};completed:{completed_through_idx}".encode("utf-8"))
     source_revision = source_hasher.hexdigest()[:12]
     version = f"{now.strftime('%Y%m%d')}-{PORTAL_CODE_REVISION}-autoexports-{source_revision}"
 
@@ -537,8 +540,17 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
                 continue
             budget_py.setdefault(code, {"bg_isl": 0, "rg": 0, "actuals_till": 0})
             budget_py[code]["actuals_till"] = sum(vals.values())
-    current_idx = current_fy_month_idx(now)
-    completed_count = max(0, min(latest_idx, current_idx - 1) + 1)
+    # Reporting month is controlled by the newest populated uploaded month.
+    # The operating-system month is only a fallback when no actual month exists.
+    # This prevents a calendar rollover from prematurely closing provisional data.
+    system_idx = current_fy_month_idx(now)
+    current_idx = running_month_idx if running_month_idx is not None else (latest_idx if latest_idx >= 0 else system_idx)
+    effective_completed_idx = completed_through_idx if completed_through_idx is not None else current_idx - 1
+    if not 0 <= current_idx < 12 or effective_completed_idx != current_idx - 1:
+        raise RuntimeError("Completed month must immediately precede the running month")
+    if latest_idx > current_idx:
+        raise RuntimeError(f"Uploaded actual data reaches {fy_month_label(latest_idx)}, after selected running month {fy_month_label(current_idx)}")
+    completed_count = effective_completed_idx + 1
     mode_note = bp_mode_note(completed_count, current_idx, latest_idx)
     demand = parse_demand(source_paths["demand_budget"], source_paths["demand_actual"], generated_at, completed_count, current_idx, latest_idx)
     detail["generatedAt"] = generated_at
@@ -551,6 +563,15 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
     app = re.sub(r"const ASSET_VERSION = '[^']+';", f"const ASSET_VERSION = '{version}';", app, count=1)
     app = replace_js_assignment(app, "BUDGET", json.dumps(budget, separators=(",", ":")))
     app = replace_js_assignment(app, "MONTH", json.dumps(month, separators=(",", ":")))
+    app = re.sub(
+        r"let _latestActualMonthIdx = (?:null|-?\d+);",
+        f"let _latestActualMonthIdx = {latest_idx if latest_idx >= 0 else 'null'};",
+        app,
+        count=1,
+    )
+    if "let _reportingCurrentMonthIdx" not in app:
+        app = app.replace("let _latestActualMonthIdx =", f"let _reportingCurrentMonthIdx = {current_idx};\nlet _latestActualMonthIdx =", 1)
+    app = re.sub(r"let _reportingCurrentMonthIdx = (?:null|-?\d+);", f"let _reportingCurrentMonthIdx = {current_idx};", app, count=1)
     if budget_py is not None and month_py is not None:
         app = replace_js_assignment(app, "BUDGET_PY", json.dumps(budget_py, separators=(",", ":")))
         app = replace_js_assignment(app, "MONTH_PY", json.dumps(month_py, separators=(",", ":")))
@@ -672,6 +693,15 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
         "sourceRevision": source_revision,
         "assetVersion": version,
         "calculationValidation": calculation_validation,
+        "monthStatus": {
+            "systemMonth": fy_month_label(system_idx),
+            "reportingCurrentMonth": fy_month_label(current_idx),
+            "latestUploadedMonth": fy_month_label(latest_idx),
+            "completedThrough": fy_month_label(completed_count - 1),
+            "reportingMonthIndex": current_idx,
+            "completedMonthCount": completed_count,
+            "selectionMode": "manual" if running_month_idx is not None or completed_through_idx is not None else "auto",
+        },
         "financialYear": FY,
         "generatedAt": generated_at,
         "syncedAt": generated_at,
@@ -738,12 +768,16 @@ def main():
     parser.add_argument("--root", default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument("--github", default="")
     parser.add_argument("--py-source", default="", help="Optional Previous Year folder containing PU budget and PU month-wise actual files")
+    parser.add_argument("--running-month-index", type=int, default=None, choices=range(12))
+    parser.add_argument("--completed-through-index", type=int, default=None, choices=range(-1, 12))
     args = parser.parse_args()
     summary = write_outputs(
         Path(args.root),
         Path(args.source),
         Path(args.github) if args.github else None,
         Path(args.py_source) if args.py_source else None,
+        args.running_month_index,
+        args.completed_through_index,
     )
     print(json.dumps(summary, indent=2))
 

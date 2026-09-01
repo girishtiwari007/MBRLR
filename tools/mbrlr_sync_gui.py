@@ -17,7 +17,7 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-from local_portal_sync import write_outputs
+from local_portal_sync import MONTH_LABELS, write_outputs
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,11 +67,25 @@ class SyncApp(tk.Tk):
         self.py_var = tk.StringVar(value=str(DEFAULT_PY))
         self.use_py = tk.BooleanVar(value=False)
         self.auto_open = tk.BooleanVar(value=True)
+        self.month_choices = ["AUTO - detect from uploaded actuals"] + [f"{m} {2026 if i <= 8 else 2027}" for i, m in enumerate(MONTH_LABELS)]
+        self.completed_choices = ["AUTO - month before running", "NONE - no completed month"] + self.month_choices[1:]
+        self.running_month_var = tk.StringVar(value=self.month_choices[0])
+        self.completed_month_var = tk.StringVar(value=self.completed_choices[0])
 
         self._path_card(body, "Portal and GitHub Desktop working folders", [
             ("Portal source", self.repo_var, lambda: self._browse_dir(self.repo_var)),
             ("GitHub Desktop folder", self.github_var, lambda: self._browse_dir(self.github_var)),
         ]).pack(fill="x", pady=(0, 10))
+
+        month_card = ttk.Frame(body, style="Card.TFrame", padding=12)
+        month_card.pack(fill="x", pady=(0, 10))
+        month_card.columnconfigure(1, weight=1); month_card.columnconfigure(3, weight=1)
+        ttk.Label(month_card, text="Reporting Month Control", style="CardTitle.TLabel").grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 7))
+        ttk.Label(month_card, text="Completed through", background="#ffffff").grid(row=1, column=0, sticky="w", padx=(0, 7))
+        ttk.Combobox(month_card, textvariable=self.completed_month_var, values=self.completed_choices, state="readonly").grid(row=1, column=1, sticky="ew", padx=(0, 14))
+        ttk.Label(month_card, text="Current / running", background="#ffffff").grid(row=1, column=2, sticky="w", padx=(0, 7))
+        ttk.Combobox(month_card, textvariable=self.running_month_var, values=self.month_choices, state="readonly").grid(row=1, column=3, sticky="ew")
+        ttk.Label(month_card, text="Manual months must be consecutive; the cutoff refreshes portal calculations and every export.", background="#ffffff", foreground="#607080").grid(row=2, column=0, columnspan=4, sticky="w", pady=(7, 0))
 
         years = ttk.Frame(body)
         years.pack(fill="x")
@@ -165,7 +179,9 @@ class SyncApp(tk.Tk):
             self.events.put(("log", f"CY source: {cy_source}"))
             self.events.put(("log", f"PY source: {py_source if py_source else 'unchanged'}"))
             self.events.put(("log", "Detecting report roles from worksheet columns..."))
-            summary = write_outputs(root, cy_source, github, py_source)
+            running_idx, completed_idx = self._selected_month_cutoff()
+            self.events.put(("log", f"Month cutoff: completed={self.completed_month_var.get()}, running={self.running_month_var.get()}"))
+            summary = write_outputs(root, cy_source, github, py_source, running_idx, completed_idx)
             manifest = json.loads((root / "data/mb-budget-sync/sync-manifest.json").read_text(encoding="utf-8"))
             validation = manifest.get("calculationValidation", {})
             if not validation.get("ok"):
@@ -177,7 +193,7 @@ class SyncApp(tk.Tk):
             portal_root = github if github and github.exists() else root
             self._ensure_server(portal_root)
             url = f"http://127.0.0.1:{PORT}/index.html?fresh={manifest.get('assetVersion', 'latest')}"
-            self._validate_live_portal(url, manifest.get("assetVersion", ""))
+            self._validate_live_portal(url, manifest)
             self.events.put(("log", "PASS: every portal tab, chart dataset, and Excel/PDF/PPT export function is available in the fresh live build"))
             webbrowser.open(url)
             self.events.put(("done", f"Sync complete - {manifest.get('sourceRevision')} - {url}"))
@@ -218,8 +234,10 @@ class SyncApp(tk.Tk):
             self.start_sync()
         self.after(60000, self._check_month_rollover)
 
-    def _validate_live_portal(self, url, asset_version):
+    def _validate_live_portal(self, url, manifest):
         """Fail the sync unless the live cache-fresh portal exposes every view and export."""
+        asset_version = manifest.get("assetVersion", "")
+        month_status = manifest.get("monthStatus", {})
         last_error = None
         for _ in range(20):
             try:
@@ -237,12 +255,29 @@ class SyncApp(tk.Tk):
                 missing_views = [view for view in required_views if f'id="{view}"' not in html]
                 required_exports = ("downloadExcel", "downloadPDFReport", "downloadPowerPoint")
                 missing_exports = [name for name in required_exports if name not in app_js]
+                required_export_rules = {
+                    "Excel landscape": "orientation:'landscape'",
+                    "Excel fit-to-page": "fitToWidth:1",
+                    "PDF A4 landscape": "new jsPDF({orientation:'landscape', unit:'pt', format:'a4'})",
+                    "PDF minimum 10 pt": "styles:{fontSize:10",
+                    "PowerPoint 16:9": '<p:sldSz cx="12192000" cy="6858000" type="screen16x9"/>',
+                    "PowerPoint minimum 10 pt": "Math.max(1000,size)",
+                    "Excel freshness guard": "prepareFreshExport('Excel')",
+                    "PDF freshness guard": "prepareFreshExport('PDF')",
+                    "PowerPoint freshness guard": "prepareFreshExport('PowerPoint')",
+                }
+                missing_export_rules = [label for label, token in required_export_rules.items() if token not in app_js]
                 if asset_version and asset_version not in app_js:
                     raise RuntimeError("Live portal is serving a stale application asset")
+                expected_month_idx = month_status.get("reportingMonthIndex")
+                if expected_month_idx is not None and f"let _reportingCurrentMonthIdx = {expected_month_idx};" not in app_js:
+                    raise RuntimeError("Live portal reporting month does not match the uploaded month")
                 if missing_views:
                     raise RuntimeError("Missing portal views: " + ", ".join(missing_views))
                 if missing_exports:
                     raise RuntimeError("Missing export functions: " + ", ".join(missing_exports))
+                if missing_export_rules:
+                    raise RuntimeError("Missing fixed export rules: " + ", ".join(missing_export_rules))
                 if 'type="file"' in html:
                     raise RuntimeError("Browser upload control unexpectedly returned")
                 return
@@ -250,6 +285,21 @@ class SyncApp(tk.Tk):
                 last_error = exc
                 time.sleep(.25)
         raise RuntimeError(f"Live portal validation failed: {last_error}")
+
+    def _selected_month_cutoff(self):
+        running_text, completed_text = self.running_month_var.get(), self.completed_month_var.get()
+        running_idx = None if running_text.startswith("AUTO") else self.month_choices[1:].index(running_text)
+        if completed_text.startswith("AUTO"):
+            completed_idx = None if running_idx is None else running_idx - 1
+        elif completed_text.startswith("NONE"):
+            completed_idx = -1
+        else:
+            completed_idx = self.month_choices[1:].index(completed_text)
+        if running_idx is None and completed_idx is not None:
+            running_idx = completed_idx + 1
+        if running_idx is not None and completed_idx != running_idx - 1:
+            raise RuntimeError("Completed Through must immediately precede Current / Running Month")
+        return running_idx, completed_idx
 
     def _drain_events(self):
         try:
