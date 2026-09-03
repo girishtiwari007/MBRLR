@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "gui-full-contract3"
+PORTAL_CODE_REVISION = "gui-operational-safety5"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -795,8 +795,46 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
         "actionLog": [{"at": generated_at, "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data", "status": "confirmed", "files": [f"{f['roleLabel']}: {f['originalName']}" for f in source_file_entries], "summary": summary}],
         "bpMode": mode_note,
     }
+    manifest["smokeTest"] = {
+        "ok": all([
+            calculation_validation.get("ok"),
+            portal_validation.get("ok"),
+            export_validation.get("ok"),
+            len(source_file_entries) == 6,
+        ]),
+        "testedAt": generated_at,
+        "sourceFileCount": len(source_file_entries),
+        "calculationGate": calculation_validation.get("ok"),
+        "portalGate": portal_validation.get("ok"),
+        "exportGate": export_validation.get("ok"),
+        "reportingCutoff": mode_note,
+    }
+    if not manifest["smokeTest"]["ok"]:
+        raise RuntimeError("Mandatory end-to-end smoke test failed")
+    audit_path = root / "data/mb-budget-sync/audit-history.json"
+    try:
+        audit_history = json.loads(audit_path.read_text(encoding="utf-8")) if audit_path.exists() else []
+        if not isinstance(audit_history, list):
+            audit_history = []
+    except (OSError, ValueError):
+        audit_history = []
+    audit_history.append({
+        "testedAt": generated_at,
+        "sourceRevision": source_revision,
+        "assetVersion": version,
+        "sourceFolder": str(source_dir),
+        "monthStatus": manifest["monthStatus"],
+        "summary": summary,
+        "calculationValidation": calculation_validation,
+        "portalValidation": portal_validation,
+        "exportValidation": export_validation,
+        "smokeTest": manifest["smokeTest"],
+    })
+    audit_history = audit_history[-100:]
     (root / "data/mb-budget-sync/sync-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
     (root / "data/mb-budget-sync/sync-log.json").write_text(json.dumps(manifest["actionLog"], indent=2), encoding="utf-8", newline="\n")
+    (root / "data/mb-budget-sync/smoke-test.json").write_text(json.dumps(manifest["smokeTest"], indent=2), encoding="utf-8", newline="\n")
+    audit_path.write_text(json.dumps(audit_history, indent=2), encoding="utf-8", newline="\n")
 
     if github_dir and github_dir.resolve() != root.resolve():
         for rel in [

@@ -4,7 +4,7 @@
   "sourceRepo": "D:\\PORTAL DATA\\current year",
   "targetRepo": "C:\\Users\\HP\\Documents\\Codex\\2026-08-10\\che\\MBRLR",
   "sourceRevision": "0a05a6a0ecbf",
-  "assetVersion": "20260901-gui-full-contract3-autoexports-0a05a6a0ecbf",
+  "assetVersion": "20260903-gui-operational-safety5-autoexports-0a05a6a0ecbf",
   "calculationValidation": {
     "ok": true,
     "puMonthMismatches": 0,
@@ -30,7 +30,7 @@
       "tab-backup",
       "tab-admin"
     ],
-    "freshAsset": "20260901-gui-full-contract3-autoexports-0a05a6a0ecbf",
+    "freshAsset": "20260903-gui-operational-safety5-autoexports-0a05a6a0ecbf",
     "reportingMonthIndex": 5,
     "uploadControls": 0
   },
@@ -58,9 +58,9 @@
     "selectionMode": "manual"
   },
   "financialYear": "2026-2027",
-  "generatedAt": "2026-09-01T16:17:37+05:30",
-  "syncedAt": "2026-09-01T16:17:37+05:30",
-  "confirmedAt": "2026-09-01T16:17:37+05:30",
+  "generatedAt": "2026-09-03T15:35:15+05:30",
+  "syncedAt": "2026-09-03T15:35:15+05:30",
+  "confirmedAt": "2026-09-03T15:35:15+05:30",
   "counts": {
     "sourceFiles": 6,
     "processedFiles": 3,
@@ -203,7 +203,7 @@
   ],
   "actionLog": [
     {
-      "at": "2026-09-01T16:17:37+05:30",
+      "at": "2026-09-03T15:35:15+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [
@@ -229,5 +229,14 @@
       }
     }
   ],
-  "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026"
+  "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026",
+  "smokeTest": {
+    "ok": true,
+    "testedAt": "2026-09-03T15:35:15+05:30",
+    "sourceFileCount": 6,
+    "calculationGate": true,
+    "portalGate": true,
+    "exportGate": true,
+    "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026"
+  }
 }

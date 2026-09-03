@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260901-gui-full-contract3-autoexports-0a05a6a0ecbf';
+const ASSET_VERSION = '20260903-gui-operational-safety5-autoexports-0a05a6a0ecbf';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -418,13 +418,13 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 01-Sep-2026; actual till date aligned to APR-AUG month-wise file.'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 01-Sep-2026; latest loaded month AUG 2026.'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026; actual till date aligned to APR-AUG month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026; latest loaded month AUG 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 01-Sep-2026.'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 01-Sep-2026; latest loaded month AUG 2026.'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 01-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026.'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026; latest loaded month AUG 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -539,9 +539,9 @@ let _reportingCurrentMonthIdx = 5; // GUI-selected or auto-detected reporting mo
 let _latestActualMonthIdx = 4;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-01T16:17:37+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-03T15:35:15+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-09-01-gui-full-contract3-0a05a6a0ecbf';
+const RLP_BUILD_ID = 'rlp-mbd-2026-09-03-gui-operational-safety5-0a05a6a0ecbf';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;

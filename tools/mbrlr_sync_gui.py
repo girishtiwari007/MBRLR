@@ -31,18 +31,20 @@ class SyncApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("MBRLR Local Sync")
-        self.geometry("940x690")
-        self.minsize(820, 600)
+        self.geometry("980x820")
+        self.minsize(880, 700)
         self.configure(bg="#eef4fb")
         self.cy_files: list[Path] = []
         self.py_files: list[Path] = []
         self.events: queue.Queue = queue.Queue()
         self._calendar_month = datetime.now().strftime("%Y-%m")
         self._sync_running = False
+        self._source_fingerprint = None
         self._build_ui()
         self.after(150, self._drain_events)
         self.after(1200, self._check_initial_month_refresh)
         self.after(60000, self._check_month_rollover)
+        self.after(3000, self._watch_source_folder)
 
     def _build_ui(self):
         style = ttk.Style(self)
@@ -102,6 +104,14 @@ class SyncApp(tk.Tk):
         self.sync_btn = ttk.Button(controls, text="SIMULATE, VALIDATE & SYNC", command=self.start_sync)
         self.sync_btn.pack(side="right")
 
+        gates = ttk.Frame(body, style="Card.TFrame", padding=10)
+        gates.pack(fill="x", pady=(0, 10))
+        ttk.Label(gates, text="Mandatory Validation Gates", style="CardTitle.TLabel").pack(anchor="w", pady=(0, 6))
+        gate_row = ttk.Frame(gates, style="Card.TFrame"); gate_row.pack(fill="x")
+        self.gate_vars = {name: tk.StringVar(value=f"{name}: WAITING") for name in ("SOURCE", "CALCULATION", "PAGES", "EXPORTS")}
+        for variable in self.gate_vars.values():
+            tk.Label(gate_row, textvariable=variable, bg="#e8eef6", fg="#40546b", padx=10, pady=5, font=("Segoe UI", 9, "bold")).pack(side="left", expand=True, fill="x", padx=3)
+
         log_card = ttk.Frame(body, style="Card.TFrame", padding=10)
         log_card.pack(fill="both", expand=True)
         ttk.Label(log_card, text="Simulation and Sync Log", style="CardTitle.TLabel").pack(anchor="w", pady=(0, 6))
@@ -157,6 +167,8 @@ class SyncApp(tk.Tk):
         self.sync_btn.configure(state="disabled")
         self.status_var.set("Simulation running - portal files are not mirrored until validation passes")
         self._append("\n--- MBRLR validated sync started ---")
+        for name, variable in self.gate_vars.items():
+            variable.set(f"{name}: RUNNING")
         threading.Thread(target=self._sync_worker, daemon=True).start()
 
     def _stage(self, files, fallback, stack):
@@ -171,6 +183,8 @@ class SyncApp(tk.Tk):
 
     def _sync_worker(self):
         temps = []
+        backup_dir = None
+        root = None
         try:
             root = Path(self.repo_var.get()).resolve()
             github = Path(self.github_var.get()).resolve() if self.github_var.get().strip() else None
@@ -179,6 +193,7 @@ class SyncApp(tk.Tk):
             self.events.put(("log", f"CY source: {cy_source}"))
             self.events.put(("log", f"PY source: {py_source if py_source else 'unchanged'}"))
             self.events.put(("log", "Detecting report roles from worksheet columns..."))
+            backup_dir = self._backup_generated_files(root, temps)
             running_idx, completed_idx = self._selected_month_cutoff()
             self.events.put(("log", f"Month cutoff: completed={self.completed_month_var.get()}, running={self.running_month_var.get()}"))
             summary = write_outputs(root, cy_source, github, py_source, running_idx, completed_idx)
@@ -192,12 +207,17 @@ class SyncApp(tk.Tk):
                 raise RuntimeError("All portal pages did not pass the fixed refresh contract")
             if not export_validation.get("ok") or export_validation.get("minimumFontPt") != 10:
                 raise RuntimeError("Excel/PDF/PowerPoint export contract did not pass")
+            smoke_test = manifest.get("smokeTest", {})
+            if not smoke_test.get("ok") or smoke_test.get("sourceFileCount") != 6:
+                raise RuntimeError("Mandatory end-to-end smoke test did not pass")
+            self.events.put(("gates", {"SOURCE": True, "CALCULATION": True, "PAGES": True, "EXPORTS": True}))
             self.events.put(("log", json.dumps(summary, indent=2)))
             self.events.put(("log", f"PASS: calculation simulation; PU mismatches {validation.get('puMonthMismatches', 0)}"))
             self.events.put(("log", f"PASS: month sensing selected latest uploaded actual {summary.get('latestMonth', 'none')} using system month {datetime.now().strftime('%b %Y').upper()}"))
             self.events.put(("log", f"PASS: export sources refreshed under asset version {manifest.get('assetVersion')}"))
             self.events.put(("log", f"PASS: {portal_validation.get('viewCount')} portal pages refreshed and validated"))
             self.events.put(("log", f"PASS: XLSX/PDF/PPTX mock contract; minimum font {export_validation.get('minimumFontPt')} pt; freshness guards {export_validation.get('freshnessGuards')}"))
+            self.events.put(("log", "PASS: persistent end-to-end smoke-test report written"))
             portal_root = github if github and github.exists() else root
             self._ensure_server(portal_root)
             url = f"http://127.0.0.1:{PORT}/index.html?fresh={manifest.get('assetVersion', 'latest')}"
@@ -206,6 +226,10 @@ class SyncApp(tk.Tk):
             webbrowser.open(url)
             self.events.put(("done", f"Sync complete - {manifest.get('sourceRevision')} - {url}"))
         except Exception as exc:
+            if root is not None and backup_dir is not None:
+                self._restore_generated_files(root, backup_dir)
+                self.events.put(("log", "ROLLBACK: restored the last-known-good portal files"))
+            self.events.put(("gates", {"SOURCE": False, "CALCULATION": False, "PAGES": False, "EXPORTS": False}))
             self.events.put(("error", str(exc)))
         finally:
             for temp in temps:
@@ -218,6 +242,55 @@ class SyncApp(tk.Tk):
                 return
         flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
         subprocess.Popen([sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"], cwd=portal_root, creationflags=flags, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def _generated_paths(self):
+        return [
+            Path("index.html"), Path("assets/js/app.js"), Path("assets/js/detail-data.js"),
+            Path("assets/js/demand-smh-data.js"), Path("data/mb-budget-sync/sync-manifest.json"),
+            Path("data/mb-budget-sync/sync-log.json"), Path("data/mb-budget-sync/smoke-test.json"),
+            Path("data/mb-budget-sync/audit-history.json"),
+        ]
+
+    def _backup_generated_files(self, root, temps):
+        temp = tempfile.TemporaryDirectory(prefix="mbrlr-last-good-")
+        temps.append(temp)
+        backup = Path(temp.name)
+        for rel in self._generated_paths():
+            source = root / rel
+            if source.exists():
+                target = backup / rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+        self.events.put(("log", "BACKUP: last-known-good generated files secured for this run"))
+        return backup
+
+    def _restore_generated_files(self, root, backup):
+        for rel in self._generated_paths():
+            source = backup / rel
+            if source.exists():
+                target = root / rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+
+    def _folder_fingerprint(self):
+        folder = Path(self.cy_var.get())
+        if not folder.is_dir() or self.cy_files:
+            return None
+        return tuple(sorted((p.name.lower(), p.stat().st_size, p.stat().st_mtime_ns) for p in folder.iterdir() if p.is_file() and p.suffix.lower() in {".xls", ".xlsx"}))
+
+    def _watch_source_folder(self):
+        try:
+            fingerprint = self._folder_fingerprint()
+            if self._source_fingerprint is None:
+                self._source_fingerprint = fingerprint
+            elif fingerprint and fingerprint != self._source_fingerprint:
+                self._source_fingerprint = fingerprint
+                self._append("SOURCE CHANGE DETECTED: Current Year workbook folder was updated.")
+                if not self._sync_running and messagebox.askyesno("MBRLR Local Sync", "New or changed Current Year files were detected.\n\nRun the full validated sync now?"):
+                    self.start_sync()
+        except Exception as exc:
+            self._append(f"Folder watcher warning: {exc}")
+        self.after(30000, self._watch_source_folder)
 
     def _check_initial_month_refresh(self):
         """Automatically catch up when the GUI is first opened in a new month."""
@@ -321,6 +394,9 @@ class SyncApp(tk.Tk):
                     self.sync_btn.configure(state="normal")
                     self._sync_running = False
                     messagebox.showinfo("MBRLR Local Sync", "Simulation, validation and sync completed successfully.\n\n" + value)
+                elif kind == "gates":
+                    for name, passed in value.items():
+                        self.gate_vars[name].set(f"{name}: {'PASS' if passed else 'FAILED'}")
                 elif kind == "error":
                     self._append("FAILED: " + value)
                     self.status_var.set("Sync failed - portal mirror was not intentionally advanced")

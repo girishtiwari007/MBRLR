@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "testedAt": "2026-09-03T15:35:15+05:30",
+  "sourceFileCount": 6,
+  "calculationGate": true,
+  "portalGate": true,
+  "exportGate": true,
+  "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026"
+}

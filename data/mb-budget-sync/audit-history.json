@@ -1,0 +1,162 @@
+[
+  {
+    "testedAt": "2026-09-03T15:34:42+05:30",
+    "sourceRevision": "0a05a6a0ecbf",
+    "assetVersion": "20260903-gui-operational-safety5-autoexports-0a05a6a0ecbf",
+    "sourceFolder": "D:\\PORTAL DATA\\current year",
+    "monthStatus": {
+      "systemMonth": "SEP 2026",
+      "reportingCurrentMonth": "SEP 2026",
+      "latestUploadedMonth": "AUG 2026",
+      "completedThrough": "AUG 2026",
+      "reportingMonthIndex": 5,
+      "completedMonthCount": 5,
+      "selectionMode": "manual"
+    },
+    "summary": {
+      "puBudgetRows": 47,
+      "puMonthRows": 40,
+      "detailRows": 810,
+      "detailBudget": 34145286,
+      "detailActual": 16141297,
+      "demandRows": 12,
+      "latestMonth": "AUG 2026",
+      "demandMainAECompleted": 15417243,
+      "demandMainBPCompleted": 13581613,
+      "pyBudgetRows": 0,
+      "pyMonthRows": 0
+    },
+    "calculationValidation": {
+      "ok": true,
+      "puMonthMismatches": 0,
+      "detailRows": 810,
+      "detailActual": 16141297,
+      "demandRows": 12,
+      "demandMainAE": 15417243
+    },
+    "portalValidation": {
+      "ok": true,
+      "viewCount": 12,
+      "views": [
+        "tab-summary",
+        "tab-monthwise",
+        "tab-pumaster",
+        "tab-trend",
+        "tab-aitrend",
+        "tab-bpanalysis",
+        "tab-budgetcontrol",
+        "tab-smhdetail",
+        "tab-demandsmh",
+        "tab-remarks",
+        "tab-backup",
+        "tab-admin"
+      ],
+      "freshAsset": "20260903-gui-operational-safety5-autoexports-0a05a6a0ecbf",
+      "reportingMonthIndex": 5,
+      "uploadControls": 0
+    },
+    "exportValidation": {
+      "ok": true,
+      "formats": [
+        "xlsx",
+        "pdf",
+        "pptx"
+      ],
+      "minimumFontPt": 10,
+      "explicitFontRulesChecked": 9,
+      "excel": "landscape, fit-to-one-page-wide",
+      "pdf": "A4 landscape, repeating tabular layout",
+      "powerPoint": "16:9 canvas, minimum 10pt",
+      "freshnessGuards": 3
+    },
+    "smokeTest": {
+      "ok": true,
+      "testedAt": "2026-09-03T15:34:42+05:30",
+      "sourceFileCount": 6,
+      "calculationGate": true,
+      "portalGate": true,
+      "exportGate": true,
+      "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026"
+    }
+  },
+  {
+    "testedAt": "2026-09-03T15:35:15+05:30",
+    "sourceRevision": "0a05a6a0ecbf",
+    "assetVersion": "20260903-gui-operational-safety5-autoexports-0a05a6a0ecbf",
+    "sourceFolder": "D:\\PORTAL DATA\\current year",
+    "monthStatus": {
+      "systemMonth": "SEP 2026",
+      "reportingCurrentMonth": "SEP 2026",
+      "latestUploadedMonth": "AUG 2026",
+      "completedThrough": "AUG 2026",
+      "reportingMonthIndex": 5,
+      "completedMonthCount": 5,
+      "selectionMode": "manual"
+    },
+    "summary": {
+      "puBudgetRows": 47,
+      "puMonthRows": 40,
+      "detailRows": 810,
+      "detailBudget": 34145286,
+      "detailActual": 16141297,
+      "demandRows": 12,
+      "latestMonth": "AUG 2026",
+      "demandMainAECompleted": 15417243,
+      "demandMainBPCompleted": 13581613,
+      "pyBudgetRows": 0,
+      "pyMonthRows": 0
+    },
+    "calculationValidation": {
+      "ok": true,
+      "puMonthMismatches": 0,
+      "detailRows": 810,
+      "detailActual": 16141297,
+      "demandRows": 12,
+      "demandMainAE": 15417243
+    },
+    "portalValidation": {
+      "ok": true,
+      "viewCount": 12,
+      "views": [
+        "tab-summary",
+        "tab-monthwise",
+        "tab-pumaster",
+        "tab-trend",
+        "tab-aitrend",
+        "tab-bpanalysis",
+        "tab-budgetcontrol",
+        "tab-smhdetail",
+        "tab-demandsmh",
+        "tab-remarks",
+        "tab-backup",
+        "tab-admin"
+      ],
+      "freshAsset": "20260903-gui-operational-safety5-autoexports-0a05a6a0ecbf",
+      "reportingMonthIndex": 5,
+      "uploadControls": 0
+    },
+    "exportValidation": {
+      "ok": true,
+      "formats": [
+        "xlsx",
+        "pdf",
+        "pptx"
+      ],
+      "minimumFontPt": 10,
+      "explicitFontRulesChecked": 9,
+      "excel": "landscape, fit-to-one-page-wide",
+      "pdf": "A4 landscape, repeating tabular layout",
+      "powerPoint": "16:9 canvas, minimum 10pt",
+      "freshnessGuards": 3
+    },
+    "smokeTest": {
+      "ok": true,
+      "testedAt": "2026-09-03T15:35:15+05:30",
+      "sourceFileCount": 6,
+      "calculationGate": true,
+      "portalGate": true,
+      "exportGate": true,
+      "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026"
+    }
+  }
+]

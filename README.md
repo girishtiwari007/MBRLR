@@ -2,6 +2,8 @@
 
 Static GitHub-ready split build for the Moradabad Division Revenue Liability Portal.
 
+For complete loss recovery and rebuilding from the original Excel reports, follow [PORTAL-RECOVERY-README.md](PORTAL-RECOVERY-README.md).
+
 ## Main Files
 
 - `index.html` - page structure only
@@ -35,6 +37,8 @@ Do not delete the `assets` folder, because `index.html` now depends on those CSS
 Portal-side file upload is intentionally disabled. Run `START-MBRLR-LOCAL-SYNC.bat` (or the legacy `RUN-LOCAL-DATA-SYNC.bat`) to open the separate Windows GUI.
 
 The GUI defaults to `D:\PORTAL DATA\current year` and accepts a Current Year folder or six individual source files, plus an optional Previous Year folder or two individual PU files. Each successful sync parses and validates the inputs, reconciles the calculations, refreshes every portal dataset and export payload, mirrors the working files to the selected GitHub Desktop folder, starts the local portal if required, validates every portal tab and Excel/PDF/PPT export entry point, and always opens a cache-busted fresh view. A failed validation stops the workflow. It does not commit or push Git changes.
+
+Every GUI run is protected by four visible mandatory gates: source detection, calculation reconciliation, all-page refresh, and export validation. Before rebuilding, it backs up the generated portal files and automatically restores that last-known-good set if any gate fails. Successful runs append a timestamped result to `data/mb-budget-sync/audit-history.json` (the latest 100 runs), and the GUI watches the Current Year folder every 30 seconds for changed Excel workbooks.
 
 Month sensing is automatic. The latest non-zero month found in the uploaded actual workbooks is treated as the reporting/current month, and the preceding months are treated as completed. The computer calendar is only a fallback when no populated actual month can be detected, so a month-end rollover cannot prematurely close provisional data. If the GUI is opened in a new calendar month—or remains open across a month boundary—it automatically reruns the complete simulation, portal refresh, and export refresh workflow using that uploaded reporting cutoff.
 
