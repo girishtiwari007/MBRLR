@@ -1,7 +1,7 @@
 {
   "financialYear": "2026-2027",
-  "generatedAt": "2026-09-03T15:35:15+05:30",
-  "sourceFolder": "D:\\PORTAL DATA\\current year",
+  "generatedAt": "2026-09-05T18:15:49+05:30",
+  "sourceFolder": "E:\\GITHUB\\source-files\\2026-2027",
   "files": {
     "pu_budget": {
       "detectedFile": "PU-BUDGET.xls",
@@ -24,7 +24,7 @@
       "label": "DEPT-Demand/SMH PU-wise Month-wise Actual"
     },
     "demand_budget": {
-      "detectedFile": "DEMAND-SMH-BUGDET.xls",
+      "detectedFile": "demand-smh-budget.xls",
       "storedAs": "demand-smh-budget.xls",
       "label": "Demand/SMH Budget Summary"
     },

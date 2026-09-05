@@ -21,10 +21,10 @@ from local_portal_sync import MONTH_LABELS, write_outputs
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CY = Path(r"D:\PORTAL DATA\current year")
+DEFAULT_CY = ROOT.parent / "source-files" / "2026-2027"
 DEFAULT_PY = Path(r"C:\Users\HP\Downloads\PORTAL DATA PY")
-DEFAULT_GITHUB = Path(r"D:\github\MBRLR")
-PORT = 8765
+DEFAULT_GITHUB = ROOT
+PORT = 8767
 
 
 class SyncApp(tk.Tk):

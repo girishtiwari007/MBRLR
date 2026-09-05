@@ -1,0 +1,59 @@
+{
+  "sourceChecks": {
+    "budget": true,
+    "monthly": true,
+    "detailRows": true,
+    "detailTotals": true,
+    "demandRows": true,
+    "demandTotals": true
+  },
+  "calculationValidation": {
+    "ok": true,
+    "puMonthMismatches": 0,
+    "detailRows": 910,
+    "detailActual": 17273494,
+    "demandRows": 12,
+    "demandMainAE": 16528995
+  },
+  "ppt": {
+    "slides": 5,
+    "aspectRatio": "16:9",
+    "minimumFontPt": 10,
+    "packageValid": true,
+    "shapeBoundsValid": true,
+    "septemberIncluded": true,
+    "renderedSlidesInspected": 5,
+    "layoutFunctionsUnchanged": true
+  },
+  "appSha256": "4ba440778a4fa19e41abb95a4b7bd958838ce5cbe454e774d769d9416e2f1e04",
+  "testedAt": "2026-09-05T18:17:00.922432+05:30",
+  "sourceRevision": "dd7595432c88",
+  "gui": {
+    "ok": true,
+    "gates": [
+      "SOURCE",
+      "CALCULATION",
+      "PAGES",
+      "EXPORTS"
+    ],
+    "url": "http://127.0.0.1:8767/index.html"
+  },
+  "browser": {
+    "publicPagesPassed": [
+      "Summary",
+      "Main Report",
+      "DEPT-Demand",
+      "Demand / SMH",
+      "PU Master",
+      "Month-wise",
+      "BP Analysis",
+      "Budget Control",
+      "Graphs",
+      "AI Summary"
+    ],
+    "consoleErrors": 0,
+    "powerPointButtonStatus": "ppt-finished",
+    "adminAndHiddenViews": "12-view static contract passed; protected admin and hidden views were not interactively exercised",
+    "excelPdfDownloads": "Static format contracts verified; downloaded files not verified"
+  }
+}

@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260903-gui-operational-safety5-autoexports-0a05a6a0ecbf';
+const ASSET_VERSION = '20260905-gui-operational-safety5-autoexports-dd7595432c88';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -418,20 +418,20 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026; actual till date aligned to APR-AUG month-wise file.'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026; latest loaded month AUG 2026.'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026; latest loaded month SEP 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026.'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026; latest loaded month AUG 2026.'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 03-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as AUG 2026. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026.'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026; latest loaded month SEP 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
-let BUDGET = {"01":{"bg_isl":6706409,"rg":0,"actuals_till":3073272},"02":{"bg_isl":4100453,"rg":0,"actuals_till":1968578},"03":{"bg_isl":285089,"rg":0,"actuals_till":81},"04":{"bg_isl":776198,"rg":0,"actuals_till":337922},"07":{"bg_isl":496609,"rg":0,"actuals_till":216618},"08":{"bg_isl":1285187,"rg":0,"actuals_till":532040},"10":{"bg_isl":680197,"rg":0,"actuals_till":364653},"11":{"bg_isl":77300,"rg":0,"actuals_till":59582},"12":{"bg_isl":209913,"rg":0,"actuals_till":122506},"13":{"bg_isl":527832,"rg":0,"actuals_till":279175},"14":{"bg_isl":3566,"rg":0,"actuals_till":427},"15":{"bg_isl":16048,"rg":0,"actuals_till":11132},"16":{"bg_isl":308081,"rg":0,"actuals_till":217182},"17":{"bg_isl":2110,"rg":0,"actuals_till":0},"18":{"bg_isl":8252,"rg":0,"actuals_till":0},"19":{"bg_isl":655,"rg":0,"actuals_till":0},"20":{"bg_isl":18623,"rg":0,"actuals_till":12682},"21":{"bg_isl":3300,"rg":0,"actuals_till":0},"22":{"bg_isl":0,"rg":0,"actuals_till":0},"23":{"bg_isl":42,"rg":0,"actuals_till":0},"24":{"bg_isl":215,"rg":0,"actuals_till":0},"25":{"bg_isl":379418,"rg":0,"actuals_till":374892},"26":{"bg_isl":384392,"rg":0,"actuals_till":152898},"27":{"bg_isl":1068752,"rg":0,"actuals_till":746612},"28":{"bg_isl":149947,"rg":0,"actuals_till":70596},"29":{"bg_isl":0,"rg":0,"actuals_till":476},"30":{"bg_isl":3878724,"rg":0,"actuals_till":1504722},"31":{"bg_isl":95273,"rg":0,"actuals_till":66725},"32":{"bg_isl":3254310,"rg":0,"actuals_till":1822493},"33":{"bg_isl":2625440,"rg":0,"actuals_till":692235},"36":{"bg_isl":155548,"rg":0,"actuals_till":17414},"38":{"bg_isl":95829,"rg":0,"actuals_till":44460},"39":{"bg_isl":5,"rg":0,"actuals_till":23},"42":{"bg_isl":25882,"rg":0,"actuals_till":5329},"43":{"bg_isl":12005,"rg":0,"actuals_till":2572},"44":{"bg_isl":11589,"rg":0,"actuals_till":224748},"49":{"bg_isl":544,"rg":0,"actuals_till":6382},"52":{"bg_isl":0,"rg":0,"actuals_till":0},"53":{"bg_isl":614,"rg":0,"actuals_till":1705},"60":{"bg_isl":4703356,"rg":0,"actuals_till":2303206},"72":{"bg_isl":32329,"rg":0,"actuals_till":37201},"73":{"bg_isl":31932,"rg":0,"actuals_till":37201},"74":{"bg_isl":4,"rg":0,"actuals_till":0},"75":{"bg_isl":26098,"rg":0,"actuals_till":41871},"98":{"bg_isl":-1652821,"rg":0,"actuals_till":-623357},"99":{"bg_isl":1797579,"rg":0,"actuals_till":2269838},"TOTAL":{"bg_isl":32582828,"rg":0,"actuals_till":16996092}};
+let BUDGET = {"01":{"bg_isl":6706409,"rg":0,"actuals_till":3072713},"02":{"bg_isl":4100453,"rg":0,"actuals_till":1967007},"03":{"bg_isl":285089,"rg":0,"actuals_till":72},"04":{"bg_isl":776198,"rg":0,"actuals_till":337362},"07":{"bg_isl":496609,"rg":0,"actuals_till":216397},"08":{"bg_isl":1285187,"rg":0,"actuals_till":532040},"10":{"bg_isl":680197,"rg":0,"actuals_till":364723},"11":{"bg_isl":77300,"rg":0,"actuals_till":59582},"12":{"bg_isl":209913,"rg":0,"actuals_till":122492},"13":{"bg_isl":527832,"rg":0,"actuals_till":278899},"14":{"bg_isl":3566,"rg":0,"actuals_till":428},"15":{"bg_isl":16048,"rg":0,"actuals_till":11230},"16":{"bg_isl":308081,"rg":0,"actuals_till":217110},"17":{"bg_isl":2110,"rg":0,"actuals_till":0},"18":{"bg_isl":8252,"rg":0,"actuals_till":0},"19":{"bg_isl":655,"rg":0,"actuals_till":0},"20":{"bg_isl":18623,"rg":0,"actuals_till":12259},"21":{"bg_isl":3300,"rg":0,"actuals_till":0},"22":{"bg_isl":0,"rg":0,"actuals_till":0},"23":{"bg_isl":42,"rg":0,"actuals_till":0},"24":{"bg_isl":215,"rg":0,"actuals_till":0},"25":{"bg_isl":379418,"rg":0,"actuals_till":375011},"26":{"bg_isl":384392,"rg":0,"actuals_till":170153},"27":{"bg_isl":1068752,"rg":0,"actuals_till":860159},"28":{"bg_isl":149947,"rg":0,"actuals_till":71926},"29":{"bg_isl":0,"rg":0,"actuals_till":476},"30":{"bg_isl":3878724,"rg":0,"actuals_till":1923773},"31":{"bg_isl":95273,"rg":0,"actuals_till":81703},"32":{"bg_isl":3254310,"rg":0,"actuals_till":1847255},"33":{"bg_isl":2625440,"rg":0,"actuals_till":834970},"36":{"bg_isl":155548,"rg":0,"actuals_till":23732},"38":{"bg_isl":95829,"rg":0,"actuals_till":56334},"39":{"bg_isl":5,"rg":0,"actuals_till":23},"42":{"bg_isl":25882,"rg":0,"actuals_till":5394},"43":{"bg_isl":12005,"rg":0,"actuals_till":2574},"44":{"bg_isl":11589,"rg":0,"actuals_till":224748},"49":{"bg_isl":544,"rg":0,"actuals_till":6382},"52":{"bg_isl":0,"rg":0,"actuals_till":0},"53":{"bg_isl":614,"rg":0,"actuals_till":1798},"60":{"bg_isl":4703356,"rg":0,"actuals_till":2715415},"72":{"bg_isl":32329,"rg":0,"actuals_till":38680},"73":{"bg_isl":31932,"rg":0,"actuals_till":38680},"74":{"bg_isl":4,"rg":0,"actuals_till":0},"75":{"bg_isl":26098,"rg":0,"actuals_till":42218},"98":{"bg_isl":-1652821,"rg":0,"actuals_till":-593016},"99":{"bg_isl":1797579,"rg":0,"actuals_till":2241238},"TOTAL":{"bg_isl":32582828,"rg":0,"actuals_till":18161940}};
 
 // Month-wise actuals from MONTH WISE report - Rs'000s
-let MONTH = {"01":{"apr":611000,"may":610721,"jun":609257,"jul":622895,"aug":619399,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"02":{"apr":422511,"may":384198,"jun":382142,"jul":390685,"aug":389042,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"03":{"apr":53,"may":28,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"04":{"apr":66797,"may":67250,"jun":67256,"jul":68584,"aug":68035,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"07":{"apr":44217,"may":42920,"jun":43031,"jul":43299,"aug":43151,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"08":{"apr":108760,"may":104872,"jun":104778,"jul":106826,"aug":106804,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"10":{"apr":63531,"may":71427,"jun":83846,"jul":71678,"aug":74171,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"11":{"apr":13824,"may":17030,"jun":13104,"jul":10824,"aug":4800,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"12":{"apr":25290,"may":22611,"jun":25787,"jul":24334,"aug":24484,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"13":{"apr":41628,"may":35790,"jun":38546,"jul":134772,"aug":28439,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"14":{"apr":154,"may":149,"jun":51,"jul":27,"aug":46,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"15":{"apr":2096,"may":1652,"jun":1646,"jul":3783,"aug":1955,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"16":{"apr":44933,"may":41693,"jun":44205,"jul":45289,"aug":41062,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"19":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"20":{"apr":2666,"may":2950,"jun":2575,"jul":1912,"aug":2579,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"21":{"apr":521,"may":0,"jun":0,"jul":-521,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"25":{"apr":103975,"may":128614,"jun":86310,"jul":39556,"aug":16437,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"26":{"apr":30352,"may":33757,"jun":38743,"jul":23112,"aug":26934,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"27":{"apr":195370,"may":152529,"jun":240399,"jul":149093,"aug":9221,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"28":{"apr":17104,"may":12231,"jun":13527,"jul":20225,"aug":7509,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"29":{"apr":3,"may":0,"jun":121,"jul":197,"aug":155,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"30":{"apr":235339,"may":467625,"jun":311219,"jul":401038,"aug":89501,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"31":{"apr":6627,"may":8778,"jun":7358,"jul":42644,"aug":1318,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"32":{"apr":385443,"may":433214,"jun":148204,"jul":719389,"aug":136243,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"33":{"apr":145104,"may":206596,"jun":182561,"jul":157974,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"36":{"apr":0,"may":5500,"jun":6236,"jul":5678,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"38":{"apr":0,"may":14165,"jun":16655,"jul":13640,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"39":{"apr":0,"may":0,"jun":0,"jul":23,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"42":{"apr":1292,"may":1069,"jun":1577,"jul":837,"aug":554,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"43":{"apr":655,"may":500,"jun":700,"jul":443,"aug":274,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"44":{"apr":766,"may":1692,"jun":197982,"jul":24308,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"49":{"apr":2403,"may":249,"jun":252,"jul":3478,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"53":{"apr":1070,"may":0,"jun":71,"jul":0,"aug":564,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"60":{"apr":450171,"may":725691,"jun":631212,"jul":496132,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"72":{"apr":15207,"may":5140,"jun":6381,"jul":6270,"aug":4203,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"73":{"apr":15207,"may":5140,"jun":6381,"jul":6270,"aug":4203,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"75":{"apr":14110,"may":6386,"jun":5414,"jul":10939,"aug":5022,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"98":{"apr":-112823,"may":-80293,"jun":-75006,"jul":-213178,"aug":-142057,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"99":{"apr":1498093,"may":156216,"jun":109451,"jul":337499,"aug":168579,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"TOTAL":{"apr":4453449,"may":3688090,"jun":3351972,"jul":3769954,"aug":1732627,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0}};
+let MONTH = {"01":{"apr":611000,"may":610721,"jun":609257,"jul":622895,"aug":617950,"sep":890,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"02":{"apr":422511,"may":384198,"jun":382142,"jul":390685,"aug":387082,"sep":389,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"03":{"apr":53,"may":28,"jun":0,"jul":0,"aug":-9,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"04":{"apr":66797,"may":67250,"jun":67256,"jul":68584,"aug":67475,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"07":{"apr":44217,"may":42920,"jun":43031,"jul":43299,"aug":42930,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"08":{"apr":108760,"may":104872,"jun":104778,"jul":106826,"aug":106804,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"10":{"apr":63531,"may":71427,"jun":83846,"jul":71678,"aug":74171,"sep":70,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"11":{"apr":13824,"may":17030,"jun":13104,"jul":10824,"aug":4800,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"12":{"apr":25290,"may":22611,"jun":25787,"jul":24334,"aug":24470,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"13":{"apr":41628,"may":35790,"jun":38546,"jul":134772,"aug":28163,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"14":{"apr":154,"may":149,"jun":51,"jul":27,"aug":47,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"15":{"apr":2096,"may":1652,"jun":1646,"jul":3783,"aug":1955,"sep":98,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"16":{"apr":44933,"may":41693,"jun":44205,"jul":45289,"aug":40980,"sep":10,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"19":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"20":{"apr":2666,"may":2950,"jun":2575,"jul":1912,"aug":2156,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"21":{"apr":521,"may":0,"jun":0,"jul":-521,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"25":{"apr":103975,"may":128614,"jun":86310,"jul":39556,"aug":16556,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"26":{"apr":30352,"may":33757,"jun":38743,"jul":23112,"aug":28065,"sep":16124,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"27":{"apr":195370,"may":152529,"jun":240399,"jul":149093,"aug":122748,"sep":20,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"28":{"apr":17104,"may":12231,"jun":13527,"jul":20225,"aug":7521,"sep":1318,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"29":{"apr":3,"may":0,"jun":121,"jul":197,"aug":155,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"30":{"apr":235339,"may":467625,"jun":311219,"jul":401038,"aug":501288,"sep":7264,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"31":{"apr":6627,"may":8778,"jun":7358,"jul":42644,"aug":16229,"sep":67,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"32":{"apr":385443,"may":433214,"jun":148204,"jul":719389,"aug":137867,"sep":23138,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"33":{"apr":145104,"may":206596,"jun":182561,"jul":157974,"aug":142735,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"36":{"apr":0,"may":5500,"jun":6236,"jul":5678,"aug":6318,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"38":{"apr":0,"may":14165,"jun":16655,"jul":13640,"aug":11874,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"39":{"apr":0,"may":0,"jun":0,"jul":23,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"42":{"apr":1292,"may":1069,"jun":1577,"jul":837,"aug":619,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"43":{"apr":655,"may":500,"jun":700,"jul":443,"aug":276,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"44":{"apr":766,"may":1692,"jun":197982,"jul":24308,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"49":{"apr":2403,"may":249,"jun":252,"jul":3478,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"53":{"apr":1070,"may":0,"jun":71,"jul":0,"aug":564,"sep":93,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"60":{"apr":450171,"may":725691,"jun":631212,"jul":496132,"aug":412209,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"72":{"apr":15207,"may":5140,"jun":6381,"jul":6270,"aug":4408,"sep":1274,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"73":{"apr":15207,"may":5140,"jun":6381,"jul":6270,"aug":4408,"sep":1274,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"75":{"apr":14110,"may":6386,"jun":5414,"jul":10939,"aug":5044,"sep":325,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"98":{"apr":-112823,"may":-80293,"jun":-75006,"jul":-213178,"aug":-110830,"sep":-886,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"99":{"apr":1498093,"may":156216,"jun":109451,"jul":337499,"aug":136554,"sep":3425,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"TOTAL":{"apr":4453449,"may":3688090,"jun":3351972,"jul":3769954,"aug":2843582,"sep":54893,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0}};
 // Spreadsheet grand-total rows can contain rounding or allocation drift.
 // Rebuild the month total from PU rows so cards and exports share one source of truth.
 MONTH.TOTAL = Object.fromEntries(['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'].map(month => [
@@ -536,12 +536,12 @@ let _pendingMonthPY  = null;
 // ═══════════════════════════════════════════════
 let _uploadedMonthIdx = null; // latest completed month detected from uploaded CY month-wise file
 let _reportingCurrentMonthIdx = 5; // GUI-selected or auto-detected reporting month
-let _latestActualMonthIdx = 4;
+let _latestActualMonthIdx = 5;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-03T15:35:15+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-05T18:15:49+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-09-03-gui-operational-safety5-0a05a6a0ecbf';
+const RLP_BUILD_ID = 'rlp-mbd-2026-09-05-gui-operational-safety5-dd7595432c88';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -817,18 +817,6 @@ function compute(code) {
   const budget = getBudget(code);
   const isNeg  = (PU_META.find(p=>p.code===code)||{}).isNeg || false;
 
-  // ══════════════════════════════════════════════════════════
-  // VERIFIED FORMULA - Budget balances exactly across 12 months
-  // ──────────────────────────────────────────────────────────
-  // Budget = APR_actual + MAY_actual + JUN_total + JUL_projx9
-  // where:
-  //   JUN_total      = proj_per_month  (one equal share of remaining)
-  //   JUN_remaining  = proj_per_month - JUN_committed
-  //   proj_per_month = (Budget - pastActuals) / (1 + futureMonths.length)
-  //
-  // CHECK: APR + MAY + projx10 = Budget OK
-  // ══════════════════════════════════════════════════════════
-
   // Past months actuals (completed months before current)
   const pastActuals  = pastMonths.reduce((s,m) => s + (md[m]||0), 0);
 
@@ -841,22 +829,16 @@ function compute(code) {
   const residualTillDate = Math.max(0, actualsTill - pastActuals);
   const curCommitted = Math.max(curColumnVal, residualTillDate);
 
-  // proj_per_month = remaining after past actuals / 10 equal months
-  // (current month remainder counts as 1 full projected month)
-  const totalRemainingMonths = 1 + futureMonths.length;  // e.g. 10 for JUN
-  const projPerMonth = totalRemainingMonths > 0
-    ? (budget - pastActuals) / totalRemainingMonths
+  // Reserve an equal share for the running month, but never forecast less
+  // than spending already booked. Reallocate the balance over future months.
+  const totalRemainingMonths = 1 + futureMonths.length;
+  const currentAllocation = Math.max(0, (budget - pastActuals) / totalRemainingMonths);
+  const curRemaining = Math.max(0, currentAllocation - curCommitted);
+  const curMonthTotal = curCommitted + curRemaining;
+  const projPerMonth = futureMonths.length > 0
+    ? Math.max(0, budget - pastActuals - curMonthTotal) / futureMonths.length
     : 0;
-
-  // JUN_remaining = proj_per_month - committed (what's left of this month's share)
-  // JUN_total     = proj_per_month  (always equal to one projected month)
-  const curRemaining  = Math.max(0, projPerMonth - curCommitted);
-  const curMonthTotal = projPerMonth;  // = committed + remaining = proj_per_month OK
-
-  // % of this month's allocation already committed
-  const curDonePct = projPerMonth > 0
-    ? Math.min(100, (curCommitted / projPerMonth) * 100)
-    : 0;
+  const curDonePct = curMonthTotal > 0 ? (curCommitted / curMonthTotal) * 100 : 0;
 
   // Balance shown = budget - all committed spend (past + current month)
   const totalCommitted = pastActuals + curCommitted;
@@ -1696,7 +1678,7 @@ function renderLiability() {
       <td class="n" style="font-weight:700">${fmtT(c.totalCommitted)}</td>
       <td class="n rem ${balCls}">${fmtT(c.balanceBudget)}</td>
       <td class="n" style="color:var(--steel)">${fmtT(c.projPerMonth)}</td>
-      <td>${miniProg(Math.min(100,c.utilisedPct), col)}</td>
+      <td>${miniProg(c.utilisedPct, col)}</td>
       <td>${statusHtml}</td>
     </tr>`;
     tB+=c.budget;tC+=c.totalCommitted;tBal+=c.balanceBudget;
@@ -1711,7 +1693,7 @@ function renderLiability() {
     <td class="n">${fmtT(tJunC)}</td><td class="n">${fmtT(tJunR)}</td>
     <td class="n">${fmtT(tJunT)}</td><td>-</td>
     <td class="n">${fmtT(tC)}</td><td class="n rem ${tBal<0?'neg':'ok'}">${fmtT(tBal)}</td>
-    <td class="n">-</td><td>${miniProg(Math.min(100,tUtil),tc2)}</td><td>-</td>
+    <td class="n">-</td><td>${miniProg(tUtil,tc2)}</td><td>-</td>
   </tr>`;
   document.getElementById('liab-tbody').innerHTML = rows;
 }
@@ -1736,7 +1718,7 @@ function renderMonthwise() {
     tots.tB+=c.budget; tots.tC+=c.totalCommitted; tots.tBal+=c.balanceBudget;
     futureMonths.forEach(m => tots[m]+=(proj||0));
 
-    const util = Math.min(100, c.utilisedPct);
+    const util = c.utilisedPct;
     const col = utilColor(util);
 
     let futureCells = futureMonths.map(() => `<td class="n" style="color:#1A4A8A;background:#F0F6FF">${fmtT(proj)}</td>`).join('');
@@ -1776,7 +1758,7 @@ function renderMonthwise() {
     <td class="n">${fmtT(tots.tB)}</td>
     <td class="n">${fmtT(tots.tC)}</td>
     <td class="n rem ${tots.tBal<0?'neg':'ok'}">${fmtT(tots.tBal)}</td>
-    <td>${miniProg(Math.min(100,tUtil), utilColor(tUtil))}</td>
+    <td>${miniProg(tUtil, utilColor(tUtil))}</td>
   </tr>`;
   document.getElementById('mw-tbody').innerHTML = rows;
 }
@@ -1828,7 +1810,7 @@ function renderRecovery() {
       <td class="n neg-val font-weight:700">${fmtT(c.totalCommitted)}</td>
       <td class="n rem ${balCls}">${fmtT(c.balanceBudget)}</td>
       <td class="n neg-val">${fmtT(c.projPerMonth)}</td>
-      <td>${miniProg(Math.min(100,c.utilisedPct),'#CC0000')}</td>
+      <td>${miniProg(c.utilisedPct,'#CC0000')}</td>
     </tr>`;
 
   // Month wise for PU-98
@@ -5709,14 +5691,14 @@ function pptSlideXml(title, lines) {
 
 function buildPowerPointBlob(audit) {
   const status = getMonthStatus();
-  const actualMonths = status.actualMonths.length ? status.actualMonths : FY_MONTHS.slice(0, Math.max(1,status.cur.idx));
+  const actualMonths = status.latestActual ? FY_MONTHS.slice(0, status.latestActual.idx + 1) : status.actualMonths;
   const rows = reportRowsForActivePUs();
   const totals = rows.reduce((t,r) => ({budget:t.budget+r.budget,actual:t.actual+r.actual,balance:t.balance+r.balance}), {budget:0,actual:0,balance:0});
   const top = rows.slice().sort((a,b)=>b.utilPct-a.utilPct).slice(0,10);
   const slides = [
     ['Revenue Liability Portal - Fresh Export', [`Financial Year 2026-27 | Moradabad Division`,`Generated: ${indianDateTime(audit.generatedAt)}`,`Actual data through: ${audit.latestMonth}`,`Validation ID: ${audit.id}`,`Rule: live data reconciled before export; minimum font 10 pt; all content within 0.5 inch margins.`]],
     ['Executive Summary', [`Active expenditure PUs: ${rows.length}`,`Gross budget: ${textCr(totals.budget)}`,`Actual / committed: ${textCr(totals.actual)}`,`Balance: ${textCr(totals.balance)}`,`Utilisation: ${totals.budget ? (totals.actual/totals.budget*100).toFixed(1) : '0.0'}%`]],
-    ['Month-wise Actuals', actualMonths.map(month => `${FY_MONTH_LABELS[FY_MONTHS.indexOf(month)]}: ${textCr(Object.keys(MONTH).filter(c=>c!=='TOTAL').reduce((s,c)=>s+(Number(MONTH[c][month])||0),0))}`).concat([`Total actual: ${textCr(totals.actual)}`])],
+    ['Month-wise Actuals', actualMonths.map(month => `${FY_MONTH_LABELS[FY_MONTHS.indexOf(month)]}: ${textCr(rows.reduce((s,r)=>s+(Number((MONTH[r.pu.code]||{})[month])||0),0))}`).concat([`Total actual: ${textCr(totals.actual)}`])],
     ['PU Utilisation - Highest', top.map(r => `PU-${r.pu.code} | ${r.pu.desc.slice(0,46)} | ${r.budget ? r.utilPct.toFixed(1)+'%' : 'No budget'} | Actual ${textCr(r.actual)}`)],
     ['Validation and Fixed Export Rules', audit.checks.map(c => `${c.state.toUpperCase()}: ${c.title} - ${c.detail}`).concat(['Excel: landscape, fit-to-one-page-wide, print margins, minimum 10 pt.','PDF: landscape A4, repeating headers, horizontal page breaks, minimum 10 pt.','PowerPoint: 16:9, 0.5 inch safe margins, minimum 10 pt.','Exports are created on demand from current portal memory; old downloaded files are not reused.'])]
   ];
@@ -7780,7 +7762,7 @@ function renderMonthwise() {
     tots.tBal += c.balanceBudget;
     futureMonths.forEach(m => tots[m] += (proj || 0));
 
-    const util = Math.min(100, c.utilisedPct);
+    const util = c.utilisedPct;
     const col = utilColor(util);
     const noExp = isBudgetNoExpense(pu.code);
     let futureCells = futureMonths.map(() => `<td class="n" style="color:#1A4A8A;background:#F0F6FF">${fmtT(proj)}</td>`).join('');
