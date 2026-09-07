@@ -30,11 +30,44 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "gui-operational-safety5"
+PORTAL_CODE_REVISION = "export-crore-2dp9"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
 SKIP_DETAIL_PUS = {"72", "73", "74", "75", "98"}
+# Authoritative Revenue PU descriptions supplied in Revenue PU.xls.
+# These replace abbreviated descriptions embedded in operational reports so
+# portal views and every regenerated export use one consistent master label.
+PU_DESCRIPTIONS = {
+    "01": "Sal/Wag", "02": "DA", "03": "PLB", "04": "HRA",
+    "07": "Transport Allowance /TPT", "08": "NPS Contribution", "09": "WCL",
+    "10": "Kilometrage Allowance (KMA)", "11": "OT", "12": "NDA",
+    "13": "Other Allowance", "14": "FEES & HON.", "15": "Travalling Allowance/TA",
+    "16": "Travelling expenses. /CTG",
+    "17": "Air Travel Expense sanctioned in lieu of privilege passes.",
+    "18": "Office Expenses", "19": "Phone", "20": "Leave Salary",
+    "21": "Advertising Expenses", "22": "Util(excl. elec.)",
+    "23": "Rental Office Equip", "24": "Printing and Stnry",
+    "25": "Children Edu. Allow", "26": "Medical Expenses",
+    "27": "Materials from stock", "28": "Materials-Dir. purchase",
+    "29": "Remu. Re-engaged Staff",
+    "30": "Cost Of Elec. Energy/Traction Energy Procurement",
+    "31": "Direct Purchase of Fuel", "32": "Contractual payments",
+    "33": "Transfer of debits/credits from other units",
+    "34": "Intra-railway adjustment of wages on POH and other repairs",
+    "35": "Material POH", "36": "Excise Duty", "37": "Customs Duty",
+    "38": "Sales Tax", "39": "ATD", "40": "ATF", "41": "VAT",
+    "42": "ARR SALARY", "43": "ARR DA", "44": "ARR OTH ALW",
+    "45": "Pmt Of Service Tax", "46": "Counter-vailing duty",
+    "47": "Addl custom duty", "48": "Custom Duty paid",
+    "49": "O/S OF MAN POWER FOR TRACK MNT", "51": "COMPCONSUM",
+    "53": "All India LTC", "54": "Int on delayed NPS",
+    "60": "Fuel from Stock-Home", "61": "Trf Dr/Cr of loco performance",
+    "63": "Adj of labour cost on POH/WMS", "64": "Int Rly Adj debits materials",
+    "72": "Central GST (CGST)", "73": "State GST (SGST)",
+    "74": "Union Territory GST (UTGST)", "75": "Integrated GST (IGST)",
+    "98": "Credit or Recoveries", "99": "Other Expenses/Misc",
+}
 DEMAND_BY_SMH = {
     "01": "03", "02": "04", "03": "05", "04": "06", "05": "07", "06": "08",
     "07": "09", "08": "10", "09": "11", "10": "12", "11": "13", "10N": "12N",
@@ -273,6 +306,7 @@ def load_existing_maps(root: Path):
                 dept_names.setdefault(str(row.get("deptCode", "")).zfill(2), row.get("deptName", ""))
         except Exception:
             pass
+    pu_names.update(PU_DESCRIPTIONS)
     return pu_names, dept_names
 
 
@@ -515,6 +549,7 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
         "tab-aitrend": "function renderAITrendSummary",
         "tab-bpanalysis": "function renderBPAnalysis",
         "tab-budgetcontrol": "function renderBudgetControl",
+        "tab-excessshortfall": "function renderExcessShortfall",
         "tab-smhdetail": "function renderSMHDetail",
         "tab-demandsmh": "function renderDemandSMHSummary",
         "tab-remarks": "function renderRemarks",
@@ -535,8 +570,10 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
         "PowerPoint freshness": "prepareFreshExport('PowerPoint')",
         "Excel landscape": "orientation:'landscape'",
         "Excel one-page width": "fitToWidth:1",
+        "Excel crore two decimals": "#,##0.00;[Red]-#,##0.00;0.00",
         "PDF A4 landscape": "new jsPDF({orientation:'landscape', unit:'pt', format:'a4'})",
         "PDF 10pt tables": "styles:{fontSize:10",
+        "PDF crore two decimals": ").toFixed(2) + ' Cr'",
         "PowerPoint 16:9": '<p:sldSz cx="12192000" cy="6858000" type="screen16x9"/>',
         "PowerPoint minimum 10pt": "Math.max(1000,size)",
     }
@@ -561,8 +598,8 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
         "formats": ["xlsx", "pdf", "pptx"],
         "minimumFontPt": 10,
         "explicitFontRulesChecked": len(pdf_fonts) + len(excel_fonts),
-        "excel": "landscape, fit-to-one-page-wide",
-        "pdf": "A4 landscape, repeating tabular layout",
+        "excel": "landscape, fit-to-one-page-wide, crore values fixed at 2 decimals",
+        "pdf": "A4 landscape, repeating tabular layout, crore values fixed at 2 decimals",
         "powerPoint": "16:9 canvas, minimum 10pt",
         "freshnessGuards": 3,
     }

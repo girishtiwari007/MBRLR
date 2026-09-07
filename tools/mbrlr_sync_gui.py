@@ -21,7 +21,8 @@ from local_portal_sync import MONTH_LABELS, write_outputs
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CY = ROOT.parent / "source-files" / "2026-2027"
+PORTABLE_CY = ROOT.parent / "source-files" / "2026-2027"
+DEFAULT_CY = PORTABLE_CY if PORTABLE_CY.is_dir() else Path(r"D:\PORTAL DATA\current year")
 DEFAULT_PY = Path(r"C:\Users\HP\Downloads\PORTAL DATA PY")
 DEFAULT_GITHUB = ROOT
 PORT = 8767
@@ -203,7 +204,7 @@ class SyncApp(tk.Tk):
                 raise RuntimeError("Generated calculation validation did not pass")
             portal_validation = manifest.get("portalValidation", {})
             export_validation = manifest.get("exportValidation", {})
-            if not portal_validation.get("ok") or portal_validation.get("viewCount") != 12:
+            if not portal_validation.get("ok") or portal_validation.get("viewCount") != 13:
                 raise RuntimeError("All portal pages did not pass the fixed refresh contract")
             if not export_validation.get("ok") or export_validation.get("minimumFontPt") != 10:
                 raise RuntimeError("Excel/PDF/PowerPoint export contract did not pass")
@@ -328,7 +329,7 @@ class SyncApp(tk.Tk):
                 with urllib.request.urlopen(app_url, timeout=3) as response:
                     app_js = response.read().decode("utf-8", errors="replace")
                 required_views = (
-                    "tab-summary", "tab-monthwise", "tab-pumaster", "tab-trend",
+                    "tab-summary", "tab-monthwise", "tab-pumaster", "tab-excessshortfall", "tab-trend",
                     "tab-aitrend", "tab-bpanalysis", "tab-budgetcontrol",
                     "tab-smhdetail", "tab-demandsmh", "tab-remarks",
                     "tab-backup", "tab-admin",

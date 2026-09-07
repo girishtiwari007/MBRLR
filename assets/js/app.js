@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260905-gui-operational-safety5-autoexports-dd7595432c88';
+const ASSET_VERSION = '20260907-export-crore-2dp9-autoexports-bd2b9011a4e5';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -342,7 +342,7 @@ const PU_META = [
   {code:'13',desc:'Other Allowance',puType:'Staff PU',liab:'Planned',isNeg:false},
   {code:'14',desc:'FEES & HON.',puType:'Staff PU',liab:'Planned',isNeg:false},
   {code:'15',desc:'Travalling Allowance/TA',puType:'Staff PU',liab:'Planned',isNeg:false},
-  {code:'16',desc:'Travelling expenses./CTG',puType:'Staff PU',liab:'Planned',isNeg:false},
+  {code:'16',desc:'Travelling expenses. /CTG',puType:'Staff PU',liab:'Planned',isNeg:false},
   {code:'17',desc:'Air Travel Expense sanctioned in lieu of privilege passes.',puType:'Staff PU',liab:'Planned',isNeg:false},
   {code:'18',desc:'Office Expenses',puType:'Non Staff PU',liab:'Planned',isNeg:false},
   {code:'19',desc:'Phone',puType:'Non Staff PU',liab:'Planned',isNeg:false},
@@ -357,7 +357,7 @@ const PU_META = [
   {code:'28',desc:'Materials-Dir. purchase',puType:'Non Staff PU',liab:'Planned',isNeg:false},
   {code:'29',desc:'Remu. Re-engaged Staff',puType:'Staff PU',liab:'Planned',isNeg:false},
   {code:'30',desc:'Cost Of Elec. Energy/Traction Energy Procurement',puType:'Non Staff PU',liab:'Committed',isNeg:false},
-  {code:'31',desc:'Direct Purchase',puType:'Non Staff PU',liab:'Planned',isNeg:false},
+  {code:'31',desc:'Direct Purchase of Fuel',puType:'Non Staff PU',liab:'Planned',isNeg:false},
   {code:'32',desc:'Contractual payments',puType:'Non Staff PU',liab:'Planned',isNeg:false},
   {code:'33',desc:'Transfer of debits/credits from other units',puType:'Non Staff PU',liab:'Planned',isNeg:false},
   {code:'34',desc:'Intra-railway adjustment of wages on POH and other repairs',puType:'Staff PU',liab:'Planned',isNeg:false},
@@ -418,13 +418,13 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026; latest loaded month SEP 2026.'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 07-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 07-Sep-2026; latest loaded month SEP 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026.'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026; latest loaded month SEP 2026.'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 05-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 07-Sep-2026.'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 07-Sep-2026; latest loaded month SEP 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 07-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -539,9 +539,9 @@ let _reportingCurrentMonthIdx = 5; // GUI-selected or auto-detected reporting mo
 let _latestActualMonthIdx = 5;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-05T18:15:49+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-07T15:17:18+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-09-05-gui-operational-safety5-dd7595432c88';
+const RLP_BUILD_ID = 'rlp-mbd-2026-09-07-export-crore-2dp9-bd2b9011a4e5';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -2069,6 +2069,125 @@ function renderBPAnalysis() {
   refreshBIViewSoon();
 }
 
+// HQ PU order supplied by "Analysis of Excess-Shortfall AE over BP up to Aug 2026 MB.xlsx".
+// Other PUs remain available and follow the HQ list in master-code order.
+const HQ_EXCESS_SHORTFALL_PUS = ['01','02','10','11','12','16','25','27','30','31','32','38','44','60','72','73','75'];
+
+function buildExcessShortfallRows() {
+  const mode = getBPModeStatus();
+  const currentMonths = mode.bpMonths.length ? mode.bpMonths : FY_MONTHS.slice(0, 1);
+  const previousMonths = currentMonths.slice(0, Math.max(0, currentMonths.length - 1));
+  const sumMonths = (source, code, months) => months.reduce((sum, key) => sum + (Number((source[code] || {})[key]) || 0), 0);
+  return PU_META.map(pu => {
+    const budget = getBudget(pu.code);
+    const pyAnnual = Number((BUDGET_PY[pu.code] || {}).actuals_till) || 0;
+    const bpPrevious = budget / 12 * previousMonths.length;
+    const bpCurrent = budget / 12 * currentMonths.length;
+    const pyPrevious = sumMonths(MONTH_PY, pu.code, previousMonths);
+    const actualPrevious = sumMonths(MONTH, pu.code, previousMonths);
+    const pyCurrent = sumMonths(MONTH_PY, pu.code, currentMonths);
+    const actualCurrent = sumMonths(MONTH, pu.code, currentMonths);
+    const budgetVsPY = budget - pyAnnual;
+    const variancePrevious = actualPrevious - bpPrevious;
+    const varianceCurrent = actualCurrent - bpCurrent;
+    const latestMovement = varianceCurrent - variancePrevious;
+    const hqIndex = HQ_EXCESS_SHORTFALL_PUS.indexOf(pu.code);
+    const remark = varianceCurrent > 0
+      ? `AE exceeds proportionate budget by ${textCr(varianceCurrent)}.`
+      : varianceCurrent < 0
+        ? `AE is below proportionate budget by ${textCr(Math.abs(varianceCurrent))}.`
+        : 'AE is aligned with proportionate budget.';
+    return {pu, budget, pyAnnual, bpPrevious, bpCurrent, pyPrevious, actualPrevious, pyCurrent, actualCurrent,
+      budgetVsPY, variancePrevious, varianceCurrent, latestMovement, remark, hqIndex};
+  });
+}
+
+function getExcessShortfallRows() {
+  const scope = (document.getElementById('xsScope') || {}).value || 'all';
+  const sort = (document.getElementById('xsSort') || {}).value || 'hq';
+  let rows = buildExcessShortfallRows();
+  if (scope === 'hq') rows = rows.filter(row => row.hqIndex >= 0);
+  const codeSort = (a,b) => a.pu.code.localeCompare(b.pu.code, undefined, {numeric:true});
+  if (sort === 'excess') rows.sort((a,b) => b.varianceCurrent - a.varianceCurrent || codeSort(a,b));
+  else if (sort === 'actual') rows.sort((a,b) => b.actualCurrent - a.actualCurrent || codeSort(a,b));
+  else if (sort === 'budget') rows.sort((a,b) => b.budget - a.budget || codeSort(a,b));
+  else if (sort === 'code') rows.sort(codeSort);
+  else rows.sort((a,b) => {
+    const ai = a.hqIndex < 0 ? 999 : a.hqIndex;
+    const bi = b.hqIndex < 0 ? 999 : b.hqIndex;
+    return ai - bi || codeSort(a,b);
+  });
+  return rows;
+}
+
+function renderExcessShortfall() {
+  const body = document.getElementById('xsTableBody');
+  if (!body) return;
+  const mode = getBPModeStatus();
+  const current = mode.bpThrough || mode.cur;
+  const currentCount = Math.max(1, mode.bpMonthCount || 1);
+  const previousCount = Math.max(0, currentCount - 1);
+  const previousIdx = Math.max(0, (current ? current.idx : currentCount - 1) - 1);
+  const currentLabel = current ? `${current.label} ${current.year}` : 'Current period';
+  const previousLabel = `${FY_MONTH_LABELS[previousIdx]} ${previousIdx <= 8 ? 2026 : 2027}`;
+  const rows = getExcessShortfallRows();
+  const cr = value => `${((Number(value) || 0) / 10000).toFixed(2)}`;
+  const signed = value => `${value > 0 ? '+' : ''}${cr(value)}`;
+  const thousand = value => `${Math.round(Number(value) || 0).toLocaleString('en-IN')}`;
+  const dual = (value, useSign = false) => `<span class="xs-cr">${useSign && value > 0 ? '+' : ''}${cr(value)} Cr</span><small class="xs-th">${useSign && value > 0 ? '+' : ''}${thousand(value)} Rs '000</small>`;
+  const pageTitle = document.getElementById('xsTitle');
+  if (pageTitle) pageTitle.textContent = `Primary Unit Wise Statement of Excess Expenditure over Budget Proportionate up to ${currentLabel} (Fig. Rs. in crores / Rs '000)`;
+  const head = document.getElementById('xsTableHead');
+  if (head) head.innerHTML = `<tr class="xs-calc-row">
+    <th></th><th>Excel calculation / logic</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+    <th>D - C</th><th>H - E</th><th>J - F</th><th>M - L</th><th></th>
+  </tr><tr>
+    <th>AU</th><th>PU Code and Description</th><th>AE 2025-26</th><th>BG 2026-27</th>
+    <th>BP up to ${previousLabel}</th><th>BP up to ${currentLabel}</th>
+    <th>COPPY up to ${previousLabel.replace('2026','2025').replace('2027','2026')}</th><th>AE up to ${previousLabel}</th>
+    <th>COPPY up to ${currentLabel.replace('2026','2025').replace('2027','2026')}</th><th>AE up to ${currentLabel}</th>
+    <th>BG - PY AE</th><th>AE - BP ${previousLabel}</th><th>AE - BP ${currentLabel}</th><th>Current movement</th><th>Calculation remark</th>
+  </tr>`;
+  const logic = document.getElementById('xsLogic');
+  if (logic) logic.innerHTML = [
+    `<strong>Calculation logic</strong>`,
+    `<span>BP ${previousLabel} = BG / 12 x ${previousCount}</span>`,
+    `<span>BP ${currentLabel} = BG / 12 x ${currentCount}</span>`,
+    `<span>BG - PY AE = BG 2026-27 minus full-year AE 2025-26</span>`,
+    `<span>AE - BP = cumulative actual expenditure minus proportionate budget</span>`,
+    `<span>Current movement = (${currentLabel} AE - BP) minus (${previousLabel} AE - BP)</span>`
+  ].join('');
+  const meta = document.getElementById('xsMeta');
+  if (meta) meta.textContent = `Live portal values through ${currentLabel}. Every amount shows crore and its underlying Rs '000 value; calculations use Rs '000 without rounding.`;
+  const hq = document.getElementById('xsHQList');
+  if (hq) hq.textContent = HQ_EXCESS_SHORTFALL_PUS.map(code => `PU-${code}`).join(', ');
+  const totals = rows.reduce((t,r) => {
+    ['budget','pyAnnual','bpPrevious','bpCurrent','pyPrevious','actualPrevious','pyCurrent','actualCurrent','budgetVsPY','variancePrevious','varianceCurrent','latestMovement'].forEach(k => t[k] += r[k]);
+    if (r.varianceCurrent > 0) t.excess++;
+    if (r.varianceCurrent < 0) t.shortfall++;
+    return t;
+  }, {budget:0,pyAnnual:0,bpPrevious:0,bpCurrent:0,pyPrevious:0,actualPrevious:0,pyCurrent:0,actualCurrent:0,budgetVsPY:0,variancePrevious:0,varianceCurrent:0,latestMovement:0,excess:0,shortfall:0});
+  const kpis = document.getElementById('xsKpis');
+  if (kpis) kpis.innerHTML = [
+    ['PUs shown', rows.length, `${totals.excess} excess / ${totals.shortfall} below BP`],
+    [`AE up to ${currentLabel}`, `${cr(totals.actualCurrent)} Cr`, 'Actual value'],
+    [`BP up to ${currentLabel}`, `${cr(totals.bpCurrent)} Cr`, `${currentCount} completed months`],
+    [totals.varianceCurrent >= 0 ? 'Net excess over BP' : 'Net shortfall against BP', `${signed(totals.varianceCurrent)} Cr`, 'AE minus BP']
+  ].map(([label,value,note]) => `<div><span>${htmlSafe(String(label))}</span><strong>${htmlSafe(String(value))}</strong><small>${htmlSafe(String(note))}</small></div>`).join('');
+  const rowCells = r => [
+    'MB', `PU-${r.pu.code} - ${r.pu.desc}`, r.pyAnnual, r.budget, r.bpPrevious, r.bpCurrent,
+    r.pyPrevious, r.actualPrevious, r.pyCurrent, r.actualCurrent, r.budgetVsPY,
+    r.variancePrevious, r.varianceCurrent, r.latestMovement, r.remark
+  ];
+  body.innerHTML = rows.map(r => `<tr class="${r.varianceCurrent > 0 ? 'xs-excess' : r.varianceCurrent < 0 ? 'xs-shortfall' : ''}${r.hqIndex >= 0 ? ' xs-hq-row' : ''}">
+    ${rowCells(r).map((value,i) => `<td${i > 1 && i < 14 ? ' class="n"' : ''}>${i === 1 ? `<button type="button" onclick="openPUDetail('${r.pu.code}')">${htmlSafe(value)}</button>` : i > 1 && i < 14 ? dual(value, i >= 10) : htmlSafe(value)}</td>`).join('')}
+  </tr>`).join('') + `<tr class="tot"><td></td><td>TOTAL - ${rows.length} PU(s)</td>${[
+    totals.pyAnnual,totals.budget,totals.bpPrevious,totals.bpCurrent,totals.pyPrevious,totals.actualPrevious,
+    totals.pyCurrent,totals.actualCurrent,totals.budgetVsPY,totals.variancePrevious,totals.varianceCurrent,totals.latestMovement
+  ].map((v,i) => `<td class="n">${dual(v, i >= 8)}</td>`).join('')}<td>Calculated from selected scope.</td></tr>`;
+  applyMobileTableLabels();
+}
+
 function budgetControlStage() {
   const d = new Date();
   const month = d.getMonth();
@@ -2389,7 +2508,7 @@ function handleTopFilterChange(sourceLabel) {
 }
 
 // Tabs and report menu
-const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','trend','aitrend','remarks','backup','admin'];
+const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','excessshortfall','trend','aitrend','remarks','backup','admin'];
 
 function syncReportNavigation(name) {
   document.querySelectorAll('[data-report-tab]').forEach(btn => {
@@ -3327,6 +3446,7 @@ function switchTab(name) {
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
   if(name==='bpanalysis'){setTimeout(renderBPAnalysis,80);}
   if(name==='budgetcontrol'){setTimeout(renderBudgetControl,80);}
+  if(name==='excessshortfall'){setTimeout(renderExcessShortfall,80);}
   if(name==='demandsmh'){setTimeout(renderDemandSMHSummary,80);}
   if(name==='remarks'){setTimeout(renderRemarks,80);}
   if(name==='admin'){setTimeout(renderAdminDesign,80);}
@@ -4611,6 +4731,9 @@ async function downloadExcel() {
   function addSheet(wb, sheetName, titleRow, subRow, headers, dataRows, colWidths, sheetOpts={}) {
     const sheetFontName = sheetOpts.fontName || 'Times New Roman';
     const textCols = new Set(sheetOpts.textCols || [1, 2]);
+    const twoDecimalCols = new Set(sheetOpts.twoDecimalCols || headers.map((header, index) =>
+      /(?:rs\s*)?(?:cr|crore)/i.test(String(header || '')) ? index + 1 : null
+    ).filter(Boolean));
     if (useExcelJS) {
       const ws = wb.addWorksheet(sheetName, {
         views: [{state:'frozen', ySplit:4, showGridLines:false}],
@@ -4673,7 +4796,11 @@ async function downloadExcel() {
           cell.border = border;
           cell.font = font(rowData && rowData._tot ? '0A1628' : '1A2433', !!(rowData && rowData._tot), 10);
           cell.alignment = {horizontal: textCols.has(colNumber) ? 'left' : 'right', vertical:'middle', wrapText:true};
-          if (typeof cell.value === 'number') cell.numFmt = '#,##0';
+          if (typeof cell.value === 'number') {
+            cell.numFmt = twoDecimalCols.has(colNumber)
+              ? '#,##0.00;[Red]-#,##0.00;0.00'
+              : '#,##0';
+          }
           if (typeof cell.value === 'number' && cell.value < 0) cell.font = font('B00020', true, 10);
           const text = String(cell.value || '').toUpperCase();
           if (text.includes('OVER') || text.includes('EXCESS') || text.includes('NO BUDGET')) {
@@ -4728,6 +4855,11 @@ async function downloadExcel() {
               else if (rowData._tot) bg='E8EFF8';
             }
             ws[addr].s = mkStyle({bg, border:true, h: textCols.has(C+1)?'left':'right', name:sheetFontName, wrap:true});
+            if (typeof ws[addr].v === 'number') {
+              ws[addr].z = twoDecimalCols.has(C+1)
+                ? '#,##0.00;[Red]-#,##0.00;0.00'
+                : '#,##0';
+            }
           }
         }
       }
@@ -4928,6 +5060,45 @@ async function downloadExcel() {
   bcRows.push(bcTotRow);
   addSheet(wb,'Budget Control',HDR_TITLE,'Indian Railways Budget Control - Ask / Surrender / Watch Register',bcHdrs,bcRows,
     [8,28,18,22,18,20,12,18,46]);
+
+  // Workbook-aligned AE vs BP statement - all PUs, HQ custom order.
+  const xsMode = getBPModeStatus();
+  const xsCur = xsMode.bpThrough || xsMode.cur;
+  const xsCurCount = Math.max(1, xsMode.bpMonthCount || 1);
+  const xsPrevCount = Math.max(0, xsCurCount - 1);
+  const xsPrevIdx = Math.max(0, (xsCur ? xsCur.idx : xsCurCount - 1) - 1);
+  const xsCurLabel = xsCur ? `${xsCur.label} ${xsCur.year}` : 'Current period';
+  const xsPrevLabel = `${FY_MONTH_LABELS[xsPrevIdx]} ${xsPrevIdx <= 8 ? 2026 : 2027}`;
+  const xsToCr = value => parseFloat(((Number(value) || 0) / 10000).toFixed(2));
+  const xsHeaders = ['AU','PU Code and Description','AE 2025-26','BG 2026-27',
+    `BP up to ${xsPrevLabel}`,`BP up to ${xsCurLabel}`,`COPPY up to prior-year ${xsPrevLabel}`,
+    `AE up to ${xsPrevLabel}`,`COPPY up to prior-year ${xsCurLabel}`,`AE up to ${xsCurLabel}`,
+    'BG - PY AE',`AE - BP ${xsPrevLabel}`,`AE - BP ${xsCurLabel}`,'Current Movement','Calculation Remark'];
+  const xsRows = buildExcessShortfallRows().sort((a,b) => {
+    const ai = a.hqIndex < 0 ? 999 : a.hqIndex;
+    const bi = b.hqIndex < 0 ? 999 : b.hqIndex;
+    return ai - bi || a.pu.code.localeCompare(b.pu.code, undefined, {numeric:true});
+  }).map(r => {
+    const row = ['MB',`PU-${r.pu.code} - ${r.pu.desc}`,xsToCr(r.pyAnnual),xsToCr(r.budget),
+      xsToCr(r.bpPrevious),xsToCr(r.bpCurrent),xsToCr(r.pyPrevious),xsToCr(r.actualPrevious),
+      xsToCr(r.pyCurrent),xsToCr(r.actualCurrent),xsToCr(r.budgetVsPY),xsToCr(r.variancePrevious),
+      xsToCr(r.varianceCurrent),xsToCr(r.latestMovement),r.remark];
+    row._important = r.hqIndex >= 0;
+    row._neg = r.varianceCurrent > 0;
+    row._cs = r.varianceCurrent < 0;
+    return row;
+  });
+  const xsTotals = buildExcessShortfallRows().reduce((t,r) => {
+    ['pyAnnual','budget','bpPrevious','bpCurrent','pyPrevious','actualPrevious','pyCurrent','actualCurrent','budgetVsPY','variancePrevious','varianceCurrent','latestMovement'].forEach(k => t[k] += r[k]);
+    return t;
+  }, {pyAnnual:0,budget:0,bpPrevious:0,bpCurrent:0,pyPrevious:0,actualPrevious:0,pyCurrent:0,actualCurrent:0,budgetVsPY:0,variancePrevious:0,varianceCurrent:0,latestMovement:0});
+  const xsTotalRow = ['',`TOTAL - ${xsRows.length} PUs`,...['pyAnnual','budget','bpPrevious','bpCurrent','pyPrevious','actualPrevious','pyCurrent','actualCurrent','budgetVsPY','variancePrevious','varianceCurrent','latestMovement'].map(k => xsToCr(xsTotals[k])),'Calculated from all PUs.'];
+  xsTotalRow._tot = true;
+  xsRows.push(xsTotalRow);
+  addSheet(wb,'AE vs BP HQ',HDR_TITLE,
+    `Figures Rs Cr | BP ${xsPrevLabel} = BG / 12 x ${xsPrevCount}; BP ${xsCurLabel} = BG / 12 x ${xsCurCount}; AE-BP = cumulative AE minus BP; Movement = current variance minus previous variance`,
+    xsHeaders,xsRows,[7,34,13,13,15,15,17,15,17,15,14,15,15,14,40],
+    {textCols:[1,2,15], twoDecimalCols:[3,4,5,6,7,8,9,10,11,12,13,14]});
 
   // Sheet 7: DEPT-Demand Wise - visible report style, no internal raw JSON
   if (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) {
@@ -5567,6 +5738,30 @@ async function downloadPDFReport() {
     columnStyles:{1:{cellWidth:150},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},8:{cellWidth:215}}
   });
 
+  const xsPdfMode = getBPModeStatus();
+  const xsPdfCur = xsPdfMode.bpThrough || xsPdfMode.cur;
+  const xsPdfCurCount = Math.max(1, xsPdfMode.bpMonthCount || 1);
+  const xsPdfPrevCount = Math.max(0, xsPdfCurCount - 1);
+  const xsPdfPrevIdx = Math.max(0, (xsPdfCur ? xsPdfCur.idx : xsPdfCurCount - 1) - 1);
+  const xsPdfCurLabel = xsPdfCur ? `${xsPdfCur.label} ${xsPdfCur.year}` : 'Current';
+  const xsPdfPrevLabel = `${FY_MONTH_LABELS[xsPdfPrevIdx]} ${xsPdfPrevIdx <= 8 ? 2026 : 2027}`;
+  const xsPdfRows = buildExcessShortfallRows().sort((a,b) => {
+    const ai = a.hqIndex < 0 ? 999 : a.hqIndex;
+    const bi = b.hqIndex < 0 ? 999 : b.hqIndex;
+    return ai - bi || a.pu.code.localeCompare(b.pu.code, undefined, {numeric:true});
+  });
+  addPage('Revenue Liability Report - AE vs BP HQ Statement');
+  doc.setTextColor(45, 65, 88); doc.setFont('times','normal'); doc.setFontSize(10);
+  doc.text(`BP ${xsPdfPrevLabel} = BG / 12 x ${xsPdfPrevCount}; BP ${xsPdfCurLabel} = BG / 12 x ${xsPdfCurCount}; AE-BP = cumulative AE minus BP; movement = current variance minus previous variance.`, margin, 60, {maxWidth:pageW-margin*2});
+  autoTable({
+    startY:78,
+    pageTitle:'Revenue Liability Report - AE vs BP HQ Statement',
+    head:[['AU','PU','PY AE','BG',`BP ${xsPdfPrevLabel}`,`BP ${xsPdfCurLabel}`,`PY ${xsPdfPrevLabel}`,`AE ${xsPdfPrevLabel}`,`PY ${xsPdfCurLabel}`,`AE ${xsPdfCurLabel}`,'BG-PY AE','Prev AE-BP','Current AE-BP','Movement','Remark']],
+    body:xsPdfRows.map(r => ['MB',`PU-${r.pu.code} ${r.pu.desc}`,textCr(r.pyAnnual),textCr(r.budget),textCr(r.bpPrevious),textCr(r.bpCurrent),textCr(r.pyPrevious),textCr(r.actualPrevious),textCr(r.pyCurrent),textCr(r.actualCurrent),signedCr(r.budgetVsPY),signedCr(r.variancePrevious),signedCr(r.varianceCurrent),signedCr(r.latestMovement),r.remark]),
+    styles:{fontSize:10, cellPadding:2.2, overflow:'linebreak'},
+    columnStyles:{1:{cellWidth:170},14:{cellWidth:170}}
+  });
+
   addPage('Revenue Liability Report - PU-wise Liability Annexure');
   autoTable({
     startY: 58,
@@ -5695,11 +5890,15 @@ function buildPowerPointBlob(audit) {
   const rows = reportRowsForActivePUs();
   const totals = rows.reduce((t,r) => ({budget:t.budget+r.budget,actual:t.actual+r.actual,balance:t.balance+r.balance}), {budget:0,actual:0,balance:0});
   const top = rows.slice().sort((a,b)=>b.utilPct-a.utilPct).slice(0,10);
+  const xsPptMode = getBPModeStatus();
+  const xsPptLabel = xsPptMode.bpThrough ? `${xsPptMode.bpThrough.label} ${xsPptMode.bpThrough.year}` : 'completed month';
+  const xsPptTop = buildExcessShortfallRows().filter(r => r.hqIndex >= 0).sort((a,b) => b.varianceCurrent - a.varianceCurrent).slice(0,8);
   const slides = [
     ['Revenue Liability Portal - Fresh Export', [`Financial Year 2026-27 | Moradabad Division`,`Generated: ${indianDateTime(audit.generatedAt)}`,`Actual data through: ${audit.latestMonth}`,`Validation ID: ${audit.id}`,`Rule: live data reconciled before export; minimum font 10 pt; all content within 0.5 inch margins.`]],
     ['Executive Summary', [`Active expenditure PUs: ${rows.length}`,`Gross budget: ${textCr(totals.budget)}`,`Actual / committed: ${textCr(totals.actual)}`,`Balance: ${textCr(totals.balance)}`,`Utilisation: ${totals.budget ? (totals.actual/totals.budget*100).toFixed(1) : '0.0'}%`]],
     ['Month-wise Actuals', actualMonths.map(month => `${FY_MONTH_LABELS[FY_MONTHS.indexOf(month)]}: ${textCr(rows.reduce((s,r)=>s+(Number((MONTH[r.pu.code]||{})[month])||0),0))}`).concat([`Total actual: ${textCr(totals.actual)}`])],
     ['PU Utilisation - Highest', top.map(r => `PU-${r.pu.code} | ${r.pu.desc.slice(0,46)} | ${r.budget ? r.utilPct.toFixed(1)+'%' : 'No budget'} | Actual ${textCr(r.actual)}`)],
+    ['AE vs BP - HQ PU Summary', [`Logic: BP = BG / 12 x ${xsPptMode.bpMonthCount}; AE-BP = cumulative actual minus BP.`,`Reporting through: ${xsPptLabel}`,`HQ list: ${HQ_EXCESS_SHORTFALL_PUS.map(code => 'PU-'+code).join(', ')}`].concat(xsPptTop.map(r => `PU-${r.pu.code} | AE ${textCr(r.actualCurrent)} | BP ${textCr(r.bpCurrent)} | Variance ${signedCr(r.varianceCurrent)}`))],
     ['Validation and Fixed Export Rules', audit.checks.map(c => `${c.state.toUpperCase()}: ${c.title} - ${c.detail}`).concat(['Excel: landscape, fit-to-one-page-wide, print margins, minimum 10 pt.','PDF: landscape A4, repeating headers, horizontal page breaks, minimum 10 pt.','PowerPoint: 16:9, 0.5 inch safe margins, minimum 10 pt.','Exports are created on demand from current portal memory; old downloaded files are not reused.'])]
   ];
   const enc = new TextEncoder();

@@ -1,10 +1,10 @@
 {
   "ok": true,
   "mode": "local-portal-sync",
-  "sourceRepo": "E:\\GITHUB\\source-files\\2026-2027",
-  "targetRepo": "E:\\GITHUB\\MBRLR",
-  "sourceRevision": "dd7595432c88",
-  "assetVersion": "20260905-gui-operational-safety5-autoexports-dd7595432c88",
+  "sourceRepo": "D:\\github\\MB-BUDGET\\data\\source-files\\2026-2027",
+  "targetRepo": "D:\\github\\MBRLR",
+  "sourceRevision": "bd2b9011a4e5",
+  "assetVersion": "20260907-export-crore-2dp9-autoexports-bd2b9011a4e5",
   "calculationValidation": {
     "ok": true,
     "puMonthMismatches": 0,
@@ -15,7 +15,7 @@
   },
   "portalValidation": {
     "ok": true,
-    "viewCount": 12,
+    "viewCount": 13,
     "views": [
       "tab-summary",
       "tab-monthwise",
@@ -24,13 +24,14 @@
       "tab-aitrend",
       "tab-bpanalysis",
       "tab-budgetcontrol",
+      "tab-excessshortfall",
       "tab-smhdetail",
       "tab-demandsmh",
       "tab-remarks",
       "tab-backup",
       "tab-admin"
     ],
-    "freshAsset": "20260905-gui-operational-safety5-autoexports-dd7595432c88",
+    "freshAsset": "20260907-export-crore-2dp9-autoexports-bd2b9011a4e5",
     "reportingMonthIndex": 5,
     "uploadControls": 0
   },
@@ -42,9 +43,9 @@
       "pptx"
     ],
     "minimumFontPt": 10,
-    "explicitFontRulesChecked": 9,
-    "excel": "landscape, fit-to-one-page-wide",
-    "pdf": "A4 landscape, repeating tabular layout",
+    "explicitFontRulesChecked": 10,
+    "excel": "landscape, fit-to-one-page-wide, crore values fixed at 2 decimals",
+    "pdf": "A4 landscape, repeating tabular layout, crore values fixed at 2 decimals",
     "powerPoint": "16:9 canvas, minimum 10pt",
     "freshnessGuards": 3
   },
@@ -55,12 +56,12 @@
     "completedThrough": "AUG 2026",
     "reportingMonthIndex": 5,
     "completedMonthCount": 5,
-    "selectionMode": "auto"
+    "selectionMode": "manual"
   },
   "financialYear": "2026-2027",
-  "generatedAt": "2026-09-05T18:15:49+05:30",
-  "syncedAt": "2026-09-05T18:15:49+05:30",
-  "confirmedAt": "2026-09-05T18:15:49+05:30",
+  "generatedAt": "2026-09-07T15:17:18+05:30",
+  "syncedAt": "2026-09-07T15:17:18+05:30",
+  "confirmedAt": "2026-09-07T15:17:18+05:30",
   "counts": {
     "sourceFiles": 6,
     "processedFiles": 3,
@@ -75,7 +76,7 @@
       "roleLabel": "PU-wise Budget Available",
       "relativePath": "data/source-files/2026-2027/pu-budget.xls",
       "size": 22016,
-      "modifiedAt": "2026-09-05T17:50:08",
+      "modifiedAt": "2026-09-07T10:20:52",
       "sha256": "20f59e2fc618655770ce3bdaa70a1ef044d4f135d7486894c68cb9b703018ce5",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls"
     },
@@ -86,7 +87,7 @@
       "roleLabel": "PU-wise Month-wise Actual",
       "relativePath": "data/source-files/2026-2027/pu-month-actual.xls",
       "size": 16896,
-      "modifiedAt": "2026-09-05T17:50:23",
+      "modifiedAt": "2026-09-07T10:20:52",
       "sha256": "56fde6aca75dfd86463e27ff66beac6f0a5d492318f29b24a869d11552b72c82",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls"
     },
@@ -97,7 +98,7 @@
       "roleLabel": "DEPT-Demand/SMH PU-wise Budget",
       "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
       "size": 1504768,
-      "modifiedAt": "2026-09-05T17:51:35",
+      "modifiedAt": "2026-09-07T10:20:52",
       "sha256": "18e6064d104637ca00616b43da98d7efe0c55cab5d895fb32cc81ae8ccfdf80c",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-budget.xls"
     },
@@ -108,7 +109,7 @@
       "roleLabel": "DEPT-Demand/SMH PU-wise Month-wise Actual",
       "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
       "size": 532480,
-      "modifiedAt": "2026-09-05T17:52:06",
+      "modifiedAt": "2026-09-07T10:20:52",
       "sha256": "c7c09518fdbe8ef94d31d27bf715df95be2afbecee61acad6c9a644cd097f1eb",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-actual.xls"
     },
@@ -119,7 +120,7 @@
       "roleLabel": "Demand/SMH Budget Summary",
       "relativePath": "data/source-files/2026-2027/demand-smh-budget.xls",
       "size": 9216,
-      "modifiedAt": "2026-09-05T17:50:42",
+      "modifiedAt": "2026-09-07T10:20:52",
       "sha256": "fefc974fd5bea79c4d41f5b1e415dbbc74872b177a6570666f23dcaddeda713b",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-budget.xls"
     },
@@ -130,7 +131,7 @@
       "roleLabel": "Demand/SMH Month-wise Actual Summary",
       "relativePath": "data/source-files/2026-2027/demand-smh-actual.xls",
       "size": 8192,
-      "modifiedAt": "2026-09-05T17:50:56",
+      "modifiedAt": "2026-09-07T10:20:52",
       "sha256": "ac045f9d4fd91f13b885931793668f91338197a929133d0dfabb04e9bad6dc03",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls"
     }
@@ -203,7 +204,7 @@
   ],
   "actionLog": [
     {
-      "at": "2026-09-05T18:15:49+05:30",
+      "at": "2026-09-07T15:17:18+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [
@@ -232,7 +233,7 @@
   "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026",
   "smokeTest": {
     "ok": true,
-    "testedAt": "2026-09-05T18:15:49+05:30",
+    "testedAt": "2026-09-07T15:17:18+05:30",
     "sourceFileCount": 6,
     "calculationGate": true,
     "portalGate": true,
