@@ -40,4 +40,20 @@ for (const scenario of [
   const c=ctx.compute('test'); check(c);
   near(c.curMonthTotal,scenario.total); near(c.projPerMonth,scenario.projection);
 }
-console.log(`PASS: ${count} operational source PUs, six boundary scenarios, and uncapped utilisation labels.`);
+ctx.BUDGET = {
+  revised:{bg_isl:1200,rg:900},
+  original:{bg_isl:600,rg:0},
+  blank:{bg_isl:400,rg:null},
+  zeroGrant:{bg_isl:300,rg:0,rg_available:true},
+  recovery:{bg_isl:-100,rg:-80},
+  TOTAL:{bg_isl:2400,rg:820}
+};
+for (monthIndex = 0; monthIndex < 12; monthIndex++) {
+  near(ctx.getBudget('revised'),900);
+  near(ctx.getBudget('original'),600);
+  near(ctx.getBudget('blank'),400);
+  near(ctx.getBudget('zeroGrant'),0);
+  near(ctx.getBudget('recovery'),-80);
+  near(ctx.getBudget('TOTAL'),1820);
+}
+console.log(`PASS: ${count} operational source PUs, six liability scenarios, and mixed RG/BG/zero/recovery selection across all 12 months.`);

@@ -884,5 +884,86 @@
       "exportGate": true,
       "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026"
     }
+  },
+  {
+    "testedAt": "2026-09-11T11:09:48+05:30",
+    "sourceRevision": "c8836bc04eac",
+    "assetVersion": "20260911-pu-wise-rg11-autoexports-c8836bc04eac",
+    "sourceFolder": "D:\\github\\MB-BUDGET\\data\\source-files\\2026-2027",
+    "monthStatus": {
+      "systemMonth": "SEP 2026",
+      "reportingCurrentMonth": "SEP 2026",
+      "latestUploadedMonth": "SEP 2026",
+      "completedThrough": "AUG 2026",
+      "reportingMonthIndex": 5,
+      "completedMonthCount": 5,
+      "selectionMode": "manual"
+    },
+    "summary": {
+      "puBudgetRows": 47,
+      "puMonthRows": 40,
+      "detailRows": 910,
+      "detailBudget": 34145286,
+      "detailActual": 17273494,
+      "demandRows": 12,
+      "latestMonth": "SEP 2026",
+      "demandMainAECompleted": 16528995,
+      "demandMainBPCompleted": 13581613,
+      "pyBudgetRows": 0,
+      "pyMonthRows": 0
+    },
+    "calculationValidation": {
+      "ok": true,
+      "puMonthMismatches": 0,
+      "detailRows": 910,
+      "detailActual": 17273494,
+      "demandRows": 12,
+      "demandMainAE": 16528995
+    },
+    "portalValidation": {
+      "ok": true,
+      "viewCount": 13,
+      "views": [
+        "tab-summary",
+        "tab-monthwise",
+        "tab-pumaster",
+        "tab-trend",
+        "tab-aitrend",
+        "tab-bpanalysis",
+        "tab-budgetcontrol",
+        "tab-excessshortfall",
+        "tab-smhdetail",
+        "tab-demandsmh",
+        "tab-remarks",
+        "tab-backup",
+        "tab-admin"
+      ],
+      "freshAsset": "20260911-pu-wise-rg11-autoexports-c8836bc04eac",
+      "reportingMonthIndex": 5,
+      "uploadControls": 0
+    },
+    "exportValidation": {
+      "ok": true,
+      "formats": [
+        "xlsx",
+        "pdf",
+        "pptx"
+      ],
+      "minimumFontPt": 10,
+      "explicitFontRulesChecked": 10,
+      "excel": "landscape, fit-to-one-page-wide, crore values fixed at 2 decimals",
+      "pdf": "A4 landscape, repeating tabular layout, crore values fixed at 2 decimals",
+      "powerPoint": "16:9 canvas, minimum 10pt",
+      "freshnessGuards": 3
+    },
+    "smokeTest": {
+      "ok": true,
+      "testedAt": "2026-09-11T11:09:48+05:30",
+      "sourceFileCount": 6,
+      "calculationGate": true,
+      "portalGate": true,
+      "exportGate": true,
+      "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026"
+    }
   }
 ]

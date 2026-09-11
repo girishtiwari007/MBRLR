@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "export-month-coverage10"
+PORTAL_CODE_REVISION = "pu-wise-rg11"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -310,6 +310,16 @@ def load_existing_maps(root: Path):
     return pu_names, dept_names
 
 
+def effective_source_budget(sheet, row, bg_col, rg_col):
+    """RG replaces BG on its own source row immediately, without a month gate.
+
+    Source zero RG cells are unallotted placeholders; negative recovery grants
+    are valid RG amounts too. A numeric zero alone cannot prove zero allotment.
+    """
+    rg = as_number(sheet.cell_value(row, rg_col)) if rg_col is not None else 0
+    return rg if rg != 0 else (as_number(sheet.cell_value(row, bg_col)) if bg_col is not None else 0)
+
+
 def parse_pu_budget(path: Path):
     sh = read_sheet(path)
     hr, headers = find_header(sh, ["PUCODE"])
@@ -368,12 +378,13 @@ def parse_detail(budget_path: Path, actual_path: Path, pu_names, dept_names):
     bsh = read_sheet(budget_path)
     bhr, bheaders = find_header(bsh, ["DEPARTMENTCODE", "SMH", "PUCODE"])
     c_bg = col(bheaders, "BGISL", "BUDGET")
+    c_rg = col(bheaders, "RG")
     budget = {}
     for r in range(bhr + 1, bsh.nrows):
         dept, smh, pu = key_from(bsh, bheaders, r)
         if not dept or not smh or not pu or dept == "00" or pu in SKIP_DETAIL_PUS:
             continue
-        budget[(dept, smh, pu)] = budget.get((dept, smh, pu), 0) + (as_number(bsh.cell_value(r, c_bg)) if c_bg is not None else 0)
+        budget[(dept, smh, pu)] = budget.get((dept, smh, pu), 0) + effective_source_budget(bsh, r, c_bg, c_rg)
 
     ash = read_sheet(actual_path)
     ahr, aheaders = find_header(ash, ["DEPARTMENTCODE", "SMH", "PUCODE"])
@@ -431,11 +442,12 @@ def parse_demand(budget_path: Path, actual_path: Path, generated_at: str, comple
     bsh = read_sheet(budget_path)
     bhr, bheaders = find_header(bsh, ["AU", "SMH"])
     c_smh, c_bg = col(bheaders, "SMH"), col(bheaders, "BGISL", "BUDGET", "OBA")
+    c_rg = col(bheaders, "RG")
     oba = {}
     for r in range(bhr + 1, bsh.nrows):
         smh = norm_code(bsh.cell_value(r, c_smh))
         if smh and smh not in {"TOTAL", "GRANDTOTAL"}:
-            oba[smh] = oba.get(smh, 0) + (as_number(bsh.cell_value(r, c_bg)) if c_bg is not None else 0)
+            oba[smh] = oba.get(smh, 0) + effective_source_budget(bsh, r, c_bg, c_rg)
 
     ash = read_sheet(actual_path)
     ahr, aheaders = find_header(ash, ["AU", "SMH"])
@@ -483,7 +495,7 @@ def parse_demand(budget_path: Path, actual_path: Path, generated_at: str, comple
         "generatedAt": generated_at,
         "asOn": fy_month_label(completed - 1),
         "completedMonths": completed,
-        "note": f"OBA uses uploaded BG_ISL/OBA. BP and default Demand/SMH summary use {completed} completed month(s) through {fy_month_label(completed - 1)}. {fy_month_label(current_idx)} is treated as current running month. Latest uploaded actual month detected as {fy_month_label(latest_idx)}. Demand 12N/10N Suspense Heads is shown separately and is not netted from main total.",
+        "note": f"OBA uses RG on each source row when available, otherwise BG_ISL, without a January restriction. BP and default Demand/SMH summary use {completed} completed month(s) through {fy_month_label(completed - 1)}. {fy_month_label(current_idx)} is treated as current running month. Latest uploaded actual month detected as {fy_month_label(latest_idx)}. Demand 12N/10N Suspense Heads is shown separately and is not netted from main total.",
         "rows": rows,
         "totals": totals,
     }

@@ -3,8 +3,8 @@
   "mode": "local-portal-sync",
   "sourceRepo": "D:\\github\\MB-BUDGET\\data\\source-files\\2026-2027",
   "targetRepo": "D:\\github\\MBRLR",
-  "sourceRevision": "bd2b9011a4e5",
-  "assetVersion": "20260908-export-month-coverage10-autoexports-bd2b9011a4e5",
+  "sourceRevision": "c8836bc04eac",
+  "assetVersion": "20260911-pu-wise-rg11-autoexports-c8836bc04eac",
   "calculationValidation": {
     "ok": true,
     "puMonthMismatches": 0,
@@ -31,7 +31,7 @@
       "tab-backup",
       "tab-admin"
     ],
-    "freshAsset": "20260908-export-month-coverage10-autoexports-bd2b9011a4e5",
+    "freshAsset": "20260911-pu-wise-rg11-autoexports-c8836bc04eac",
     "reportingMonthIndex": 5,
     "uploadControls": 0
   },
@@ -59,9 +59,9 @@
     "selectionMode": "manual"
   },
   "financialYear": "2026-2027",
-  "generatedAt": "2026-09-08T10:43:19+05:30",
-  "syncedAt": "2026-09-08T10:43:19+05:30",
-  "confirmedAt": "2026-09-08T10:43:19+05:30",
+  "generatedAt": "2026-09-11T11:09:48+05:30",
+  "syncedAt": "2026-09-11T11:09:48+05:30",
+  "confirmedAt": "2026-09-11T11:09:48+05:30",
   "counts": {
     "sourceFiles": 6,
     "processedFiles": 3,
@@ -77,7 +77,7 @@
       "relativePath": "data/source-files/2026-2027/pu-budget.xls",
       "size": 22016,
       "modifiedAt": "2026-09-07T10:20:52",
-      "sha256": "20f59e2fc618655770ce3bdaa70a1ef044d4f135d7486894c68cb9b703018ce5",
+      "sha256": "5988e1b754a49d83a943a9cf97fdcab68c3a012e6fff7813c7fe90e0130ffaf1",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls"
     },
     {
@@ -204,7 +204,7 @@
   ],
   "actionLog": [
     {
-      "at": "2026-09-08T10:43:19+05:30",
+      "at": "2026-09-11T11:09:48+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [
@@ -233,7 +233,7 @@
   "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026",
   "smokeTest": {
     "ok": true,
-    "testedAt": "2026-09-08T10:43:19+05:30",
+    "testedAt": "2026-09-11T11:09:48+05:30",
     "sourceFileCount": 6,
     "calculationGate": true,
     "portalGate": true,
