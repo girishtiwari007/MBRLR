@@ -9,12 +9,12 @@ const app = fs.readFileSync(path.join(root, 'assets/js/app.js'), 'utf8').replace
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'data/mb-budget-sync/sync-manifest.json')));
 const ctx = vm.createContext({Blob, TextEncoder, Uint8Array, DataView, Date,
   document: {getElementById: () => null}, _crcTable: null});
-for (const name of ['BUDGET','MONTH','PU_META','FY_MONTHS','FY_MONTH_LABELS','SKIPPED_DISPLAY_PUS','IMPORTANT_PUS','_reportingCurrentMonthIdx','_latestActualMonthIdx']) {
+for (const name of ['BUDGET','MONTH','BUDGET_PY','MONTH_PY','HQ_EXCESS_SHORTFALL_PUS','PU_META','FY_MONTHS','FY_MONTH_LABELS','SKIPPED_DISPLAY_PUS','IMPORTANT_PUS','_reportingCurrentMonthIdx','_latestActualMonthIdx']) {
   const match = app.match(new RegExp(`^(?:const|let) ${name} = ([\\s\\S]*?);`, 'm'));
   assert.ok(match, `Missing ${name}`);
   vm.runInContext(`var ${name} = ${match[1]};`, ctx);
 }
-for (const name of ['getCurrentFYMonth','getMonthStatus','isRGActive','getBudget','compute',
+for (const name of ['getBPModeStatus','buildExcessShortfallRows','signedCr','getCurrentFYMonth','getMonthStatus','isRGActive','getBudget','compute',
   'normPUCode','isSkippedDisplayPU','isImportantPU','puFocusMode','passesPUFocus','isActiveDisplayPU','activePUMeta',
   'isBudgetNoExpense','reportRowsForActivePUs','textCr','indianDateTime',
   'crc32','dosDateTime','u16','u32','concatUint8','createZipBlob','pptEscape','pptTextShape','pptSlideXml','buildPowerPointBlob']) {
