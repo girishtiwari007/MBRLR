@@ -27,6 +27,7 @@ assert.match(ctx.miniProg(1939.3, 'red'), /1939\.3%/);
 assert.match(ctx.miniProg(1939.3, 'red'), /width:100%/);
 for (const scenario of [
   {budget:1200,past:500,current:0,index:5,total:100,projection:100},
+  {budget:1200,past:500,current:-30,index:5,total:100,projection:100},
   {budget:1200,past:500,current:300,index:5,total:300,projection:400/6},
   {budget:400,past:500,current:30,index:5,total:30,projection:0},
   {budget:0,past:0,current:30,index:0,total:30,projection:0},
@@ -38,6 +39,7 @@ for (const scenario of [
   ctx.MONTH={test:{[months[monthIndex]]:scenario.current}};
   if (monthIndex>0) ctx.MONTH.test.apr=scenario.past;
   const c=ctx.compute('test'); check(c);
+  near(c.curCommitted,scenario.current);
   near(c.curMonthTotal,scenario.total); near(c.projPerMonth,scenario.projection);
 }
 ctx.BUDGET = {
@@ -56,4 +58,4 @@ for (monthIndex = 0; monthIndex < 12; monthIndex++) {
   near(ctx.getBudget('recovery'),-80);
   near(ctx.getBudget('TOTAL'),1820);
 }
-console.log(`PASS: ${count} operational source PUs, six liability scenarios, and mixed RG/BG/zero/recovery selection across all 12 months.`);
+console.log(`PASS: ${count} operational source PUs, seven liability scenarios including signed running-month adjustments, and mixed RG/BG/zero/recovery selection across all 12 months.`);
