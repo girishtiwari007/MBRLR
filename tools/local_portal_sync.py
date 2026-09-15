@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "signed-actuals12"
+PORTAL_CODE_REVISION = "reporting-settings13"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -209,7 +209,7 @@ def sheet_profile(path: Path):
         has_smh = any(h == "SMH" or h.endswith("SMH") or "SMH" in h for h in headers)
         has_au = any(h == "AU" for h in headers)
         has_bg = any("BGISL" in h or h in {"BUDGET", "OBA"} for h in headers)
-        has_rg_stage = any(h in {"REA20262027", "RG20262027", "FME20262027", "FG20262027", "RG"} for h in headers)
+        has_rg_stage = any(re.fullmatch(r'(REA|RG|FME|FG)(20\d{2}20\d{2})?', h) for h in headers)
         month_hits = sum(1 for label in MONTH_LABELS if any(label in h for h in headers))
         role = None
         score = 0
@@ -310,6 +310,31 @@ def load_existing_maps(root: Path):
     return pu_names, dept_names
 
 
+def rebase_reporting_year(text, old_fy, new_fy):
+    """Migrate legacy reporting labels, never embedded numbers or audit dates."""
+    if old_fy == new_fy:
+        return text
+    old, new = int(old_fy[:4]), int(new_fy[:4])
+    pairs = {}
+    for offset in (-1, 0):
+        a, b = old + offset, new + offset
+        pairs[f'{a}-{a+1}'] = f'{b}-{b+1}'
+        pairs[f'{a}-{str(a+1)[-2:]}'] = f'{b}-{str(b+1)[-2:]}'
+        pairs[f'{a}_{a+1}'] = f'{b}_{b+1}'
+    result = []
+    for line in text.splitlines(keepends=True):
+        if re.match(r'\s*(?:let|const) (?:BUDGET|MONTH|BUDGET_PY|MONTH_PY|DEFAULT_DATA_AS_ON_DATE|RLP_BUILD_ID|ASSET_VERSION)\b', line):
+            result.append(line)
+            continue
+        line = re.sub('|'.join(map(re.escape, sorted(pairs, key=len, reverse=True))), lambda m: pairs[m[0]], line)
+        # Single calendar-year labels and numeric year branches, not timestamps.
+        line = re.sub(r'(?i)\b(APR(?:IL)?|MAY|JUN(?:E)?|JUL(?:Y)?|AUG(?:UST)?|SEP(?:TEMBER)?|OCT(?:OBER)?|NOV(?:EMBER)?|DEC(?:EMBER)?|JAN(?:UARY)?|FEB(?:RUARY)?|MAR(?:CH)?) (' + '|'.join(str(old+i) for i in (-1,0,1)) + r')\b', lambda m: m[1] + ' ' + str(int(m[2])+new-old), line)
+        line = re.sub(r'(?<=[?:])\s*(' + str(old) + '|' + str(old+1) + r')\b', lambda m: ' ' + str(int(m[1])+new-old), line)
+        line = line.replace(f"replace('{old}','{old-1}').replace('{old+1}','{old}')", f"replace('{new}','{new-1}').replace('{new+1}','{new}')")
+        result.append(line)
+    return ''.join(result)
+
+
 def effective_source_budget(sheet, row, bg_col, rg_col):
     """RG replaces BG on its own source row immediately, without a month gate.
 
@@ -324,7 +349,7 @@ def parse_pu_budget(path: Path):
     sh = read_sheet(path)
     hr, headers = find_header(sh, ["PUCODE"])
     c_pu = col(headers, "PUCODE")
-    c_bg = col(headers, "BGISL20262027", "BGISL")
+    c_bg = col(headers, "BGISL" + FY.replace('-', ''), "BGISL")
     c_rg = col(headers, "RG")
     c_actual = col(headers, "ACTUALSUPTO")
     out = {}
@@ -345,7 +370,8 @@ def parse_pu_budget(path: Path):
     return out
 
 
-def parse_pu_month(path: Path, start_year=2026):
+def parse_pu_month(path: Path, start_year=None):
+    start_year = start_year or int(FY[:4])
     sh = read_sheet(path)
     hr, headers = find_header(sh, ["PUCODE"])
     c_pu = col(headers, "PUCODE")
@@ -388,7 +414,8 @@ def parse_detail(budget_path: Path, actual_path: Path, pu_names, dept_names):
 
     ash = read_sheet(actual_path)
     ahr, aheaders = find_header(ash, ["DEPARTMENTCODE", "SMH", "PUCODE"])
-    month_cols = [month_col(aheaders, f"{m} 2026" if i <= 8 else f"{m} 2027") for i, m in enumerate(MONTH_LABELS)]
+    start_year = int(FY[:4])
+    month_cols = [month_col(aheaders, f"{m} {start_year if i <= 8 else start_year + 1}") for i, m in enumerate(MONTH_LABELS)]
     actual = {}
     for r in range(ahr + 1, ash.nrows):
         dept, smh, pu = key_from(ash, aheaders, r)
@@ -423,7 +450,7 @@ def parse_detail(budget_path: Path, actual_path: Path, pu_names, dept_names):
 def fy_month_label(idx: int) -> str:
     if idx < 0:
         return "No completed month"
-    return f"{MONTH_LABELS[idx]} {'2026' if idx <= 8 else '2027'}"
+    return f"{MONTH_LABELS[idx]} {int(FY[:4]) + (idx > 8)}"
 
 
 def current_fy_month_idx(now: datetime) -> int:
@@ -452,7 +479,8 @@ def parse_demand(budget_path: Path, actual_path: Path, generated_at: str, comple
     ash = read_sheet(actual_path)
     ahr, aheaders = find_header(ash, ["AU", "SMH"])
     c_smh = col(aheaders, "SMH")
-    month_cols = [month_col(aheaders, f"{m} 2026" if i <= 8 else f"{m} 2027") for i, m in enumerate(MONTH_LABELS)]
+    start_year = int(FY[:4])
+    month_cols = [month_col(aheaders, f"{m} {start_year if i <= 8 else start_year + 1}") for i, m in enumerate(MONTH_LABELS)]
     actual = {}
     for r in range(ahr + 1, ash.nrows):
         smh = norm_code(ash.cell_value(r, c_smh))
@@ -618,13 +646,34 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
 
 
 def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_source_dir: Path | None = None,
-                  running_month_idx: int | None = None, completed_through_idx: int | None = None):
+                  running_month_idx: int | None = None, completed_through_idx: int | None = None,
+                  financial_year: str | None = None):
+    global FY, FY_SHORT
+    manifest_path = root / 'data/mb-budget-sync/sync-manifest.json'
+    previous = json.loads(manifest_path.read_text(encoding='utf-8')) if manifest_path.exists() else {}
+    old_year = previous.get('financialYear', '2026-2027')
+    FY = financial_year or old_year
+    if not re.fullmatch(r'20\d{2}-20\d{2}', FY) or int(FY[5:]) != int(FY[:4]) + 1:
+        raise ValueError('Financial year must be consecutive, e.g. 2026-2027')
+    FY_SHORT = f'{FY[:4]}-{FY[-2:]}'
+    if FY != old_year and not py_source_dir:
+        raise ValueError('Changing financial year requires matching previous-year files; stale PY comparisons cannot be retained.')
     now = datetime.now(IST).replace(microsecond=0)
     generated_at = now.isoformat()
     source_paths, detected_profiles = discover_source_files(source_dir)
+    # Reject a wrong-year workbook before changing any published data.
+    for role in ('pu_month', 'detail_actual', 'demand_actual'):
+        sheet = read_sheet(source_paths[role])
+        cells = ' '.join(norm_header(sheet.cell_value(r, c)) for r in range(min(20, sheet.nrows)) for c in range(sheet.ncols))
+        if not any(norm_header(f'{m} {int(FY[:4]) + (i > 8)}') in cells for i, m in enumerate(MONTH_LABELS)):
+            raise ValueError(f'{role}: no month headers matching selected financial year {FY}')
     py_source_paths, py_profiles = ({}, [])
     if py_source_dir:
         py_source_paths, py_profiles = discover_py_source_files(py_source_dir)
+        py_sheet = read_sheet(py_source_paths['pu_month'])
+        py_cells = ' '.join(norm_header(py_sheet.cell_value(r, c)) for r in range(min(20, py_sheet.nrows)) for c in range(py_sheet.ncols))
+        if not any(norm_header(f'{m} {int(FY[:4])-1 + (i > 8)}') in py_cells for i, m in enumerate(MONTH_LABELS)):
+            raise ValueError('Previous-year month headers do not match selected financial year')
     source_hasher = hashlib.sha256()
     all_revision_sources = [(f"cy:{role}", path) for role, path in source_paths.items()]
     all_revision_sources += [(f"py:{role}", path) for role, path in py_source_paths.items()]
@@ -634,7 +683,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
             for chunk in iter(lambda: source_file.read(1024 * 1024), b""):
                 source_hasher.update(chunk)
     source_revision = source_hasher.hexdigest()[:12]
-    source_hasher.update(f"running:{running_month_idx};completed:{completed_through_idx}".encode("utf-8"))
+    source_hasher.update(f"fy:{FY};running:{running_month_idx};completed:{completed_through_idx}".encode("utf-8"))
     source_revision = source_hasher.hexdigest()[:12]
     version = f"{now.strftime('%Y%m%d')}-{PORTAL_CODE_REVISION}-autoexports-{source_revision}"
 
@@ -648,7 +697,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
     budget_py = month_py = None
     if py_source_paths:
         budget_py = parse_pu_budget(py_source_paths["pu_budget"])
-        month_py, _ = parse_pu_month(py_source_paths["pu_month"], start_year=2025)
+        month_py, _ = parse_pu_month(py_source_paths["pu_month"], start_year=int(FY[:4])-1)
         for code, vals in month_py.items():
             if code == "TOTAL":
                 continue
@@ -674,6 +723,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
 
     app_path = root / "assets/js/app.js"
     app = app_path.read_text(encoding="utf-8")
+    app = rebase_reporting_year(app, old_year, FY)
     app = re.sub(r"const ASSET_VERSION = '[^']+';", f"const ASSET_VERSION = '{version}';", app, count=1)
     app = replace_js_assignment(app, "BUDGET", json.dumps(budget, separators=(",", ":")))
     app = replace_js_assignment(app, "MONTH", json.dumps(month, separators=(",", ":")))
@@ -726,10 +776,11 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
     fallback = datetime.fromisoformat(generated_at).strftime("%d-%b-%Y %H:%M")
     index = re.sub(r'<meta name="portal-build" content="[^"]+">', f'<meta name="portal-build" content="rlp-mbd-{generated_at[:10]}-{PORTAL_CODE_REVISION}-{source_revision}">', index, count=1)
     index = re.sub(r'As on: [0-9]{2}-[A-Za-z]{3}-[0-9]{4} [0-9]{2}:[0-9]{2}', f"As on: {fallback}", index, count=1)
-    index = re.sub(r'v=2026[0-9A-Za-z-]+', f"v={version}", index)
+    index = rebase_reporting_year(index, old_year, FY)
+    index = re.sub(r'v=20[0-9A-Za-z-]+', f"v={version}", index)
     index_path.write_text(index, encoding="utf-8", newline="\n")
 
-    target_source = root / "data/mb-budget-sync/source-files/2026-2027"
+    target_source = root / f"data/mb-budget-sync/source-files/{FY}"
     target_source.mkdir(parents=True, exist_ok=True)
     source_file_entries = []
     for key, src in source_paths.items():
@@ -742,15 +793,16 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
             "originalName": src.name,
             "role": key,
             "roleLabel": ROLE_LABELS[key],
-            "relativePath": f"data/source-files/2026-2027/{TARGET_NAMES[key]}",
+            "relativePath": f"data/source-files/{FY}/{TARGET_NAMES[key]}",
             "size": stat.st_size,
             "modifiedAt": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
             "sha256": hashlib.sha256(src.read_bytes()).hexdigest(),
-            "targetPath": f"data/mb-budget-sync/source-files/2026-2027/{TARGET_NAMES[key]}",
+            "targetPath": f"data/mb-budget-sync/source-files/{FY}/{TARGET_NAMES[key]}",
         })
     py_source_file_entries = []
     if py_source_paths:
-        py_target = root / "data/mb-budget-sync/source-files/2025-2026"
+        py_fy = f'{int(FY[:4])-1}-{FY[:4]}'
+        py_target = root / f"data/mb-budget-sync/source-files/{py_fy}"
         py_target.mkdir(parents=True, exist_ok=True)
         for key, src in py_source_paths.items():
             target_name = TARGET_NAMES[key]
@@ -766,7 +818,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
                 "size": stat.st_size,
                 "modifiedAt": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
                 "sha256": hashlib.sha256(src.read_bytes()).hexdigest(),
-                "targetPath": f"data/mb-budget-sync/source-files/2025-2026/{target_name}",
+                "targetPath": f"data/mb-budget-sync/source-files/{py_fy}/{target_name}",
             })
 
     processed = root / "data/mb-budget-sync/processed"
@@ -924,6 +976,7 @@ def main():
     parser.add_argument("--github", default="")
     parser.add_argument("--py-source", default="", help="Optional Previous Year folder containing PU budget and PU month-wise actual files")
     parser.add_argument("--running-month-index", type=int, default=None, choices=range(12))
+    parser.add_argument("--financial-year", default=None, help="Financial year, e.g. 2026-2027")
     parser.add_argument("--completed-through-index", type=int, default=None, choices=range(-1, 12))
     args = parser.parse_args()
     summary = write_outputs(
@@ -933,6 +986,7 @@ def main():
         Path(args.py_source) if args.py_source else None,
         args.running_month_index,
         args.completed_through_index,
+        args.financial_year,
     )
     print(json.dumps(summary, indent=2))
 

@@ -18,6 +18,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from local_portal_sync import MONTH_LABELS, write_outputs
+from reporting_settings import load_settings, save_settings, calendar_cutoff
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,6 +42,8 @@ class SyncApp(tk.Tk):
         self._calendar_month = datetime.now().strftime("%Y-%m")
         self._sync_running = False
         self._source_fingerprint = None
+        self._pending_month_refresh = False
+        self.settings = load_settings(ROOT)
         self._build_ui()
         self.after(150, self._drain_events)
         self.after(1200, self._check_initial_month_refresh)
@@ -70,10 +73,24 @@ class SyncApp(tk.Tk):
         self.py_var = tk.StringVar(value=str(DEFAULT_PY))
         self.use_py = tk.BooleanVar(value=False)
         self.auto_open = tk.BooleanVar(value=True)
-        self.month_choices = ["AUTO - detect from uploaded actuals"] + [f"{m} {2026 if i <= 8 else 2027}" for i, m in enumerate(MONTH_LABELS)]
+        self.fy_var = tk.StringVar(value=self.settings['financial_year'])
+        self.follow_calendar = tk.BooleanVar(value=self.settings.get('follow_calendar', False))
+        start_year = int(self.fy_var.get()[:4])
+        self.month_choices = ["AUTO - detect from uploaded actuals"] + [f"{m} {start_year + (i > 8)}" for i, m in enumerate(MONTH_LABELS)]
         self.completed_choices = ["AUTO - month before running", "NONE - no completed month"] + self.month_choices[1:]
         self.running_month_var = tk.StringVar(value=self.month_choices[0])
         self.completed_month_var = tk.StringVar(value=self.completed_choices[0])
+        if self.settings.get('running') is not None:
+            self.running_month_var.set(self.month_choices[self.settings['running'] + 1])
+        if self.settings.get('completed') is not None:
+            self.completed_month_var.set(self.completed_choices[self.settings['completed'] + 2])
+        year_row = ttk.Frame(body)
+        year_row.pack(fill='x', pady=5)
+        ttk.Label(year_row, text='Financial year').pack(side='left')
+        year_box = ttk.Combobox(year_row, textvariable=self.fy_var, state='readonly', values=[f'{y}-{y+1}' for y in range(start_year-5, start_year+11)], width=14)
+        year_box.pack(side='left', padx=8)
+        year_box.bind('<<ComboboxSelected>>', self._change_year)
+        ttk.Checkbutton(year_row, text='Follow calendar month (otherwise retain selected cutoff)', variable=self.follow_calendar).pack(side='left')
 
         self._path_card(body, "Portal and GitHub Desktop working folders", [
             ("Portal source", self.repo_var, lambda: self._browse_dir(self.repo_var)),
@@ -85,18 +102,20 @@ class SyncApp(tk.Tk):
         month_card.columnconfigure(1, weight=1); month_card.columnconfigure(3, weight=1)
         ttk.Label(month_card, text="Reporting Month Control", style="CardTitle.TLabel").grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 7))
         ttk.Label(month_card, text="Completed through", background="#ffffff").grid(row=1, column=0, sticky="w", padx=(0, 7))
-        ttk.Combobox(month_card, textvariable=self.completed_month_var, values=self.completed_choices, state="readonly").grid(row=1, column=1, sticky="ew", padx=(0, 14))
+        self.completed_box = ttk.Combobox(month_card, textvariable=self.completed_month_var, values=self.completed_choices, state="readonly")
+        self.completed_box.grid(row=1, column=1, sticky="ew", padx=(0, 14))
         ttk.Label(month_card, text="Current / running", background="#ffffff").grid(row=1, column=2, sticky="w", padx=(0, 7))
-        ttk.Combobox(month_card, textvariable=self.running_month_var, values=self.month_choices, state="readonly").grid(row=1, column=3, sticky="ew")
+        self.running_box = ttk.Combobox(month_card, textvariable=self.running_month_var, values=self.month_choices, state="readonly")
+        self.running_box.grid(row=1, column=3, sticky="ew")
         ttk.Label(month_card, text="Manual months must be consecutive; the cutoff refreshes portal calculations and every export.", background="#ffffff", foreground="#607080").grid(row=2, column=0, columnspan=4, sticky="w", pady=(7, 0))
 
         years = ttk.Frame(body)
         years.pack(fill="x")
         years.columnconfigure(0, weight=1)
         years.columnconfigure(1, weight=1)
-        cy = self._year_card(years, "CURRENT YEAR 2026-27", self.cy_var, self.cy_files, False)
+        cy = self._year_card(years, "CURRENT YEAR (selected FY)", self.cy_var, self.cy_files, False)
         cy.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
-        py = self._year_card(years, "PREVIOUS YEAR 2025-26 (optional)", self.py_var, self.py_files, True)
+        py = self._year_card(years, "PREVIOUS YEAR (selected FY minus one)", self.py_var, self.py_files, True)
         py.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
 
         controls = ttk.Frame(body, style="Card.TFrame", padding=12)
@@ -161,8 +180,28 @@ class SyncApp(tk.Tk):
         self.log.insert("end", message.rstrip() + "\n")
         self.log.see("end")
 
+    def _change_year(self, event=None):
+        year = int(self.fy_var.get()[:4])
+        self.month_choices = ['AUTO - detect from uploaded actuals'] + [f'{m} {year + (i > 8)}' for i, m in enumerate(MONTH_LABELS)]
+        self.completed_choices = ['AUTO - month before running', 'NONE - no completed month'] + self.month_choices[1:]
+        self.running_box.configure(values=self.month_choices)
+        self.completed_box.configure(values=self.completed_choices)
+        self.running_month_var.set(self.month_choices[0])
+        self.completed_month_var.set(self.completed_choices[0])
+        self._append('FY changed: select matching CY and PY files. Existing data is not automatically relabelled.')
+
     def start_sync(self):
         if self._sync_running:
+            return
+        try:
+            if self.follow_calendar.get():
+                running, completed = calendar_cutoff(self.fy_var.get(), datetime.now())
+                self.running_month_var.set(self.month_choices[running+1])
+                self.completed_month_var.set(self.completed_choices[completed+2])
+            running, completed = self._selected_month_cutoff()
+            self._run_settings = {'financial_year': self.fy_var.get(), 'running': running, 'completed': completed, 'follow_calendar': self.follow_calendar.get()}
+        except Exception as exc:
+            messagebox.showerror('Reporting settings', str(exc))
             return
         self._sync_running = True
         self.sync_btn.configure(state="disabled")
@@ -195,9 +234,9 @@ class SyncApp(tk.Tk):
             self.events.put(("log", f"PY source: {py_source if py_source else 'unchanged'}"))
             self.events.put(("log", "Detecting report roles from worksheet columns..."))
             backup_dir = self._backup_generated_files(root, temps)
-            running_idx, completed_idx = self._selected_month_cutoff()
+            running_idx, completed_idx = self._run_settings['running'], self._run_settings['completed']
             self.events.put(("log", f"Month cutoff: completed={self.completed_month_var.get()}, running={self.running_month_var.get()}"))
-            summary = write_outputs(root, cy_source, github, py_source, running_idx, completed_idx)
+            summary = write_outputs(root, cy_source, github, py_source, running_idx, completed_idx, self._run_settings['financial_year'])
             manifest = json.loads((root / "data/mb-budget-sync/sync-manifest.json").read_text(encoding="utf-8"))
             validation = manifest.get("calculationValidation", {})
             if not validation.get("ok"):
@@ -223,6 +262,7 @@ class SyncApp(tk.Tk):
             self._ensure_server(portal_root)
             url = f"http://127.0.0.1:{PORT}/index.html?fresh={manifest.get('assetVersion', 'latest')}"
             self._validate_live_portal(url, manifest)
+            save_settings(ROOT, self._run_settings)
             self.events.put(("log", "PASS: every portal tab, chart dataset, and Excel/PDF/PPT export function is available in the fresh live build"))
             webbrowser.open(url)
             self.events.put(("done", f"Sync complete - {manifest.get('sourceRevision')} - {url}"))
@@ -302,7 +342,7 @@ class SyncApp(tk.Tk):
             last_month = str(manifest.get("generatedAt", ""))[:7]
             if last_month and last_month != self._calendar_month:
                 self._append(f"MONTH CHANGE SENSED: last calculation {last_month}; system month {self._calendar_month}. Auto-refreshing all views and exports.")
-                self.start_sync()
+                self._request_month_refresh()
         except Exception as exc:
             self._append(f"Month-sensing startup check warning: {exc}")
 
@@ -313,8 +353,14 @@ class SyncApp(tk.Tk):
             previous_month = self._calendar_month
             self._calendar_month = current_month
             self._append(f"MONTH CHANGE SENSED: {previous_month} to {current_month}. Auto-refreshing calculations, portal views, and exports.")
-            self.start_sync()
+            self._request_month_refresh()
         self.after(60000, self._check_month_rollover)
+
+    def _request_month_refresh(self):
+        if self._sync_running:
+            self._pending_month_refresh = True
+        else:
+            self.start_sync()
 
     def _validate_live_portal(self, url, manifest):
         """Fail the sync unless the live cache-fresh portal exposes every view and export."""
@@ -406,6 +452,9 @@ class SyncApp(tk.Tk):
                     messagebox.showerror("MBRLR Local Sync", value)
         except queue.Empty:
             pass
+        if self._pending_month_refresh and not self._sync_running:
+            self._pending_month_refresh = False
+            self.start_sync()
         self.after(150, self._drain_events)
 
 

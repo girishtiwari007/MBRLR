@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260915-signed-actuals12-autoexports-426a51edbc91';
+const ASSET_VERSION = '20260915-reporting-settings13-autoexports-5932b9e68b04';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -539,9 +539,9 @@ let _reportingCurrentMonthIdx = 5; // GUI-selected or auto-detected reporting mo
 let _latestActualMonthIdx = 5;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-15T16:05:46+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-15T16:23:52+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-09-15-signed-actuals12-426a51edbc91';
+const RLP_BUILD_ID = 'rlp-mbd-2026-09-15-reporting-settings13-5932b9e68b04';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;

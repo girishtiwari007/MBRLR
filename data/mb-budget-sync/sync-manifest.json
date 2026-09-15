@@ -3,8 +3,8 @@
   "mode": "local-portal-sync",
   "sourceRepo": "D:\\PORTAL DATA\\current year",
   "targetRepo": "D:\\github\\MBRLR",
-  "sourceRevision": "426a51edbc91",
-  "assetVersion": "20260915-signed-actuals12-autoexports-426a51edbc91",
+  "sourceRevision": "5932b9e68b04",
+  "assetVersion": "20260915-reporting-settings13-autoexports-5932b9e68b04",
   "calculationValidation": {
     "ok": true,
     "puMonthMismatches": 0,
@@ -31,7 +31,7 @@
       "tab-backup",
       "tab-admin"
     ],
-    "freshAsset": "20260915-signed-actuals12-autoexports-426a51edbc91",
+    "freshAsset": "20260915-reporting-settings13-autoexports-5932b9e68b04",
     "reportingMonthIndex": 5,
     "uploadControls": 0
   },
@@ -59,9 +59,9 @@
     "selectionMode": "manual"
   },
   "financialYear": "2026-2027",
-  "generatedAt": "2026-09-15T16:05:46+05:30",
-  "syncedAt": "2026-09-15T16:05:46+05:30",
-  "confirmedAt": "2026-09-15T16:05:46+05:30",
+  "generatedAt": "2026-09-15T16:23:52+05:30",
+  "syncedAt": "2026-09-15T16:23:52+05:30",
+  "confirmedAt": "2026-09-15T16:23:52+05:30",
   "counts": {
     "sourceFiles": 6,
     "processedFiles": 3,
@@ -204,7 +204,7 @@
   ],
   "actionLog": [
     {
-      "at": "2026-09-15T16:05:46+05:30",
+      "at": "2026-09-15T16:23:52+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [
@@ -233,7 +233,7 @@
   "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026",
   "smokeTest": {
     "ok": true,
-    "testedAt": "2026-09-15T16:05:46+05:30",
+    "testedAt": "2026-09-15T16:23:52+05:30",
     "sourceFileCount": 6,
     "calculationGate": true,
     "portalGate": true,
