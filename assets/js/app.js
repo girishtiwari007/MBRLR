@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260915-reporting-settings13-autoexports-5932b9e68b04';
+const ASSET_VERSION = '20260916-office-integrity16-autoexports-5932b9e68b04';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -134,7 +134,8 @@ async function doExportLogin() {
   _pendingExportLabel = '';
   showSecurityNotice('EXPORT user unlocked for this browser session.');
   setTimeout(() => {
-    if (pending.includes('Excel')) downloadExcel();
+    if (pending.startsWith('SMH matrix')) downloadSMHMatrixPDF(pending.includes('crore')?'crore':'thousand');
+    else if (pending.includes('Excel')) downloadExcel();
     else if (pending.includes('PDF')) downloadPDFReport();
     else if (pending.includes('PowerPoint')) downloadPowerPoint();
   }, 50);
@@ -418,13 +419,13 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 15-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 15-Sep-2026; latest loaded month SEP 2026.'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026; latest loaded month SEP 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 15-Sep-2026.'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 15-Sep-2026; latest loaded month SEP 2026.'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 15-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026.'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026; latest loaded month SEP 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -539,9 +540,9 @@ let _reportingCurrentMonthIdx = 5; // GUI-selected or auto-detected reporting mo
 let _latestActualMonthIdx = 5;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-15T16:23:52+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-16T10:58:48+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-09-15-reporting-settings13-5932b9e68b04';
+const RLP_BUILD_ID = 'rlp-mbd-2026-09-16-office-integrity16-5932b9e68b04';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -3508,7 +3509,8 @@ function saveBlob(blob, filename) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // Allow slow browsers/download handlers to acquire the full Blob before cleanup.
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 const BACKUP_FILE_LIST = Object.freeze([
@@ -3526,6 +3528,7 @@ const BACKUP_FILE_LIST = Object.freeze([
   'assets/js/demand-smh-data.js',
   'assets/vendor/xlsx.full.min.js',
   'assets/vendor/exceljs.min.js',
+  'assets/js/smh-matrix-export.js',
   'assets/vendor/jspdf.umd.min.js',
   'assets/vendor/jspdf.plugin.autotable.min.js'
 ]);
@@ -5408,6 +5411,21 @@ function makeGroupedBarChart(title, labels, budgetValues, actualValues) {
   });
 }
 
+function downloadSMHMatrixPDF(unit) {
+  if (!confirmProtectedExport(`SMH matrix ${unit} PDF`)) return;
+  try {
+    const audit=prepareFreshExport('PDF');
+    const mode=getBPModeStatus();
+    const data=window.DETAIL_SMH_DATA;
+    const fy=window.DEMAND_SMH_SUMMARY_DATA.fy;
+    const doc=window.SMHMatrixExport.generate(window.jspdf.jsPDF,data.rows,mode.bpMonths,{
+      fy,through:mode.bpThrough?`${mode.bpThrough.label} ${mode.bpThrough.year}`:'NONE',
+      revision:ASSET_VERSION,generated:new Date().toLocaleString('en-IN')
+    },unit);
+    doc.save(`MBRLR_SMH_PU_Department_${fy}_${unit}.pdf`);
+  } catch(e) { showPortalNotice(`SMH PDF failed: ${e.message}`,'err'); }
+}
+
 async function downloadPDFReport() {
   if (!confirmProtectedExport('PDF export')) return;
   document.body.dataset.exportStatus = 'pdf-started';
@@ -5911,7 +5929,20 @@ function buildPowerPointBlob(audit) {
     ['Validation and Fixed Export Rules', audit.checks.map(c => `${c.state.toUpperCase()}: ${c.title} - ${c.detail}`).concat(['Excel: landscape, fit-to-one-page-wide, print margins, minimum 10 pt.','PDF: landscape A4, repeating headers, horizontal page breaks, minimum 10 pt.','PowerPoint: 16:9, 0.5 inch safe margins, minimum 10 pt.','Exports are created on demand from current portal memory; old downloaded files are not reused.'])]
   ];
   const enc = new TextEncoder();
-  const entry = (name, xml) => ({name, bytes:enc.encode(xml)});
+  const entry = (name, xml) => {
+    // OOXML colour maps reference scheme slots, not RGB literals. Office also
+    // requires layout IDs >= 2^31 and three entries in each theme style list.
+    if (name === 'ppt/slideMasters/slideMaster1.xml') {
+      xml = xml.replace(/accent([1-6])="[0-9A-F]{6}"/g, 'accent$1="accent$1"')
+        .replace('<p:sldLayoutId id="1"', '<p:sldLayoutId id="2147483649"');
+    }
+    if (name === 'ppt/theme/theme1.xml') {
+      for (const tag of ['fillStyleLst','lnStyleLst','effectStyleLst','bgFillStyleLst']) {
+        xml = xml.replace(new RegExp(`<a:${tag}>([\\s\\S]*?)</a:${tag}>`), (_, style) => `<a:${tag}>${style.repeat(3)}</a:${tag}>`);
+      }
+    }
+    return {name, bytes:enc.encode(xml)};
+  };
   const slideOverrides = slides.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('');
   const sldIds = slides.map((_,i)=>`<p:sldId id="${256+i}" r:id="rId${i+2}"/>`).join('');
   const presRels = [`<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>`].concat(slides.map((_,i)=>`<Relationship Id="rId${i+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`)).join('');

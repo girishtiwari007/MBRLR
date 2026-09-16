@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "reporting-settings13"
+PORTAL_CODE_REVISION = "office-integrity16"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -942,6 +942,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
             "index.html",
             "assets/css/main.css",
             "assets/js/app.js",
+            "assets/js/smh-matrix-export.js",
             "assets/js/detail-data.js",
             "assets/js/demand-smh-data.js",
             "data/mb-budget-sync",
