@@ -29,10 +29,13 @@
     }
     return {columns, groups:[...list,total]};
   }
-  function generate(jsPDF, rows, months, meta, unit) {
-    if (!['thousand','crore'].includes(unit)) throw new Error('Invalid units');
+  function generate(jsPDF, rows, months, meta, unit, fonts=null) {
+    if (!['thousand','crore','dual'].includes(unit)) throw new Error('Invalid units');
     if (!rows.length) throw new Error('No department/SMH detail data available');
     const doc = new jsPDF({orientation:'landscape',unit:'pt',format:'a3'});
+    if(fonts)for(const [style,data] of Object.entries(fonts)){
+      doc.addFileToVFS(style+'.ttf',data);doc.addFont(style+'.ttf','helvetica',style);
+    }
     const w=doc.internal.pageSize.getWidth(), h=doc.internal.pageSize.getHeight(), margin=36;
     const factor=unit==='crore'?10000:1;
     const fmt=v=>(Math.abs(v)<0.0000001?0:v/factor).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -44,7 +47,7 @@
       doc.setFontSize(11);
       doc.text(kind==='pu'?'SMH WISE PRIMARY UNIT REPORT':'SMH WISE DEPARTMENT REPORT - ALL PRIMARY UNITS',w/2,53,{align:'center'});
       doc.setFont('helvetica','normal'); doc.setFontSize(10);
-      doc.text(`FY ${meta.fy} | Completed through ${meta.through} | Figures in ${unit==='crore'?'Rs crores':'Rs thousands'}`,margin,72);
+      doc.text(`FY ${meta.fy} | Completed through ${meta.through} | ${unit==='dual'?'Top: Rs thousands (10 pt); below: Rs crores (8 pt)':unit==='crore'?'Figures in Rs crores':'Figures in Rs thousands'}`,margin,72);
       doc.text('ACT: completed-month actual | BUD PROP: effective annual budget x completed months / 12 | VAR: ACT - BUD PROP',margin,88);
       doc.text('Scope: department detail dataset; department 00 and PU 72/73/74/75/98 excluded. Missing combinations shown as --.',margin,103);
       doc.text('VAR colours: red = above proportion; green = below proportion; grey = zero/missing. Colour uses unrounded values.',margin,118);
@@ -63,7 +66,7 @@
         // Start a new sheet before a three-row PU/department block could split.
         const name=`${group.code}${group.name?' - '+group.name:''}`;
         const nameLines=doc.splitTextToSize(name,158).length;
-        const required=Math.max(66,nameLines*12+12)+45;
+        const required=Math.max(unit==='dual'?108:66,nameLines*12+12)+45;
         if(y+required>h-44) {
           header(kind);
           doc.autoTable({head,body:[],startY:129,margin:{left:margin,right:margin},styles:{fontSize:10,cellPadding:5,halign:'center',lineWidth:0.5,lineColor:0},headStyles:{fillColor:[190,190,190],textColor:0,fontStyle:'bold'},columnStyles:widths,theme:'grid'});
@@ -74,10 +77,21 @@
             const c=group.cells[key]; return c ? (metric==='act'?c.act:metric==='bp'?c.bp:c.act-c.bp) : null;
           });
           const label=['ACT','BUD PROP','VAR'][i];
-          const cell = v => metric==='var' ? {content:v===null?'--':fmt(v),styles:varianceStyle(v)} : (v===null?'--':fmt(v));
+          const cell = v => unit==='dual'
+            ? {content:'',dual:{thousand:v===null?'--':fmt(v),crore:v===null?'--':(v/10000).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})},styles:metric==='var'?varianceStyle(v):{}}
+            : metric==='var' ? {content:v===null?'--':fmt(v),styles:varianceStyle(v)} : (v===null?'--':fmt(v));
           return [...(i===0?[{content:name,rowSpan:3,styles:{halign:'left',valign:'middle'}}]:[]),metric==='var'?{content:label,styles:varianceStyle(0)}:label,...values.map(cell),cell(values.reduce((s,v)=>s+(v||0),0))];
         });
-        doc.autoTable({body,startY:y,showHead:'never',pageBreak:'avoid',rowPageBreak:'avoid',margin:{left:margin,right:margin,bottom:44},theme:'grid',styles:{font:'helvetica',fontSize:10,cellPadding:5,halign:'right',textColor:0,lineColor:0,lineWidth:0.4,minCellHeight:22,overflow:'linebreak'},columnStyles:widths});
+        doc.autoTable({body,startY:y,showHead:'never',pageBreak:'avoid',rowPageBreak:'avoid',margin:{left:margin,right:margin,bottom:44},theme:'grid',styles:{font:'helvetica',fontSize:10,cellPadding:5,halign:'right',textColor:0,lineColor:0,lineWidth:0.4,minCellHeight:unit==='dual'?36:22,overflow:'linebreak'},columnStyles:widths,
+          didDrawCell:data=>{
+            const dual=data.cell.raw?.dual;if(!dual)return;
+            doc.setFont('helvetica',data.cell.styles.fontStyle||'normal');
+            doc.setTextColor(...(Array.isArray(data.cell.styles.textColor)?data.cell.styles.textColor:[0,0,0]));
+            const x=data.cell.x+data.cell.width-5;
+            doc.setFontSize(10);doc.text(dual.thousand,x,data.cell.y+14,{align:'right'});
+            doc.setFontSize(8);doc.text(dual.crore,x,data.cell.y+27,{align:'right'});
+          }
+        });
         y=doc.lastAutoTable.finalY;
       }
     }

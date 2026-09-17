@@ -19,8 +19,9 @@ const pu=sums('pu'),dept=sums('dept');
 assert.ok(Math.abs(pu[0]-dept[0])<1e-6 && Math.abs(pu[1]-dept[1])<1e-6);
 assert.ok(Math.abs(pu[0]-rows.reduce((s,r)=>s+months.reduce((v,m)=>v+r.months[m],0),0))<1e-6);
 const out=path.resolve(process.argv[2]||path.join(root,'output/pdf'));fs.mkdirSync(out,{recursive:true});
-for(const unit of ['thousand','crore']) {
- const doc=matrix.generate(jsPDF,rows,months,{fy:manifest.financialYear,through:manifest.monthStatus.completedThrough,revision:manifest.sourceRevision,generated:new Date().toISOString()},unit);
+for(const unit of ['dual']) {
+ const fonts={normal:fs.readFileSync(path.join(root,'assets/fonts/times.ttf')).toString('base64'),bold:fs.readFileSync(path.join(root,'assets/fonts/timesbd.ttf')).toString('base64')};
+ const doc=matrix.generate(jsPDF,rows,months,{fy:manifest.financialYear,through:manifest.monthStatus.completedThrough,revision:manifest.sourceRevision,generated:new Date().toISOString()},unit,fonts);
  fs.writeFileSync(path.join(out,`MBRLR_SMH_${unit}.pdf`),Buffer.from(doc.output('arraybuffer')));
  console.log(unit,doc.getNumberOfPages(),'pages');
 }

@@ -243,7 +243,7 @@ class SyncApp(tk.Tk):
                 raise RuntimeError("Generated calculation validation did not pass")
             portal_validation = manifest.get("portalValidation", {})
             export_validation = manifest.get("exportValidation", {})
-            if not portal_validation.get("ok") or portal_validation.get("viewCount") != 13:
+            if not portal_validation.get("ok") or portal_validation.get("viewCount") != 15:
                 raise RuntimeError("All portal pages did not pass the fixed refresh contract")
             if not export_validation.get("ok") or export_validation.get("minimumFontPt") != 10:
                 raise RuntimeError("Excel/PDF/PowerPoint export contract did not pass")
@@ -378,7 +378,7 @@ class SyncApp(tk.Tk):
                     "tab-summary", "tab-monthwise", "tab-pumaster", "tab-excessshortfall", "tab-trend",
                     "tab-aitrend", "tab-bpanalysis", "tab-budgetcontrol",
                     "tab-smhdetail", "tab-demandsmh", "tab-remarks",
-                    "tab-backup", "tab-admin",
+                    "tab-backup", "tab-admin", "tab-liability", "tab-dataexport",
                 )
                 missing_views = [view for view in required_views if f'id="{view}"' not in html]
                 required_exports = ("downloadExcel", "downloadPDFReport", "downloadPowerPoint")

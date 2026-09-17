@@ -7,9 +7,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="portal-build" content="rlp-mbd-2026-09-16-office-integrity16-5932b9e68b04">
+<meta name="portal-build" content="rlp-mbd-2026-09-17-export-hub-dual18-5932b9e68b04">
 <title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260916-office-integrity16-autoexports-5932b9e68b04">
+<link rel="stylesheet" href="assets/css/main.css?v=20260917-export-hub-dual18-autoexports-5932b9e68b04">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -81,7 +81,7 @@
   </div>
   <div class="hdr-r">
     <span class="fy-badge">FY 2026-27</span>
-    <span class="as-on" id="asOnLabel">As on: 16-Sep-2026 10:58</span>
+    <span class="as-on" id="asOnLabel">As on: 17-Sep-2026 11:03</span>
   </div>
 </div>
 
@@ -129,14 +129,17 @@
     <button class="report-menu-btn" type="button" data-report-tab="aitrend" aria-pressed="false">
       <span>AI Summary</span><small>PU risk remarks</small><em>NEW</em>
     </button>
-    <button class="report-menu-btn" type="button" data-report-tab="remarks" aria-pressed="false">
+    <button class="report-menu-btn" type="button" data-report-tab="dataexport" aria-pressed="false">
+      <span>12. Data Export</span><small>Editable reports and SMH PDFs</small>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="remarks" aria-pressed="false" style="display:none">
       <span>Remarks</span><small>Sources and rules</small><em>NEW</em>
     </button>
-    <button class="report-menu-btn" type="button" data-report-tab="backup" id="backupMenuBtn" aria-pressed="false">
+    <button class="report-menu-btn" type="button" data-report-tab="backup" id="backupMenuBtn" aria-pressed="false" style="display:none">
       <span>Backup</span><small>Admin zip export</small><em>NEW</em>
     </button>
-    <button class="report-menu-btn" type="button" data-report-tab="admin" id="adminMenuBtn" aria-pressed="false">
-      <span>Portal Admin</span><small>Names and layout</small><em>NEW</em>
+    <button class="report-menu-btn" type="button" data-report-tab="admin" id="adminMenuBtn" aria-pressed="false" hidden style="display:none">
+      <span>13. Portal Admin</span><small>Names, layout, sources and backup</small><em>NEW</em>
     </button>
   </div>
 </div>
@@ -173,11 +176,6 @@
       <input class="util-input" id="utilPctFilter" type="number" min="0" max="999" step="1" placeholder="%" oninput="handleTopFilterChange('Utilisation percent filter')">
     </span>
     <span class="export-actions">
-      <button class="dl-btn filter-download" id="downloadExcelBtn" type="button" title="Download Excel">Excel</button>
-      <button class="dl-btn pdf-btn" id="downloadPdfBtn" type="button" title="Download PDF Report">PDF Report</button>
-      <button class="dl-btn pdf-btn" type="button" onclick="downloadSMHMatrixPDF('thousand')">SMH PDF (000)</button>
-      <button class="dl-btn pdf-btn" type="button" onclick="downloadSMHMatrixPDF('crore')">SMH PDF (Cr)</button>
-      <button class="dl-btn ppt-btn" id="downloadPptBtn" type="button" title="Download fresh PowerPoint">PowerPoint</button>
     </span>
   </div>
   <div class="fbar-group status-main">
@@ -286,9 +284,10 @@
   <div class="tab tab-feature" onclick="switchTab('excessshortfall')">AE vs BP - HQ</div>
   <div class="tab" onclick="switchTab('trend')">Trend Analysis Graphs</div>
   <div class="tab" onclick="switchTab('aitrend')">AI Trend Analysis Summary</div>
+  <div class="tab" onclick="switchTab('dataexport')">12. Data Export</div>
+  <div class="tab" id="adminTab" onclick="switchTab('admin')" hidden style="display:none">13. Portal Admin</div>
   <div class="tab" onclick="switchTab('remarks')">Remarks / Clarification</div>
   <div class="tab" id="backupTab" onclick="switchTab('backup')">Portal Backup</div>
-  <div class="tab" id="adminTab" onclick="switchTab('admin')">Portal Admin</div>
 </div>
 <div class="bi-view-panel" id="biViewPanel" hidden></div>
 <!-- TAB: SUMMARY -->
@@ -881,7 +880,24 @@
   </div>
 </div>
 
+<div class="tab-content" id="tab-dataexport">
+  <div style="padding:24px;background:white;color:#17365D">
+    <h2>12. Data Export</h2>
+    <p>Export the displayed report values and units. Excel cells and PowerPoint tables/charts remain editable. PDF and Excel use Times New Roman, minimum 10 pt. Wide reports continue across sheets/pages.</p>
+    <p>Set filters on the report first. Combined exports use each report's currently rendered data. Downloads are snapshots; later portal updates do not change files already downloaded.</p>
+    <h3>Combined reports</h3>
+    <button onclick="DisplayExport.run('Excel','all')">Combined Excel</button>
+    <button onclick="DisplayExport.run('PDF','all')">Combined PDF</button>
+    <button onclick="DisplayExport.run('PPT','all')">Combined PowerPoint</button>
+    <h3>Page-wise reports</h3>
+    <table style="width:100%;text-align:left"><thead><tr><th>Report page</th><th>Excel</th><th>PDF</th><th>PowerPoint</th></tr></thead><tbody id="displayExportPages"></tbody></table>
+    <h3>SMH matrix reports</h3>
+    <p>Each numeric cell shows Rs thousands at 10 pt and the equivalent Rs crores beneath at 8 pt.</p>
+    <button onclick="downloadSMHMatrixPDF('dual')">SMH Matrix PDF - Thousands + Crores</button>
+  </div>
+</div>
 <div class="tab-content" id="tab-admin">
+  <div style="padding:12px"><button onclick="switchTab('remarks')">Sources / Remarks</button> <button onclick="switchTab('backup')">Portal Backup</button></div>
   <div class="admin-wrap">
     <div class="admin-head">
       <div>
@@ -990,14 +1006,17 @@
   Revenue Liability Portal &nbsp;-&nbsp; Moradabad Division / Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
 </div>
 
-<script src="assets/js/detail-data.js?v=20260916-office-integrity16-autoexports-5932b9e68b04"></script>
-<script src="assets/js/demand-smh-data.js?v=20260916-office-integrity16-autoexports-5932b9e68b04"></script>
-<script src="assets/js/admin-config.js?v=20260916-office-integrity16-autoexports-5932b9e68b04"></script>
+<script src="assets/js/detail-data.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
+<script src="assets/js/demand-smh-data.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
+<script src="assets/js/admin-config.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/smh-matrix-export.js?v=20260916-office-integrity16-autoexports-5932b9e68b04"></script>
-<script src="assets/js/app.js?v=20260916-office-integrity16-autoexports-5932b9e68b04"></script>
+<script src="assets/js/smh-matrix-export.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
+<script src="assets/vendor/pptxgen.bundle.js"></script>
+<script src="assets/js/display-export.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
+<script src="assets/js/app.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
+<script>DisplayExport.init();</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>

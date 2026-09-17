@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "office-integrity16"
+PORTAL_CODE_REVISION = "export-hub-dual18"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -582,6 +582,8 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
     html = (root / "index.html").read_text(encoding="utf-8")
     app = (root / "assets/js/app.js").read_text(encoding="utf-8")
     view_contract = {
+        "tab-liability": "function renderLiability",
+        "tab-dataexport": "function renderDataExport",
         "tab-summary": "function renderSummaryPage",
         "tab-monthwise": "function renderMonthwise",
         "tab-pumaster": "function renderPUMaster",
@@ -943,6 +945,11 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
             "assets/css/main.css",
             "assets/js/app.js",
             "assets/js/smh-matrix-export.js",
+            "assets/js/display-export.js",
+            "assets/vendor/pptxgen.bundle.js",
+            "assets/vendor/pptxgen.LICENSE",
+            "assets/fonts/times.ttf",
+            "assets/fonts/timesbd.ttf",
             "assets/js/detail-data.js",
             "assets/js/demand-smh-data.js",
             "data/mb-budget-sync",

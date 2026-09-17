@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260916-office-integrity16-autoexports-5932b9e68b04';
+const ASSET_VERSION = '20260917-export-hub-dual18-autoexports-5932b9e68b04';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -134,7 +134,8 @@ async function doExportLogin() {
   _pendingExportLabel = '';
   showSecurityNotice('EXPORT user unlocked for this browser session.');
   setTimeout(() => {
-    if (pending.startsWith('SMH matrix')) downloadSMHMatrixPDF(pending.includes('crore')?'crore':'thousand');
+    if (pending.startsWith('Display ')) { const parts=pending.split(' '); DisplayExport.run(parts[1],parts[2]); }
+    else if (pending.startsWith('SMH matrix')) downloadSMHMatrixPDF(pending.includes('dual')?'dual':pending.includes('crore')?'crore':'thousand');
     else if (pending.includes('Excel')) downloadExcel();
     else if (pending.includes('PDF')) downloadPDFReport();
     else if (pending.includes('PowerPoint')) downloadPowerPoint();
@@ -271,9 +272,9 @@ function restoreLoginSession() {
   const backupMenuBtn = document.getElementById('backupMenuBtn');
   if (backupMenuBtn) backupMenuBtn.style.display = '';
   const adminTab = document.getElementById('adminTab');
-  if (adminTab) adminTab.style.display = '';
+  if (adminTab) { adminTab.hidden = true; adminTab.style.display = 'none'; }
   const adminMenuBtn = document.getElementById('adminMenuBtn');
-  if (adminMenuBtn) adminMenuBtn.style.display = '';
+  if (adminMenuBtn) { adminMenuBtn.hidden = true; adminMenuBtn.style.display = 'none'; }
 }
 
 function isUploadAdminUnlocked() {
@@ -419,13 +420,13 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026; latest loaded month SEP 2026.'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026; latest loaded month SEP 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026.'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026; latest loaded month SEP 2026.'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 16-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026.'},
+  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026; latest loaded month SEP 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -540,9 +541,9 @@ let _reportingCurrentMonthIdx = 5; // GUI-selected or auto-detected reporting mo
 let _latestActualMonthIdx = 5;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-16T10:58:48+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-17T11:03:43+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-09-16-office-integrity16-5932b9e68b04';
+const RLP_BUILD_ID = 'rlp-mbd-2026-09-17-export-hub-dual18-5932b9e68b04';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -2515,7 +2516,7 @@ function handleTopFilterChange(sourceLabel) {
 }
 
 // Tabs and report menu
-const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','excessshortfall','trend','aitrend','remarks','backup','admin'];
+const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','excessshortfall','trend','aitrend','dataexport','admin','remarks','backup'];
 
 function syncReportNavigation(name) {
   document.querySelectorAll('[data-report-tab]').forEach(btn => {
@@ -3442,12 +3443,14 @@ function initSmartTools() {
   renderRiskSpotlight();
 }
 
+function renderDataExport(){ if(window.DisplayExport) DisplayExport.init(); }
 function switchTab(name) {
+  if(name==='dataexport')renderDataExport();
   if ((name === 'remarks' || name === 'upload' || name === 'backup' || name === 'admin') && !isUploadAdminUnlocked()) {
     requestUploadAdmin(name);
     return;
   }
-  if (name !== activeTabName()) resetFiltersForNavigation();
+  if (name !== activeTabName() && name !== 'dataexport') resetFiltersForNavigation();
   if(name==='summary'){setTimeout(renderSummaryPage,80);}
   if(name==='trend'){setTimeout(renderTrend,80);}
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
@@ -3529,6 +3532,10 @@ const BACKUP_FILE_LIST = Object.freeze([
   'assets/vendor/xlsx.full.min.js',
   'assets/vendor/exceljs.min.js',
   'assets/js/smh-matrix-export.js',
+  'assets/js/display-export.js',
+  'assets/vendor/pptxgen.bundle.js',
+  'assets/fonts/times.ttf',
+  'assets/fonts/timesbd.ttf',
   'assets/vendor/jspdf.umd.min.js',
   'assets/vendor/jspdf.plugin.autotable.min.js'
 ]);
@@ -5411,17 +5418,18 @@ function makeGroupedBarChart(title, labels, budgetValues, actualValues) {
   });
 }
 
-function downloadSMHMatrixPDF(unit) {
+async function downloadSMHMatrixPDF(unit) {
   if (!confirmProtectedExport(`SMH matrix ${unit} PDF`)) return;
   try {
     const audit=prepareFreshExport('PDF');
     const mode=getBPModeStatus();
     const data=window.DETAIL_SMH_DATA;
     const fy=window.DEMAND_SMH_SUMMARY_DATA.fy;
+    const fonts=await DisplayExport.fonts();
     const doc=window.SMHMatrixExport.generate(window.jspdf.jsPDF,data.rows,mode.bpMonths,{
       fy,through:mode.bpThrough?`${mode.bpThrough.label} ${mode.bpThrough.year}`:'NONE',
       revision:ASSET_VERSION,generated:new Date().toLocaleString('en-IN')
-    },unit);
+    },unit,fonts);
     doc.save(`MBRLR_SMH_PU_Department_${fy}_${unit}.pdf`);
   } catch(e) { showPortalNotice(`SMH PDF failed: ${e.message}`,'err'); }
 }
@@ -5438,6 +5446,7 @@ async function downloadPDFReport() {
     return;
   }
   const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
+  if(window.DisplayExport) await DisplayExport.configurePDF(doc);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 34;
