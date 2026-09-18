@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260917-export-hub-dual18-autoexports-5932b9e68b04';
+const ASSET_VERSION = '20260918-neural-shield-5932b9e68b04';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -26,6 +26,72 @@ let _exportConfirmedUntil = 0;
 let _pendingExportLabel = '';
 const EXPORT_USER_DIGEST = '605e2a9a5b09a900b3a780e3f1d9a11a4ca08cb06a149afc231cefd815be1abf';
 const EXPORT_USER_SESSION_KEY = 'rlp_export_user_access';
+const HUMAN_CHECK_MAX_ATTEMPTS = 5;
+const HUMAN_CHECK_LOCK_MS = 60 * 1000;
+const _humanChecks = Object.create(null);
+const _loginAttempts = { admin: 0, export: 0 };
+const _loginLockedUntil = { admin: 0, export: 0 };
+
+const HUMAN_GLYPHS = Object.freeze([
+  ['◆','◇'], ['●','○'], ['▲','△'], ['■','□'], ['★','☆'], ['⬢','⬡']
+]);
+
+function humanCheckId(kind) {
+  return kind === 'admin' ? 'adminHumanCheck' : 'exportHumanCheck';
+}
+
+function makeHumanChallenge(kind) {
+  const el = document.getElementById(humanCheckId(kind));
+  if (!el) return;
+  const pair = HUMAN_GLYPHS[crypto.getRandomValues(new Uint32Array(1))[0] % HUMAN_GLYPHS.length];
+  const answerIndex = crypto.getRandomValues(new Uint32Array(1))[0] % 4;
+  const cells = Array.from({length: 4}, (_, i) => i === answerIndex ? pair[1] : pair[0]);
+  _humanChecks[kind] = { answerIndex, verified: false };
+  el.classList.remove('locked');
+  el.innerHTML = `<div class="human-check-head"><span class="human-check-title">Neural Shield</span><span class="human-check-state">Human check</span></div>
+    <div class="human-check-prompt">Select the symbol that is different from the other three.</div>
+    <div class="human-check-grid">${cells.map((glyph, i) => `<button type="button" data-human-choice="${i}" aria-label="Challenge symbol ${i + 1}">${glyph}</button>`).join('')}</div>
+    <button class="human-check-refresh" type="button">New challenge</button>`;
+  el.querySelectorAll('[data-human-choice]').forEach(button => button.addEventListener('click', () => {
+    const state = _humanChecks[kind];
+    if (!state || state.verified) return;
+    const choice = Number(button.dataset.humanChoice);
+    if (choice === state.answerIndex) {
+      state.verified = true;
+      button.classList.add('selected');
+      el.querySelector('.human-check-state').textContent = 'Verified';
+      el.querySelector('.human-check-state').classList.add('ok');
+      el.querySelectorAll('[data-human-choice]').forEach(item => item.disabled = true);
+    } else {
+      el.querySelector('.human-check-state').textContent = 'Try again';
+      setTimeout(() => makeHumanChallenge(kind), 450);
+    }
+  }));
+  el.querySelector('.human-check-refresh').addEventListener('click', () => makeHumanChallenge(kind));
+}
+
+function humanCheckVerified(kind) {
+  return !!(_humanChecks[kind] && _humanChecks[kind].verified);
+}
+
+function loginThrottleMessage(kind) {
+  const remaining = _loginLockedUntil[kind] - Date.now();
+  return remaining > 0 ? `Too many attempts. Try again in ${Math.ceil(remaining / 1000)} seconds.` : '';
+}
+
+function recordFailedLogin(kind) {
+  _loginAttempts[kind] += 1;
+  if (_loginAttempts[kind] >= HUMAN_CHECK_MAX_ATTEMPTS) {
+    _loginAttempts[kind] = 0;
+    _loginLockedUntil[kind] = Date.now() + HUMAN_CHECK_LOCK_MS;
+  }
+  makeHumanChallenge(kind);
+}
+
+function clearLoginThrottle(kind) {
+  _loginAttempts[kind] = 0;
+  _loginLockedUntil[kind] = 0;
+}
 
 function securitySessionId() {
   let id = sessionStorage.getItem('rlp_security_session');
@@ -109,6 +175,7 @@ function requestExportLogin(label) {
   if (pwd) pwd.value = '';
   if (err) err.textContent = '';
   if (overlay) overlay.classList.remove('hidden');
+  makeHumanChallenge('export');
   setTimeout(() => pwd && pwd.focus(), 30);
 }
 
@@ -121,12 +188,17 @@ function closeExportLogin() {
 async function doExportLogin() {
   const pwd = document.getElementById('exportLoginPwd');
   const err = document.getElementById('exportLoginErr');
+  const locked = loginThrottleMessage('export');
+  if (locked) { if (err) err.textContent = locked; return; }
+  if (!humanCheckVerified('export')) { if (err) err.textContent = 'Complete Neural Shield verification first.'; return; }
   const digest = await sha256Hex(`EXPORT:${pwd ? pwd.value : ''}`);
   if (digest !== EXPORT_USER_DIGEST) {
     if (err) err.textContent = 'Incorrect EXPORT password.';
     if (pwd) pwd.value = '';
+    recordFailedLogin('export');
     return;
   }
+  clearLoginThrottle('export');
   sessionStorage.setItem(EXPORT_USER_SESSION_KEY, '1');
   const pending = _pendingExportLabel;
   const overlay = document.getElementById('exportLoginOverlay');
@@ -243,13 +315,18 @@ async function doLogin() {
   const user = 'ADMIN';
   const pwd  = document.getElementById('loginPwd').value;
   const err  = document.getElementById('loginErr');
+  const locked = loginThrottleMessage('admin');
+  if (locked) { err.textContent = locked; return; }
+  if (!humanCheckVerified('admin')) { err.textContent = 'Complete Neural Shield verification first.'; return; }
   const digest = await sha256Hex(`${user}:${pwd}`);
   if (AUTH_DIGESTS[user] !== digest) {
     err.textContent = 'Incorrect ADMIN password. Upload access not allowed.';
     document.getElementById('loginPwd').value = '';
+    recordFailedLogin('admin');
     setTimeout(()=>err.textContent='', 3000);
     return;
   }
+  clearLoginThrottle('admin');
   sessionStorage.setItem('rlp_upload_admin', '1');
   const targetTab = _pendingAdminTab || (_pendingUploadAfterLogin ? 'upload' : null);
   _pendingUploadAfterLogin = false;
@@ -300,6 +377,7 @@ function requestUploadAdmin(targetTab='upload') {
   if (err) err.textContent = '';
   if (pwd) pwd.value = '';
   if (overlay) overlay.classList.remove('hidden');
+  makeHumanChallenge('admin');
   setTimeout(() => { if (pwd) pwd.focus(); }, 60);
 }
 

@@ -495,6 +495,17 @@ thead th.la { min-width:80px; }
 .login-err{color:#CC0000;font-size:10px;margin-top:8px;min-height:14px;font-weight:600}
 .login-badge{display:inline-block;background:linear-gradient(135deg,#C9A84C,#F4C842);
   color:#0A1628;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:10px}
+.human-check{margin:4px 0 12px;padding:10px;border:1px solid #C9D7E8;border-radius:9px;background:linear-gradient(145deg,#F7FBFF,#EEF4FF);text-align:left}
+.human-check-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.human-check-title{font-size:10px;font-weight:900;color:#123A63;letter-spacing:.45px;text-transform:uppercase}
+.human-check-state{font-size:9px;font-weight:900;color:#6B7F96}.human-check-state.ok{color:#0E7A49}
+.human-check-prompt{font-size:10px;color:#425B76;line-height:1.35;margin-bottom:8px}
+.human-check-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.human-check-grid button{min-height:42px;border:1px solid #B6C9DE;border-radius:8px;background:#fff;color:#123A63;font-size:20px;cursor:pointer;box-shadow:0 2px 7px rgba(10,22,40,.08)}
+.human-check-grid button:hover,.human-check-grid button:focus{border-color:#1A6FD9;background:#EAF3FF;outline:2px solid rgba(26,111,217,.18)}
+.human-check-grid button.selected{border-color:#0E7A49;background:#E3F7EC;color:#0E7A49}
+.human-check-refresh{border:0;background:transparent;color:#1A6FD9;font-size:9px;font-weight:900;cursor:pointer;padding:2px}
+.human-check.locked{border-color:#D79A9A;background:#FFF3F3}.human-check.locked .human-check-state{color:#A71919}
 
 /* ── UPLOAD TAB ─────────────────────────────────────────────── */
 .upload-wrap{padding:12px 18px;max-width:1220px;margin:0 auto}
