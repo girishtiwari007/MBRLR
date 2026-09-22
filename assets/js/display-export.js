@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   const PORTAL_BRAND='Ordinary Working Expenses (OWE) PORTAL - Moradabad Division';
-  const pages=[['summary','Summary'],['liability','OWE Statement'],['smhdetail','Department wise'],['demandsmh','Demand SMH'],['pumaster','PU Master'],['monthwise','Month-wise'],['bpanalysis','BP Analysis'],['budgetcontrol','Budget Control'],['excessshortfall','AE vs BP'],['trend','Graphs'],['aitrend','AI Summary']];
+  const pages=[['summary','Summary'],['liability','OWE Statement'],['smhdetail','Department wise'],['demandsmh','Demand SMH'],['pumaster','PU Master'],['monthwise','Month-wise'],['bpanalysis','BP Analysis'],['budgetcontrol','Budget Control'],['excessshortfall','AE vs BP'],['trend','Graphs'],['aitrend','AI Summary'],['historycompare','History Compare']];
   const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
   function grid(rows,repeatSpan=false){
     const result=[];
@@ -20,7 +20,9 @@
     return result;
   }
   function capture(id){
-    const section=document.getElementById('tab-'+id);
+    const section=(document.body.classList.contains('bi-view-active') && id===(root.activeTabName?.()||id) && document.getElementById('biViewPanel'))
+      ? document.getElementById('biViewPanel')
+      : document.getElementById('tab-'+id);
     if(!section) throw new Error('Report unavailable: '+id);
     const tables=[...section.querySelectorAll('table')].filter(t=>!t.hidden && t.style.display!=='none').map((t,i)=>{
       const header=grid(t.tHead?.rows||[],true), rows=grid([...t.tBodies].flatMap(b=>[...b.rows]).concat([...t.tFoot?.rows||[]]));
@@ -46,7 +48,7 @@
     for(const chart of charts) tables.push({title:chart.title+' (chart data)',headers:['Category',...chart.series.map(s=>s.name)],rows:chart.series[0].labels.map((label,i)=>[label,...chart.series.map(s=>s.values[i])])});
     const notes=[...new Set([...section.querySelectorAll('.kpi,.card,.summary-card,.summary-point,.prog-item,.ai-dash-kpi,.bi-kpi,.ai-pu-head,.ai-kpi-row,.ai-bullets,.ai-digest-head,.ai-summary-card,.chart-note,.formula-note')].map(n=>clean(n.innerText||n.textContent)).filter(Boolean))];
     if(!tables.length && !notes.length) throw new Error('Open '+id+' first and allow its data to finish loading before exporting.');
-    return {id,title:pages.find(p=>p[0]===id)[1],tables,charts,notes};
+    return {id,title:(pages.find(p=>p[0]===id)||[id,id])[1],tables,charts,notes};
   }
   function bands(table,max=7){
     if(table.headers.length<=max)return [table];
@@ -146,11 +148,11 @@
       const audit=prepareFreshExport(format);
     renderSMHDetail();renderExcessShortfall();
       await new Promise(resolve=>setTimeout(resolve,200));
-      const chosen=which==='all'?pages:pages.filter(p=>p[0]===which);
+      const chosen=which==='all'?pages:(pages.some(p=>p[0]===which)?pages.filter(p=>p[0]===which):[[which,which]]);
       const reports=chosen.map(p=>capture(p[0]));
       const status=getMonthStatus();
       const meta={period:`Completed through ${getBPModeStatus().bpThrough?.label||'NONE'}; running ${status.cur.label} ${status.cur.year}. Generated ${new Date().toLocaleDateString('en-IN')}`,filters:'Current displayed filters; amounts retain displayed units. Source '+audit.id};
-      const name='MBRLR_'+which+'_'+new Date().toISOString().slice(0,10);
+      const name='MBRLR_'+which+'_current_view_'+new Date().toISOString().slice(0,10);
       if(format==='Excel')saveBlob(new Blob([await excel(reports,meta,root.ExcelJS)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),name+'.xlsx');
       else if(format==='PDF')(await pdf(reports,meta,root.jspdf.jsPDF,await fonts())).save(name+'.pdf');
       else await (await ppt(reports,meta,root.PptxGenJS)).writeFile({fileName:name+'.pptx'});
@@ -160,9 +162,8 @@
     const box=document.getElementById('displayExportPages');if(!box)return;
     box.innerHTML=pages.map(([id,title],i)=>`<tr><td>${i+1}. ${title}</td>${['Excel','PDF','PPT'].map(f=>`<td><button type="button" onclick="DisplayExport.run('${f}','${id}')">${f}</button></td>`).join('')}</tr>`).join('');
     pages.forEach(([id])=>{
-      const label=document.querySelector(`[data-report-tab="${id}"] span`);if(label)label.textContent=`${pages.findIndex(p=>p[0]===id)+1}. ${pages.find(p=>p[0]===id)[1]}`;
       const section=document.getElementById('tab-'+id);
-      section.querySelectorAll('.display-export-actions').forEach(bar=>bar.remove());
+      if(section)section.querySelectorAll('.display-export-actions').forEach(bar=>bar.remove());
     });
   }
   async function configurePDF(doc){

@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260922-history-compare19-autoexports-c99e1666e737';
+const ASSET_VERSION = '20260922-history-compare19-autoexports-9787bac88361';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -508,10 +508,10 @@ const SOURCE_REGISTER = {
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
-let BUDGET = {"01":{"bg_isl":671,"rg":0,"actuals_till":307},"02":{"bg_isl":410,"rg":0,"actuals_till":196},"03":{"bg_isl":29,"rg":0,"actuals_till":0},"04":{"bg_isl":78,"rg":0,"actuals_till":35},"07":{"bg_isl":50,"rg":0,"actuals_till":20},"08":{"bg_isl":129,"rg":0,"actuals_till":53},"10":{"bg_isl":68,"rg":0,"actuals_till":35},"11":{"bg_isl":8,"rg":0,"actuals_till":5},"12":{"bg_isl":21,"rg":0,"actuals_till":12},"13":{"bg_isl":53,"rg":0,"actuals_till":28},"14":{"bg_isl":0,"rg":0,"actuals_till":0},"15":{"bg_isl":2,"rg":0,"actuals_till":0},"16":{"bg_isl":31,"rg":0,"actuals_till":21},"17":{"bg_isl":0,"rg":0,"actuals_till":0},"18":{"bg_isl":1,"rg":0,"actuals_till":0},"19":{"bg_isl":0,"rg":0,"actuals_till":0},"20":{"bg_isl":2,"rg":0,"actuals_till":0},"21":{"bg_isl":0,"rg":0,"actuals_till":0},"22":{"bg_isl":0,"rg":0,"actuals_till":0},"23":{"bg_isl":0,"rg":0,"actuals_till":0},"24":{"bg_isl":0,"rg":0,"actuals_till":0},"25":{"bg_isl":38,"rg":0,"actuals_till":38},"26":{"bg_isl":38,"rg":0,"actuals_till":19},"27":{"bg_isl":107,"rg":0,"actuals_till":86},"28":{"bg_isl":15,"rg":0,"actuals_till":8},"29":{"bg_isl":0,"rg":0,"actuals_till":0},"30":{"bg_isl":388,"rg":0,"actuals_till":202},"31":{"bg_isl":10,"rg":0,"actuals_till":9},"32":{"bg_isl":325,"rg":0,"actuals_till":195},"33":{"bg_isl":263,"rg":0,"actuals_till":84},"36":{"bg_isl":16,"rg":0,"actuals_till":4},"38":{"bg_isl":10,"rg":0,"actuals_till":5},"39":{"bg_isl":0,"rg":0,"actuals_till":0},"42":{"bg_isl":3,"rg":0,"actuals_till":0},"43":{"bg_isl":1,"rg":0,"actuals_till":0},"44":{"bg_isl":1,"rg":0,"actuals_till":22},"49":{"bg_isl":0,"rg":0,"actuals_till":0},"52":{"bg_isl":0,"rg":0,"actuals_till":0},"53":{"bg_isl":0,"rg":0,"actuals_till":0},"60":{"bg_isl":470,"rg":0,"actuals_till":272},"72":{"bg_isl":3,"rg":0,"actuals_till":6},"73":{"bg_isl":3,"rg":0,"actuals_till":6},"74":{"bg_isl":0,"rg":0,"actuals_till":0},"75":{"bg_isl":3,"rg":0,"actuals_till":5},"98":{"bg_isl":-165,"rg":0,"actuals_till":-64},"99":{"bg_isl":180,"rg":0,"actuals_till":231},"TOTAL":{"bg_isl":3262,"rg":0,"actuals_till":1840}};
+let BUDGET = {"01":{"bg_isl":6706409,"rg":0,"actuals_till":3072350},"02":{"bg_isl":4100453,"rg":0,"actuals_till":1967427},"03":{"bg_isl":285089,"rg":0,"actuals_till":72},"04":{"bg_isl":776198,"rg":0,"actuals_till":337367},"07":{"bg_isl":496609,"rg":0,"actuals_till":216400},"08":{"bg_isl":1285187,"rg":0,"actuals_till":532040},"10":{"bg_isl":680197,"rg":0,"actuals_till":364820},"11":{"bg_isl":77300,"rg":0,"actuals_till":59582},"12":{"bg_isl":209913,"rg":0,"actuals_till":122498},"13":{"bg_isl":527832,"rg":0,"actuals_till":278912},"14":{"bg_isl":3566,"rg":0,"actuals_till":428},"15":{"bg_isl":16048,"rg":0,"actuals_till":11973},"16":{"bg_isl":308081,"rg":0,"actuals_till":217110},"17":{"bg_isl":2110,"rg":0,"actuals_till":0},"18":{"bg_isl":8252,"rg":0,"actuals_till":0},"19":{"bg_isl":655,"rg":0,"actuals_till":0},"20":{"bg_isl":18623,"rg":0,"actuals_till":12247},"21":{"bg_isl":3300,"rg":0,"actuals_till":0},"22":{"bg_isl":0,"rg":0,"actuals_till":0},"23":{"bg_isl":42,"rg":0,"actuals_till":0},"24":{"bg_isl":215,"rg":0,"actuals_till":0},"25":{"bg_isl":379418,"rg":0,"actuals_till":375093},"26":{"bg_isl":384392,"rg":0,"actuals_till":194273},"27":{"bg_isl":1068752,"rg":0,"actuals_till":860159},"28":{"bg_isl":149947,"rg":0,"actuals_till":78973},"29":{"bg_isl":0,"rg":0,"actuals_till":476},"30":{"bg_isl":3878724,"rg":0,"actuals_till":2012221},"31":{"bg_isl":95273,"rg":0,"actuals_till":81703},"32":{"bg_isl":3254310,"rg":0,"actuals_till":1948938},"33":{"bg_isl":2625440,"rg":0,"actuals_till":834970},"36":{"bg_isl":155548,"rg":0,"actuals_till":23732},"38":{"bg_isl":95829,"rg":0,"actuals_till":56334},"39":{"bg_isl":5,"rg":0,"actuals_till":23},"42":{"bg_isl":25882,"rg":0,"actuals_till":5394},"43":{"bg_isl":12005,"rg":0,"actuals_till":2574},"44":{"bg_isl":11589,"rg":0,"actuals_till":224748},"49":{"bg_isl":544,"rg":0,"actuals_till":6382},"52":{"bg_isl":0,"rg":0,"actuals_till":0},"53":{"bg_isl":614,"rg":0,"actuals_till":1798},"60":{"bg_isl":4703356,"rg":0,"actuals_till":2715415},"72":{"bg_isl":32329,"rg":0,"actuals_till":42507},"73":{"bg_isl":31932,"rg":0,"actuals_till":42507},"74":{"bg_isl":4,"rg":0,"actuals_till":0},"75":{"bg_isl":26098,"rg":0,"actuals_till":45799},"98":{"bg_isl":-1652821,"rg":0,"actuals_till":-641223},"99":{"bg_isl":1797579,"rg":0,"actuals_till":2301545},"TOTAL":{"bg_isl":32582828,"rg":0,"actuals_till":18407567}};
 
 // Month-wise actuals from MONTH WISE report - Rs'000s
-let MONTH = {"01":{"apr":61,"may":61,"jun":61,"jul":62,"aug":62,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"02":{"apr":42,"may":38,"jun":38,"jul":39,"aug":39,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"03":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"04":{"apr":7,"may":7,"jun":7,"jul":7,"aug":7,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"07":{"apr":4,"may":4,"jun":4,"jul":4,"aug":4,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"08":{"apr":11,"may":10,"jun":10,"jul":11,"aug":11,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"10":{"apr":6,"may":7,"jun":8,"jul":7,"aug":7,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"11":{"apr":1,"may":2,"jun":1,"jul":1,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"12":{"apr":3,"may":2,"jun":3,"jul":2,"aug":2,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"13":{"apr":4,"may":4,"jun":4,"jul":13,"aug":3,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"14":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"15":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"16":{"apr":4,"may":4,"jun":4,"jul":5,"aug":4,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"19":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"20":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"21":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"25":{"apr":10,"may":13,"jun":9,"jul":4,"aug":2,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"26":{"apr":3,"may":3,"jun":4,"jul":2,"aug":3,"sep":4,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"27":{"apr":20,"may":15,"jun":24,"jul":15,"aug":12,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"28":{"apr":2,"may":1,"jun":1,"jul":2,"aug":1,"sep":1,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"29":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"30":{"apr":24,"may":47,"jun":31,"jul":40,"aug":50,"sep":10,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"31":{"apr":1,"may":1,"jun":1,"jul":4,"aug":2,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"32":{"apr":39,"may":43,"jun":15,"jul":72,"aug":14,"sep":12,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"33":{"apr":15,"may":21,"jun":18,"jul":16,"aug":14,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"36":{"apr":0,"may":1,"jun":1,"jul":1,"aug":1,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"38":{"apr":0,"may":1,"jun":2,"jul":1,"aug":1,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"39":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"42":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"43":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"44":{"apr":0,"may":0,"jun":20,"jul":2,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"49":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"53":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"60":{"apr":45,"may":73,"jun":63,"jul":50,"aug":41,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"72":{"apr":2,"may":1,"jun":1,"jul":1,"aug":0,"sep":1,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"73":{"apr":2,"may":1,"jun":1,"jul":1,"aug":0,"sep":1,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"75":{"apr":1,"may":1,"jun":1,"jul":1,"aug":1,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"98":{"apr":-11,"may":-8,"jun":-8,"jul":-21,"aug":-11,"sep":-5,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"99":{"apr":150,"may":16,"jun":11,"jul":34,"aug":14,"sep":6,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"TOTAL":{"apr":446,"may":369,"jun":335,"jul":376,"aug":284,"sep":30,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0}};
+let MONTH = {"01":{"apr":611000,"may":610721,"jun":609257,"jul":622895,"aug":617950,"sep":527,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"02":{"apr":422511,"may":384198,"jun":382142,"jul":390685,"aug":387082,"sep":809,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"03":{"apr":53,"may":28,"jun":0,"jul":0,"aug":-9,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"04":{"apr":66797,"may":67250,"jun":67256,"jul":68584,"aug":67475,"sep":5,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"07":{"apr":44217,"may":42920,"jun":43031,"jul":43299,"aug":42930,"sep":3,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"08":{"apr":108760,"may":104872,"jun":104778,"jul":106826,"aug":106804,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"10":{"apr":63531,"may":71427,"jun":83846,"jul":71678,"aug":74171,"sep":167,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"11":{"apr":13824,"may":17030,"jun":13104,"jul":10824,"aug":4800,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"12":{"apr":25290,"may":22611,"jun":25787,"jul":24334,"aug":24470,"sep":6,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"13":{"apr":41628,"may":35790,"jun":38546,"jul":134772,"aug":28163,"sep":13,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"14":{"apr":154,"may":149,"jun":51,"jul":27,"aug":47,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"15":{"apr":2096,"may":1652,"jun":1646,"jul":3783,"aug":1955,"sep":841,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"16":{"apr":44933,"may":41693,"jun":44205,"jul":45289,"aug":40980,"sep":10,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"19":{"apr":0,"may":0,"jun":0,"jul":0,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"20":{"apr":2666,"may":2950,"jun":2575,"jul":1912,"aug":2156,"sep":-12,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"21":{"apr":521,"may":0,"jun":0,"jul":-521,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"25":{"apr":103975,"may":128614,"jun":86310,"jul":39556,"aug":16556,"sep":82,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"26":{"apr":30352,"may":33757,"jun":38743,"jul":23112,"aug":28065,"sep":40244,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"27":{"apr":195370,"may":152529,"jun":240399,"jul":149093,"aug":122748,"sep":20,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"28":{"apr":17104,"may":12231,"jun":13527,"jul":20225,"aug":7521,"sep":8365,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"29":{"apr":3,"may":0,"jun":121,"jul":197,"aug":155,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"30":{"apr":235339,"may":467625,"jun":311219,"jul":401038,"aug":501288,"sep":95712,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"31":{"apr":6627,"may":8778,"jun":7358,"jul":42644,"aug":16229,"sep":67,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"32":{"apr":385443,"may":433214,"jun":148204,"jul":719389,"aug":137867,"sep":124821,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"33":{"apr":145104,"may":206596,"jun":182561,"jul":157974,"aug":142735,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"36":{"apr":0,"may":5500,"jun":6236,"jul":5678,"aug":6318,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"38":{"apr":0,"may":14165,"jun":16655,"jul":13640,"aug":11874,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"39":{"apr":0,"may":0,"jun":0,"jul":23,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"42":{"apr":1292,"may":1069,"jun":1577,"jul":837,"aug":619,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"43":{"apr":655,"may":500,"jun":700,"jul":443,"aug":276,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"44":{"apr":766,"may":1692,"jun":197982,"jul":24308,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"49":{"apr":2403,"may":249,"jun":252,"jul":3478,"aug":0,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"53":{"apr":1070,"may":0,"jun":71,"jul":0,"aug":564,"sep":93,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"60":{"apr":450171,"may":725691,"jun":631212,"jul":496132,"aug":412209,"sep":0,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"72":{"apr":15207,"may":5140,"jun":6381,"jul":6270,"aug":4408,"sep":5101,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"73":{"apr":15207,"may":5140,"jun":6381,"jul":6270,"aug":4408,"sep":5101,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"75":{"apr":14110,"may":6386,"jun":5414,"jul":10939,"aug":5044,"sep":3906,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"98":{"apr":-112823,"may":-80293,"jun":-75006,"jul":-213178,"aug":-110830,"sep":-49093,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"99":{"apr":1498093,"may":156216,"jun":109451,"jul":337499,"aug":136554,"sep":63732,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0},"TOTAL":{"apr":4453449,"may":3688090,"jun":3351972,"jul":3769954,"aug":2843582,"sep":300520,"oct":0,"nov":0,"dec":0,"jan":0,"feb":0,"mar":0}};
 // Spreadsheet grand-total rows can contain rounding or allocation drift.
 // Rebuild the month total from PU rows so cards and exports share one source of truth.
 MONTH.TOTAL = Object.fromEntries(['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'].map(month => [
@@ -619,9 +619,9 @@ let _reportingCurrentMonthIdx = 5; // GUI-selected or auto-detected reporting mo
 let _latestActualMonthIdx = 5;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-22T11:45:02+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-22T17:27:07+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-09-22-history-compare19-c99e1666e737';
+const RLP_BUILD_ID = 'rlp-mbd-2026-09-22-history-compare19-9787bac88361';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -2224,29 +2224,15 @@ function renderExcessShortfall() {
   const pageTitle = document.getElementById('xsTitle');
   if (pageTitle) pageTitle.textContent = `Primary Unit Wise Statement of Excess Expenditure over Budget Proportionate up to ${currentLabel} (Fig. Rs. in crores / Rs '000)`;
   const head = document.getElementById('xsTableHead');
-  if (head) head.innerHTML = `<tr class="xs-calc-row">
-    <th></th><th>Excel calculation / logic</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
-    <th>D - C</th><th>H - E</th><th>J - F</th><th>M - L</th><th></th>
-  </tr><tr>
-    <th>AU</th><th>PU Code and Description</th><th>AE 2025-26</th><th>BG 2026-27</th>
-    <th>BP up to ${previousLabel}</th><th>BP up to ${currentLabel}</th>
-    <th>COPPY up to ${previousLabel.replace('2026','2025').replace('2027','2026')}</th><th>AE up to ${previousLabel}</th>
-    <th>COPPY up to ${currentLabel.replace('2026','2025').replace('2027','2026')}</th><th>AE up to ${currentLabel}</th>
-    <th>BG - PY AE</th><th>AE - BP ${previousLabel}</th><th>AE - BP ${currentLabel}</th><th>Current movement</th><th>Calculation remark</th>
+  if (head) head.innerHTML = `<tr>
+    <th>A<br>AU</th><th>B<br>PU Code and Description</th><th>C<br>AE 2025-26</th><th>D<br>BG 2026-27</th>
+    <th>E<br>BP up to ${previousLabel}</th><th>F<br>BP up to ${currentLabel}</th>
+    <th>G<br>COPPY up to ${previousLabel.replace('2026','2025').replace('2027','2026')}</th><th>H<br>AE up to ${previousLabel}</th>
+    <th>I<br>COPPY up to ${currentLabel.replace('2026','2025').replace('2027','2026')}</th><th>J<br>AE up to ${currentLabel}</th>
+    <th>K<br>BG - PY AE<br><small>D - C</small></th><th>L<br>AE - BP ${previousLabel}<br><small>H - E</small></th><th>M<br>AE - BP ${currentLabel}<br><small>J - F</small></th><th>N<br>Current movement<br><small>M - L</small></th><th>O<br>Calculation remark</th>
   </tr>`;
-  const logic = document.getElementById('xsLogic');
-  if (logic) logic.innerHTML = [
-    `<strong>Calculation logic</strong>`,
-    `<span>BP ${previousLabel} = BG / 12 x ${previousCount}</span>`,
-    `<span>BP ${currentLabel} = BG / 12 x ${currentCount}</span>`,
-    `<span>BG - PY AE = BG 2026-27 minus full-year AE 2025-26</span>`,
-    `<span>AE - BP = cumulative actual expenditure minus proportionate budget</span>`,
-    `<span>Current movement = (${currentLabel} AE - BP) minus (${previousLabel} AE - BP)</span>`
-  ].join('');
   const meta = document.getElementById('xsMeta');
   if (meta) meta.textContent = `Live portal values through ${currentLabel}. Every amount shows crore and its underlying Rs '000 value; calculations use Rs '000 without rounding.`;
-  const hq = document.getElementById('xsHQList');
-  if (hq) hq.textContent = HQ_EXCESS_SHORTFALL_PUS.map(code => `PU-${code}`).join(', ');
   const totals = rows.reduce((t,r) => {
     ['budget','pyAnnual','bpPrevious','bpCurrent','pyPrevious','actualPrevious','pyCurrent','actualCurrent','budgetVsPY','variancePrevious','varianceCurrent','latestMovement'].forEach(k => t[k] += r[k]);
     if (r.varianceCurrent > 0) t.excess++;
@@ -2266,7 +2252,7 @@ function renderExcessShortfall() {
     r.variancePrevious, r.varianceCurrent, r.latestMovement, r.remark
   ];
   body.innerHTML = rows.map(r => `<tr class="${r.varianceCurrent > 0 ? 'xs-excess' : r.varianceCurrent < 0 ? 'xs-shortfall' : ''}${r.hqIndex >= 0 ? ' xs-hq-row' : ''}">
-    ${rowCells(r).map((value,i) => `<td${i > 1 && i < 14 ? ' class="n"' : ''}>${i === 1 ? `<button type="button" onclick="openPUDetail('${r.pu.code}')">${htmlSafe(value)}</button>` : i > 1 && i < 14 ? dual(value, i >= 10) : htmlSafe(value)}</td>`).join('')}
+    ${rowCells(r).map((value,i) => `<td${i === 0 ? ' class="xs-au"' : i === 1 ? ' class="xs-pu-name"' : i > 1 && i < 14 ? ' class="n"' : ''}>${i === 1 ? `<span role="button" tabindex="0" onclick="openPUDetail('${r.pu.code}')" onkeydown="if(event.key==='Enter')openPUDetail('${r.pu.code}')">${htmlSafe(value)}</span>` : i > 1 && i < 14 ? dual(value, i >= 10) : htmlSafe(value)}</td>`).join('')}
   </tr>`).join('') + `<tr class="tot"><td></td><td>TOTAL - ${rows.length} PU(s)</td>${[
     totals.pyAnnual,totals.budget,totals.bpPrevious,totals.bpCurrent,totals.pyPrevious,totals.actualPrevious,
     totals.pyCurrent,totals.actualCurrent,totals.budgetVsPY,totals.variancePrevious,totals.varianceCurrent,totals.latestMovement
@@ -2489,6 +2475,19 @@ function setBudgetControlAction(action) {
 function activeTabName() {
   const active = document.querySelector('.tab-content.active');
   return active ? active.id.replace('tab-', '') : 'liability';
+}
+
+function exportCurrentView(format) {
+  const tab = activeTabName();
+  if (tab === 'dataexport' || tab === 'admin' || tab === 'backup') {
+    showPortalNotice('Current-view export is available on report pages. Use Data Export for combined reports.', 'warn');
+    return;
+  }
+  if (!window.DisplayExport || typeof DisplayExport.run !== 'function') {
+    showPortalNotice('Displayed export tools are still loading. Please try again.', 'warn');
+    return;
+  }
+  DisplayExport.run(format, tab);
 }
 
 function showFilterAlert(message) {
@@ -3544,6 +3543,32 @@ function historyMoney(value) {
   return n.toLocaleString('en-IN', {minimumFractionDigits:0, maximumFractionDigits:0});
 }
 
+function historyCrText(value) {
+  const n = Number(value) || 0;
+  return textCr(n).replace(/^0\.00 Cr$/, '0.00 Cr');
+}
+
+function historyMoneyDualText(value) {
+  const n = Number(value) || 0;
+  return `${historyMoney(n)}\n${historyCrText(n)}`;
+}
+
+function historySignedCrText(value) {
+  return signedCr(value);
+}
+
+function historySignedDualText(value) {
+  const n = Number(value) || 0;
+  return `${n > 0 ? '+' : n < 0 ? '-' : ''}${historyMoney(Math.abs(n))}\n${historySignedCrText(n)}`;
+}
+
+function historyMoneyDualHtml(value, signed=false) {
+  const n = Number(value) || 0;
+  const top = signed ? `${n > 0 ? '+' : n < 0 ? '-' : ''}${historyMoney(Math.abs(n))}` : historyMoney(n);
+  const cr = signed ? historySignedCrText(n) : historyCrText(n);
+  return `<span class="dual-money"><span>${htmlSafe(top)}</span><small>${htmlSafe(cr)}</small></span>`;
+}
+
 function historyPct(value) {
   const n = Number(value) || 0;
   return `${n.toFixed(2)}%`;
@@ -3553,6 +3578,10 @@ function historySigned(value, pct=false) {
   const n = Number(value) || 0;
   const text = pct ? `${Math.abs(n).toFixed(2)}%` : historyMoney(Math.abs(n));
   return `${n > 0 ? '+' : n < 0 ? '-' : ''}${text}`;
+}
+
+function historySignedDual(value) {
+  return historySignedDualText(value);
 }
 
 function historySnapshotOption(item) {
@@ -3669,9 +3698,9 @@ function renderHistoryCompareRows() {
   }
   body.innerHTML = rows.map(r => `<tr>
     <td>${htmlSafe(r.pu)}</td><td>${htmlSafe(r.description)}</td>
-    <td class="num">${historyMoney(r.fromBudget)}</td><td class="num">${historyMoney(r.toBudget)}</td><td class="num ${r.budgetChange<0?'neg':'pos'}">${historySigned(r.budgetChange)}</td>
-    <td class="num">${historyMoney(r.fromActual)}</td><td class="num">${historyMoney(r.toActual)}</td><td class="num ${r.actualChange<0?'neg':'pos'}">${historySigned(r.actualChange)}</td>
-    <td class="num">${historyMoney(r.fromBalance)}</td><td class="num">${historyMoney(r.toBalance)}</td><td class="num ${r.balanceChange<0?'neg':'pos'}">${historySigned(r.balanceChange)}</td>
+    <td class="num">${historyMoneyDualHtml(r.fromBudget)}</td><td class="num">${historyMoneyDualHtml(r.toBudget)}</td><td class="num ${r.budgetChange<0?'neg':'pos'}">${historyMoneyDualHtml(r.budgetChange,true)}</td>
+    <td class="num">${historyMoneyDualHtml(r.fromActual)}</td><td class="num">${historyMoneyDualHtml(r.toActual)}</td><td class="num ${r.actualChange<0?'neg':'pos'}">${historyMoneyDualHtml(r.actualChange,true)}</td>
+    <td class="num">${historyMoneyDualHtml(r.fromBalance)}</td><td class="num">${historyMoneyDualHtml(r.toBalance)}</td><td class="num ${r.balanceChange<0?'neg':'pos'}">${historyMoneyDualHtml(r.balanceChange,true)}</td>
     <td class="num">${historyPct(r.fromUtilPct)}</td><td class="num">${historyPct(r.toUtilPct)}</td><td class="num ${r.utilPctChange<0?'neg':'pos'}">${historySigned(r.utilPctChange,true)}</td>
     <td><span class="history-status-pill ${htmlSafe(r.status.toLowerCase())}">${htmlSafe(r.status)}</span></td>
   </tr>`).join('');
@@ -3683,7 +3712,7 @@ function renderHistoryTopList(id, rows, field, sign) {
   if (!el) return;
   const top = rows.filter(r => sign > 0 ? r[field] > 0 : r[field] < 0)
     .sort((a,b) => Math.abs(b[field]) - Math.abs(a[field])).slice(0,5);
-  el.innerHTML = top.length ? top.map(r => `<li>PU ${htmlSafe(r.pu)} - ${htmlSafe(r.description)} <strong>${historySigned(r[field])}</strong></li>`).join('') : '<li>No movement</li>';
+  el.innerHTML = top.length ? top.map(r => `<li>PU ${htmlSafe(r.pu)} - ${htmlSafe(r.description)} <strong>${historySignedDual(r[field])}</strong></li>`).join('') : '<li>No movement</li>';
 }
 
 function renderHistoryKpis(fromSnapshot, toSnapshot) {
@@ -3700,9 +3729,9 @@ function renderHistoryKpis(fromSnapshot, toSnapshot) {
   box.innerHTML = [
     ['From', fromSnapshot.label || fromSnapshot.id],
     ['To', toSnapshot.label || toSnapshot.id],
-    ['Budget change', `${historySigned(totals.budget)} (${textCr(totals.budget)})`],
-    ['Actual change', `${historySigned(totals.actual)} (${textCr(totals.actual)})`],
-    ['Balance change', `${historySigned(totals.balance)} (${textCr(totals.balance)})`],
+    ['Budget change', historySignedDual(totals.budget)],
+    ['Actual change', historySignedDual(totals.actual)],
+    ['Balance change', historySignedDual(totals.balance)],
     ['PU status', `${totals.changedCount} changed, ${totals.newCount} new, ${totals.removedCount} removed`],
   ].map(([label,value]) => `<div class="history-kpi"><span>${htmlSafe(label)}</span><strong>${htmlSafe(value)}</strong></div>`).join('');
   renderHistoryTopList('historyTopBudgetUp', rows, 'budgetChange', 1);
@@ -3763,7 +3792,7 @@ function showDataExportPanel(panel) {
 
 function historyExportRows() {
   const rows = filteredHistoryRows();
-  return rows.map(r => [r.pu, r.description, r.fromBudget, r.toBudget, r.budgetChange, r.fromActual, r.toActual, r.actualChange, r.fromBalance, r.toBalance, r.balanceChange, Number(r.fromUtilPct.toFixed(2)), Number(r.toUtilPct.toFixed(2)), Number(r.utilPctChange.toFixed(2)), r.status]);
+  return rows.map(r => [r.pu, r.description, historyMoneyDualText(r.fromBudget), historyMoneyDualText(r.toBudget), historySignedDualText(r.budgetChange), historyMoneyDualText(r.fromActual), historyMoneyDualText(r.toActual), historySignedDualText(r.actualChange), historyMoneyDualText(r.fromBalance), historyMoneyDualText(r.toBalance), historySignedDualText(r.balanceChange), Number(r.fromUtilPct.toFixed(2)), Number(r.toUtilPct.toFixed(2)), Number(r.utilPctChange.toFixed(2)), r.status]);
 }
 
 async function downloadHistoryCompareExport(format) {
@@ -3778,10 +3807,13 @@ async function downloadHistoryCompareExport(format) {
     const ws = wb.addWorksheet('History Compare', {pageSetup:{orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0}});
     ws.addRow([title]); ws.mergeCells(1,1,1,headers.length);
     ws.addRow(headers); rows.forEach(row => ws.addRow(row));
-    ws.eachRow(row => row.eachCell(cell => { cell.font = {name:'Times New Roman', size:10}; cell.alignment = {vertical:'middle', wrapText:true}; cell.border = {top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'}}; }));
+    ws.eachRow((row, rowNumber) => {
+      row.height = rowNumber <= 2 ? 24 : 34;
+      row.eachCell(cell => { cell.font = {name:'Times New Roman', size:10}; cell.alignment = {vertical:'middle', wrapText:true}; cell.border = {top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'}}; });
+    });
     ws.getRow(1).font = {name:'Times New Roman', size:12, bold:true};
     ws.getRow(2).font = {name:'Times New Roman', size:10, bold:true};
-    ws.columns.forEach((col, idx) => { col.width = idx === 1 ? 28 : 14; });
+    ws.columns.forEach((col, idx) => { col.width = idx === 1 ? 28 : (idx >= 2 && idx <= 10 ? 18 : 14); });
     const buf = await wb.xlsx.writeBuffer();
     saveBlob(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), `${filename}.xlsx`);
   } else if (format === 'PDF') {
@@ -3789,7 +3821,7 @@ async function downloadHistoryCompareExport(format) {
     const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
     if(window.DisplayExport) await DisplayExport.configurePDF(doc);
     doc.setFont('Times','bold'); doc.setFontSize(12); doc.text(title, 28, 28);
-    doc.autoTable({head:[headers], body:rows, startY:42, theme:'grid', styles:{font:'Times',fontSize:10,cellPadding:2,overflow:'linebreak'}, headStyles:{fillColor:[28,58,94],textColor:255,fontSize:10}, columnStyles:{1:{cellWidth:80}}});
+    doc.autoTable({head:[headers], body:rows, startY:42, theme:'grid', styles:{font:'Times',fontSize:10,cellPadding:2,overflow:'linebreak',valign:'middle'}, headStyles:{fillColor:[28,58,94],textColor:255,fontSize:10}, columnStyles:{1:{cellWidth:80}}});
     saveBlob(doc.output('blob'), `${filename}.pdf`);
   } else {
     const pptx = new pptxgen();
@@ -3801,7 +3833,7 @@ async function downloadHistoryCompareExport(format) {
       slide.background = {color:'FFFFFF'};
       slide.addText(title, {x:0.3,y:0.2,w:12.7,h:0.3,fontFace:'Times New Roman',fontSize:14,bold:true,color:'17365D'});
       const part = rows.slice(i, i+chunk).map(row => row.map(v => typeof v === 'number' ? historyMoney(v) : String(v ?? '')));
-      slide.addTable([headers, ...part], {x:0.2,y:0.65,w:12.9,h:6.4,border:{type:'solid',color:'666666',pt:0.5},fontFace:'Times New Roman',fontSize:10,color:'111111',fit:'shrink',margin:0.03});
+      slide.addTable([headers, ...part], {x:0.2,y:0.65,w:12.9,h:6.4,border:{type:'solid',color:'666666',pt:0.5},fontFace:'Times New Roman',fontSize:10,color:'111111',fit:'shrink',margin:0.03,breakLine:false});
     }
     const blob = await pptx.write({outputType:'blob'});
     saveBlob(blob, `${filename}.pptx`);
@@ -3844,6 +3876,8 @@ function switchTab(name) {
 
 window.jumpReport = jumpReport;
 window.switchTab = switchTab;
+window.activeTabName = activeTabName;
+window.exportCurrentView = exportCurrentView;
 window.filterPUChecklist = filterPUChecklist;
 window.closePUDrawer = closePUDrawer;
 window.saveAdminDesign = saveAdminDesign;

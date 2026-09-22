@@ -133,6 +133,12 @@ def as_number(value) -> int:
     if value in (None, ""):
         return 0
     if isinstance(value, (int, float)):
+        # IPAS exports may arrive either already in Rs '000s (large integers)
+        # or in crores with 4 decimals (for example 670.6409 Cr = 6,706,409
+        # in Rs '000s). Normalise both forms to the portal's single unit:
+        # Rs '000s. Integer-like floats are left untouched.
+        if isinstance(value, float) and not value.is_integer() and abs(value) < 100000:
+            return int(round(value * 10000))
         return int(round(value))
     text = str(value).strip().replace(",", "")
     if text in {"", "-", "NIL"}:
@@ -140,9 +146,10 @@ def as_number(value) -> int:
     neg = text.startswith("(") and text.endswith(")")
     text = text.strip("()")
     try:
-        num = int(round(float(text)))
+        raw = float(text)
     except ValueError:
         return 0
+    num = int(round(raw * 10000)) if "." in text and abs(raw) < 100000 else int(round(raw))
     return -num if neg else num
 
 

@@ -3,15 +3,15 @@
   "mode": "local-portal-sync",
   "sourceRepo": "D:\\PORTAL DATA\\current year",
   "targetRepo": "D:\\github\\MBRLR",
-  "sourceRevision": "c99e1666e737",
-  "assetVersion": "20260922-history-compare19-autoexports-c99e1666e737",
+  "sourceRevision": "9787bac88361",
+  "assetVersion": "20260922-history-compare19-autoexports-9787bac88361",
   "calculationValidation": {
     "ok": true,
     "puMonthMismatches": 0,
     "detailRows": 914,
-    "detailActual": 1571,
+    "detailActual": 17556099,
     "demandRows": 12,
-    "demandMainAE": 1658
+    "demandMainAE": 16528995
   },
   "portalValidation": {
     "ok": true,
@@ -34,7 +34,7 @@
       "tab-backup",
       "tab-admin"
     ],
-    "freshAsset": "20260922-history-compare19-autoexports-c99e1666e737",
+    "freshAsset": "20260922-history-compare19-autoexports-9787bac88361",
     "reportingMonthIndex": 5,
     "uploadControls": 0
   },
@@ -62,9 +62,9 @@
     "selectionMode": "auto"
   },
   "financialYear": "2026-2027",
-  "generatedAt": "2026-09-22T11:45:02+05:30",
-  "syncedAt": "2026-09-22T11:45:02+05:30",
-  "confirmedAt": "2026-09-22T11:45:02+05:30",
+  "generatedAt": "2026-09-22T17:27:07+05:30",
+  "syncedAt": "2026-09-22T17:27:07+05:30",
+  "confirmedAt": "2026-09-22T17:27:07+05:30",
   "counts": {
     "sourceFiles": 6,
     "processedFiles": 4,
@@ -79,8 +79,8 @@
       "roleLabel": "PU-wise Budget Available",
       "relativePath": "data/source-files/2026-2027/pu-budget.xls",
       "size": 22016,
-      "modifiedAt": "2026-09-22T11:40:32",
-      "sha256": "a098882cc420a0ac46eab1c9da87e1dad2773d52ee2314692417a807dc74b3a5",
+      "modifiedAt": "2026-09-22T17:23:22",
+      "sha256": "79eb90c1354ae0349a41bf37fd0a241cf95a794dc1d696f432744363bf6b49d7",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls"
     },
     {
@@ -90,8 +90,8 @@
       "roleLabel": "PU-wise Month-wise Actual",
       "relativePath": "data/source-files/2026-2027/pu-month-actual.xls",
       "size": 16896,
-      "modifiedAt": "2026-09-22T11:40:50",
-      "sha256": "037b3c722f19f85ba1beb708f15276b4ef6b2de5cc44ae7c34793615555a0104",
+      "modifiedAt": "2026-09-22T17:25:10",
+      "sha256": "c3d5c15e3c71335c74d1b4792ec68d4e105103a47c5bb193f5e641d0e3e3d22a",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls"
     },
     {
@@ -101,8 +101,8 @@
       "roleLabel": "Department / SMH PU-wise Budget",
       "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
       "size": 1514496,
-      "modifiedAt": "2026-09-22T11:43:02",
-      "sha256": "88cd91c4f552712a7475ea4017aa44d981fdbfbaca29b8fcbac2a0083179ef97",
+      "modifiedAt": "2026-09-22T17:25:45",
+      "sha256": "9435659d08a1ba69b5a51a0bb126df0f46368cbf503368e099be0f1c8878fed6",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-budget.xls"
     },
     {
@@ -112,8 +112,8 @@
       "roleLabel": "Department / SMH PU-wise Month-wise Actual",
       "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
       "size": 537600,
-      "modifiedAt": "2026-09-22T11:43:18",
-      "sha256": "563a275a81df9109ea46feaa5924921f152825f818f217579ed48c501f72d667",
+      "modifiedAt": "2026-09-22T17:26:00",
+      "sha256": "9e5c6ba1949a0c6912e46039bb4e751800959b648552f9bcee2b28a09dd042bd",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-actual.xls"
     },
     {
@@ -123,8 +123,8 @@
       "roleLabel": "Demand/SMH Budget Summary",
       "relativePath": "data/source-files/2026-2027/demand-smh-budget.xls",
       "size": 9216,
-      "modifiedAt": "2026-09-22T11:41:55",
-      "sha256": "ea2d65873c5c2d4c9f002679f337bbd9c9a31da2049d9a23ca7834167842a71c",
+      "modifiedAt": "2026-09-22T17:25:23",
+      "sha256": "46942d9f9078f68092b16d361e9819eaae20b48566f7700418f90a71020fb232",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-budget.xls"
     },
     {
@@ -134,8 +134,8 @@
       "roleLabel": "Demand/SMH Month-wise Actual Summary",
       "relativePath": "data/source-files/2026-2027/demand-smh-actual.xls",
       "size": 8192,
-      "modifiedAt": "2026-09-22T11:42:11",
-      "sha256": "08701b350ecdb18f828bc273b632a95ac80c63b54e12f6e66893413ca4d7347b",
+      "modifiedAt": "2026-09-22T17:25:32",
+      "sha256": "a5d0cb82c71472c103d9597ab1b5026cea5b59159f5e05dc8eff5837ab04bdd1",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls"
     }
   ],
@@ -211,7 +211,7 @@
   ],
   "actionLog": [
     {
-      "at": "2026-09-22T11:45:02+05:30",
+      "at": "2026-09-22T17:27:07+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [
@@ -226,12 +226,12 @@
         "puBudgetRows": 47,
         "puMonthRows": 40,
         "detailRows": 914,
-        "detailBudget": 3366,
-        "detailActual": 1571,
+        "detailBudget": 34145286,
+        "detailActual": 17556099,
         "demandRows": 12,
         "latestMonth": "SEP 2026",
-        "demandMainAECompleted": 1658,
-        "demandMainBPCompleted": 1359,
+        "demandMainAECompleted": 16528995,
+        "demandMainBPCompleted": 13581613,
         "pyBudgetRows": 0,
         "pyMonthRows": 0
       }
@@ -240,7 +240,7 @@
   "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026",
   "smokeTest": {
     "ok": true,
-    "testedAt": "2026-09-22T11:45:02+05:30",
+    "testedAt": "2026-09-22T17:27:07+05:30",
     "sourceFileCount": 6,
     "calculationGate": true,
     "portalGate": true,
@@ -248,9 +248,9 @@
     "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026"
   },
   "history": {
-    "latestSnapshotId": "2026-09-22_114502_c99e1666e737",
-    "snapshotCount": 3,
+    "latestSnapshotId": "2026-09-22_172707_9787bac88361",
+    "snapshotCount": 2,
     "indexPath": "data/mb-budget-sync/history/history-index.json",
-    "snapshotPath": "data/mb-budget-sync/history/2026-09-22_114502_c99e1666e737/snapshot-data.json"
+    "snapshotPath": "data/mb-budget-sync/history/2026-09-22_172707_9787bac88361/snapshot-data.json"
   }
 }

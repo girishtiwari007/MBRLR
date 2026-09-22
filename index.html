@@ -7,9 +7,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="portal-build" content="rlp-mbd-2026-09-22-history-compare19-c99e1666e737">
+<meta name="portal-build" content="rlp-mbd-2026-09-22-history-compare19-9787bac88361">
 <title>Ordinary Working Expenses (OWE) PORTAL - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260922-history-compare19-autoexports-c99e1666e737">
+<link rel="stylesheet" href="assets/css/main.css?v=20260922-history-compare19-autoexports-9787bac88361">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -84,7 +84,7 @@
   </div>
   <div class="hdr-r">
     <span class="fy-badge">FY 2026-27</span>
-    <span class="as-on" id="asOnLabel">As on: 22-Sep-2026 11:45</span>
+    <span class="as-on" id="asOnLabel">As on: 22-Sep-2026 17:27</span>
   </div>
 </div>
 
@@ -202,6 +202,12 @@
     <div class="bi-mode-toggle" id="reportViewToggle" aria-label="Report view mode">
       <button type="button" class="active" data-report-view-mode="classic">Classic Table</button>
       <button type="button" data-report-view-mode="bi">BI-AI View</button>
+    </div>
+    <div class="current-view-export" aria-label="Export current view">
+      <span>Export Current View:</span>
+      <button type="button" onclick="exportCurrentView('Excel')">Excel</button>
+      <button type="button" onclick="exportCurrentView('PDF')">PDF</button>
+      <button type="button" onclick="exportCurrentView('PPT')">PowerPoint</button>
     </div>
     <button type="button" id="saveViewBtn">Save View</button>
     <button type="button" id="startTourBtn">Tour</button>
@@ -708,8 +714,6 @@
         </select>
       </div>
     </div>
-    <div class="xs-logic" id="xsLogic"></div>
-    <div class="xs-hq"><strong>HQ PU list:</strong> <span id="xsHQList"></span></div>
     <div class="xs-kpis" id="xsKpis"></div>
     <div class="xs-scroll">
       <table class="xs-table">
@@ -1065,16 +1069,16 @@
   Ordinary Working Expenses (OWE) PORTAL - Moradabad Division &nbsp;-&nbsp; Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
 </div>
 
-<script src="assets/js/detail-data.js?v=20260922-history-compare19-autoexports-c99e1666e737"></script>
-<script src="assets/js/demand-smh-data.js?v=20260922-history-compare19-autoexports-c99e1666e737"></script>
-<script src="assets/js/admin-config.js?v=20260922-history-compare19-autoexports-c99e1666e737"></script>
+<script src="assets/js/detail-data.js?v=20260922-history-compare19-autoexports-9787bac88361"></script>
+<script src="assets/js/demand-smh-data.js?v=20260922-history-compare19-autoexports-9787bac88361"></script>
+<script src="assets/js/admin-config.js?v=20260922-history-compare19-autoexports-9787bac88361"></script>
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/smh-matrix-export.js?v=20260922-history-compare19-autoexports-c99e1666e737"></script>
+<script src="assets/js/smh-matrix-export.js?v=20260922-history-compare19-autoexports-9787bac88361"></script>
 <script src="assets/vendor/pptxgen.bundle.js"></script>
-<script src="assets/js/display-export.js?v=20260922-history-compare19-autoexports-c99e1666e737"></script>
-<script src="assets/js/app.js?v=20260922-history-compare19-autoexports-c99e1666e737"></script>
+<script src="assets/js/display-export.js?v=20260922-history-compare19-autoexports-9787bac88361"></script>
+<script src="assets/js/app.js?v=20260922-history-compare19-autoexports-9787bac88361"></script>
 <script>DisplayExport.init();</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
