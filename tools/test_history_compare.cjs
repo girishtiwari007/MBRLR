@@ -21,7 +21,9 @@ if (!index.ok || !Array.isArray(index.snapshots) || index.snapshots.length < 2) 
   throw new Error('History index must contain at least two snapshots for comparison smoke test');
 }
 
-const pair = index.snapshots.slice(-2);
+const fromItem = index.snapshots[0];
+const toItem = index.snapshots.find(item => item.id === index.latestSnapshotId) || index.snapshots[index.snapshots.length - 1];
+const pair = [fromItem, toItem];
 const snapshots = pair.map(item => {
   const snapshotPath = path.join(root, item.snapshotPath.replace(/\//g, path.sep));
   if (!fs.existsSync(snapshotPath)) throw new Error(`Snapshot file missing: ${item.snapshotPath}`);

@@ -243,19 +243,23 @@ class SyncApp(tk.Tk):
                 raise RuntimeError("Generated calculation validation did not pass")
             portal_validation = manifest.get("portalValidation", {})
             export_validation = manifest.get("exportValidation", {})
-            if not portal_validation.get("ok") or portal_validation.get("viewCount") != 15:
+            if not portal_validation.get("ok") or portal_validation.get("viewCount") != 16:
                 raise RuntimeError("All portal pages did not pass the fixed refresh contract")
             if not export_validation.get("ok") or export_validation.get("minimumFontPt") != 10:
                 raise RuntimeError("Excel/PDF/PowerPoint export contract did not pass")
             smoke_test = manifest.get("smokeTest", {})
             if not smoke_test.get("ok") or smoke_test.get("sourceFileCount") != 6:
                 raise RuntimeError("Mandatory end-to-end smoke test did not pass")
+            history = manifest.get("history", {})
+            if not history.get("latestSnapshotId") or not history.get("indexPath"):
+                raise RuntimeError("History snapshot archive was not updated")
             self.events.put(("gates", {"SOURCE": True, "CALCULATION": True, "PAGES": True, "EXPORTS": True}))
             self.events.put(("log", json.dumps(summary, indent=2)))
             self.events.put(("log", f"PASS: calculation simulation; PU mismatches {validation.get('puMonthMismatches', 0)}"))
             self.events.put(("log", f"PASS: month sensing selected latest uploaded actual {summary.get('latestMonth', 'none')} using system month {datetime.now().strftime('%b %Y').upper()}"))
             self.events.put(("log", f"PASS: export sources refreshed under asset version {manifest.get('assetVersion')}"))
             self.events.put(("log", f"PASS: {portal_validation.get('viewCount')} portal pages refreshed and validated"))
+            self.events.put(("log", f"PASS: history snapshot archived as {history.get('latestSnapshotId')} ({history.get('snapshotCount', 0)} snapshots indexed)"))
             self.events.put(("log", f"PASS: XLSX/PDF/PPTX mock contract; minimum font {export_validation.get('minimumFontPt')} pt; freshness guards {export_validation.get('freshnessGuards')}"))
             self.events.put(("log", "PASS: persistent end-to-end smoke-test report written"))
             portal_root = github if github and github.exists() else root
@@ -290,6 +294,7 @@ class SyncApp(tk.Tk):
             Path("assets/js/demand-smh-data.js"), Path("data/mb-budget-sync/sync-manifest.json"),
             Path("data/mb-budget-sync/sync-log.json"), Path("data/mb-budget-sync/smoke-test.json"),
             Path("data/mb-budget-sync/audit-history.json"),
+            Path("data/mb-budget-sync/history/history-index.json"),
         ]
 
     def _backup_generated_files(self, root, temps):
@@ -378,10 +383,10 @@ class SyncApp(tk.Tk):
                     "tab-summary", "tab-monthwise", "tab-pumaster", "tab-excessshortfall", "tab-trend",
                     "tab-aitrend", "tab-bpanalysis", "tab-budgetcontrol",
                     "tab-smhdetail", "tab-demandsmh", "tab-remarks",
-                    "tab-backup", "tab-admin", "tab-liability", "tab-dataexport",
+                    "tab-backup", "tab-admin", "tab-liability", "tab-dataexport", "tab-historycompare",
                 )
                 missing_views = [view for view in required_views if f'id="{view}"' not in html]
-                required_exports = ("downloadExcel", "downloadPDFReport", "downloadPowerPoint")
+                required_exports = ("downloadExcel", "downloadPDFReport", "downloadPowerPoint", "downloadHistoryCompareExport")
                 missing_exports = [name for name in required_exports if name not in app_js]
                 required_export_rules = {
                     "Excel landscape": "orientation:'landscape'",
@@ -406,6 +411,11 @@ class SyncApp(tk.Tk):
                     raise RuntimeError("Missing export functions: " + ", ".join(missing_exports))
                 if missing_export_rules:
                     raise RuntimeError("Missing fixed export rules: " + ", ".join(missing_export_rules))
+                history_url = f"http://127.0.0.1:{PORT}/data/mb-budget-sync/history/history-index.json?v={asset_version}"
+                with urllib.request.urlopen(history_url, timeout=3) as response:
+                    history_index = json.loads(response.read().decode("utf-8", errors="replace"))
+                if not history_index.get("latestSnapshotId") or len(history_index.get("snapshots", [])) < 1:
+                    raise RuntimeError("Live portal history snapshot index is missing or empty")
                 if 'type="file"' in html:
                     raise RuntimeError("Browser upload control unexpectedly returned")
                 return

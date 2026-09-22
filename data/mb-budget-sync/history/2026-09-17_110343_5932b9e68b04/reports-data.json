@@ -3,97 +3,97 @@
     "demand": {
       "Demand 03 / SMH 01": {
         "2026-27": {
-          "oba": 64,
-          "ae": 30,
-          "bp": 27
+          "oba": 641522,
+          "ae": 294135,
+          "bp": 267301
         }
       },
       "Demand 04 / SMH 02": {
         "2026-27": {
-          "oba": 361,
-          "ae": 179,
-          "bp": 150
+          "oba": 3608902,
+          "ae": 1781320,
+          "bp": 1503709
         }
       },
       "Demand 05 / SMH 03": {
         "2026-27": {
-          "oba": 186,
-          "ae": 78,
-          "bp": 78
+          "oba": 1864843,
+          "ae": 782032,
+          "bp": 777018
         }
       },
       "Demand 06 / SMH 04": {
         "2026-27": {
-          "oba": 135,
-          "ae": 92,
-          "bp": 56
+          "oba": 1353581,
+          "ae": 911131,
+          "bp": 563992
         }
       },
       "Demand 07 / SMH 05": {
         "2026-27": {
-          "oba": 206,
-          "ae": 101,
-          "bp": 86
+          "oba": 2059950,
+          "ae": 995022,
+          "bp": 858312
         }
       },
       "Demand 08 / SMH 06": {
         "2026-27": {
-          "oba": 335,
-          "ae": 198,
-          "bp": 140
+          "oba": 3352566,
+          "ae": 1978638,
+          "bp": 1396902
         }
       },
       "Demand 09 / SMH 07": {
         "2026-27": {
-          "oba": 443,
-          "ae": 220,
-          "bp": 185
+          "oba": 4428766,
+          "ae": 2192865,
+          "bp": 1845319
         }
       },
       "Demand 10 / SMH 08": {
         "2026-27": {
-          "oba": 1161,
-          "ae": 570,
-          "bp": 484
+          "oba": 11607206,
+          "ae": 5702475,
+          "bp": 4836336
         }
       },
       "Demand 11 / SMH 09": {
         "2026-27": {
-          "oba": 139,
-          "ae": 92,
-          "bp": 58
+          "oba": 1392832,
+          "ae": 916954,
+          "bp": 580347
         }
       },
       "Demand 12 / SMH 10": {
         "2026-27": {
-          "oba": 99,
-          "ae": 44,
-          "bp": 41
+          "oba": 994638,
+          "ae": 441761,
+          "bp": 414432
         }
       },
       "Demand 13 / SMH 11": {
         "2026-27": {
-          "oba": 129,
-          "ae": 54,
-          "bp": 54
+          "oba": 1291067,
+          "ae": 532662,
+          "bp": 537945
         }
       },
       "Demand 12N / SMH 10N": {
         "2026-27": {
-          "oba": -1,
-          "ae": 158,
-          "bp": 0
+          "oba": -13045,
+          "ae": 1578052,
+          "bp": -5435
         }
       }
     }
   },
   "summary": {
-    "generatedAt": "2026-09-22T11:45:02+05:30",
+    "generatedAt": "2026-09-17T11:03:43+05:30",
     "latestMonth": "SEP 2026",
     "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026",
     "demandRows": 12,
-    "demandMainOBA": 3258,
-    "demandMainBP": 1359,
-    "demandMainAE": 1658
+    "demandMainOBA": 32595873,
+    "demandMainBP": 13581613,
+    "demandMainAE": 16528995
   }
 }

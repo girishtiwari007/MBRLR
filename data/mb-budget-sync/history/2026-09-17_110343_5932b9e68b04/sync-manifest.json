@@ -3,19 +3,19 @@
   "mode": "local-portal-sync",
   "sourceRepo": "D:\\PORTAL DATA\\current year",
   "targetRepo": "D:\\github\\MBRLR",
-  "sourceRevision": "c99e1666e737",
-  "assetVersion": "20260922-history-compare19-autoexports-c99e1666e737",
+  "sourceRevision": "5932b9e68b04",
+  "assetVersion": "20260917-export-hub-dual18-autoexports-5932b9e68b04",
   "calculationValidation": {
     "ok": true,
     "puMonthMismatches": 0,
-    "detailRows": 914,
-    "detailActual": 1571,
+    "detailRows": 913,
+    "detailActual": 17473340,
     "demandRows": 12,
-    "demandMainAE": 1658
+    "demandMainAE": 16528995
   },
   "portalValidation": {
     "ok": true,
-    "viewCount": 16,
+    "viewCount": 15,
     "views": [
       "tab-liability",
       "tab-dataexport",
@@ -24,7 +24,6 @@
       "tab-pumaster",
       "tab-trend",
       "tab-aitrend",
-      "tab-historycompare",
       "tab-bpanalysis",
       "tab-budgetcontrol",
       "tab-excessshortfall",
@@ -34,7 +33,7 @@
       "tab-backup",
       "tab-admin"
     ],
-    "freshAsset": "20260922-history-compare19-autoexports-c99e1666e737",
+    "freshAsset": "20260917-export-hub-dual18-autoexports-5932b9e68b04",
     "reportingMonthIndex": 5,
     "uploadControls": 0
   },
@@ -59,15 +58,15 @@
     "completedThrough": "AUG 2026",
     "reportingMonthIndex": 5,
     "completedMonthCount": 5,
-    "selectionMode": "auto"
+    "selectionMode": "manual"
   },
   "financialYear": "2026-2027",
-  "generatedAt": "2026-09-22T11:45:02+05:30",
-  "syncedAt": "2026-09-22T11:45:02+05:30",
-  "confirmedAt": "2026-09-22T11:45:02+05:30",
+  "generatedAt": "2026-09-17T11:03:43+05:30",
+  "syncedAt": "2026-09-17T11:03:43+05:30",
+  "confirmedAt": "2026-09-17T11:03:43+05:30",
   "counts": {
     "sourceFiles": 6,
-    "processedFiles": 4,
+    "processedFiles": 3,
     "frFiles": 0,
     "totalFiles": 11
   },
@@ -79,8 +78,8 @@
       "roleLabel": "PU-wise Budget Available",
       "relativePath": "data/source-files/2026-2027/pu-budget.xls",
       "size": 22016,
-      "modifiedAt": "2026-09-22T11:40:32",
-      "sha256": "a098882cc420a0ac46eab1c9da87e1dad2773d52ee2314692417a807dc74b3a5",
+      "modifiedAt": "2026-09-15T15:58:43",
+      "sha256": "7264ebe73c550685bde2b15411593acd637b2fe29fff752270c0fe6a7c58d54d",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls"
     },
     {
@@ -90,30 +89,30 @@
       "roleLabel": "PU-wise Month-wise Actual",
       "relativePath": "data/source-files/2026-2027/pu-month-actual.xls",
       "size": 16896,
-      "modifiedAt": "2026-09-22T11:40:50",
-      "sha256": "037b3c722f19f85ba1beb708f15276b4ef6b2de5cc44ae7c34793615555a0104",
+      "modifiedAt": "2026-09-15T15:59:05",
+      "sha256": "639910d75ec1522edab2b619bbe50213fd475234fd0c9c26129896ecdfe39e48",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls"
     },
     {
       "name": "pu-dept-demand-smh-budget.xls",
       "originalName": "PU-DEPT-DEMAND-SMH-BUDGET.xls",
       "role": "detail_budget",
-      "roleLabel": "Department / SMH PU-wise Budget",
+      "roleLabel": "DEPT-Demand/SMH PU-wise Budget",
       "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
-      "size": 1514496,
-      "modifiedAt": "2026-09-22T11:43:02",
-      "sha256": "88cd91c4f552712a7475ea4017aa44d981fdbfbaca29b8fcbac2a0083179ef97",
+      "size": 1513472,
+      "modifiedAt": "2026-09-15T16:00:11",
+      "sha256": "2ead8a9e947c68028d209d576fb502fafdc40364a6953965197c9c77c301d220",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-budget.xls"
     },
     {
       "name": "pu-dept-demand-smh-actual.xls",
       "originalName": "PU-DEPT-DEMAND-SMH-ACTUAL.xls",
       "role": "detail_actual",
-      "roleLabel": "Department / SMH PU-wise Month-wise Actual",
+      "roleLabel": "DEPT-Demand/SMH PU-wise Month-wise Actual",
       "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
-      "size": 537600,
-      "modifiedAt": "2026-09-22T11:43:18",
-      "sha256": "563a275a81df9109ea46feaa5924921f152825f818f217579ed48c501f72d667",
+      "size": 536064,
+      "modifiedAt": "2026-09-15T16:00:36",
+      "sha256": "a475955ef51fea79dcd4a4b447d7cc123e7da2e400ed7484b19b41ce12b42d67",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-actual.xls"
     },
     {
@@ -123,8 +122,8 @@
       "roleLabel": "Demand/SMH Budget Summary",
       "relativePath": "data/source-files/2026-2027/demand-smh-budget.xls",
       "size": 9216,
-      "modifiedAt": "2026-09-22T11:41:55",
-      "sha256": "ea2d65873c5c2d4c9f002679f337bbd9c9a31da2049d9a23ca7834167842a71c",
+      "modifiedAt": "2026-09-15T15:59:29",
+      "sha256": "6d17dbe0afeb7a96e2dbbd52da6e797ae7a6de93b6cbfe71c64661294b6f2771",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-budget.xls"
     },
     {
@@ -134,8 +133,8 @@
       "roleLabel": "Demand/SMH Month-wise Actual Summary",
       "relativePath": "data/source-files/2026-2027/demand-smh-actual.xls",
       "size": 8192,
-      "modifiedAt": "2026-09-22T11:42:11",
-      "sha256": "08701b350ecdb18f828bc273b632a95ac80c63b54e12f6e66893413ca4d7347b",
+      "modifiedAt": "2026-09-15T15:59:50",
+      "sha256": "f50246af9dfff74a93e96b22c73e1efc585f04275c8fa468f21031139e592e5b",
       "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls"
     }
   ],
@@ -164,14 +163,14 @@
     {
       "file": "PU-DEPT-DEMAND-SMH-ACTUAL.xls",
       "role": "detail_actual",
-      "roleLabel": "Department / SMH PU-wise Month-wise Actual",
+      "roleLabel": "DEPT-Demand/SMH PU-wise Month-wise Actual",
       "score": 95,
       "reason": "Department + SMH + PU + month actual columns"
     },
     {
       "file": "PU-DEPT-DEMAND-SMH-BUDGET.xls",
       "role": "detail_budget",
-      "roleLabel": "Department / SMH PU-wise Budget",
+      "roleLabel": "DEPT-Demand/SMH PU-wise Budget",
       "score": 90,
       "reason": "Department + SMH + PU + BG/Budget columns"
     },
@@ -195,10 +194,6 @@
     {
       "name": "year-sources.json",
       "targetPath": "data/mb-budget-sync/processed/year-sources.json"
-    },
-    {
-      "name": "history-index.json",
-      "targetPath": "data/mb-budget-sync/history/history-index.json"
     }
   ],
   "selectedTargets": [
@@ -211,27 +206,27 @@
   ],
   "actionLog": [
     {
-      "at": "2026-09-22T11:45:02+05:30",
+      "at": "2026-09-17T11:03:43+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [
         "PU-wise Budget Available: PU-BUDGET.xls",
         "PU-wise Month-wise Actual: PU-MONTH-ACTUAL.xls",
-        "Department / SMH PU-wise Budget: PU-DEPT-DEMAND-SMH-BUDGET.xls",
-        "Department / SMH PU-wise Month-wise Actual: PU-DEPT-DEMAND-SMH-ACTUAL.xls",
+        "DEPT-Demand/SMH PU-wise Budget: PU-DEPT-DEMAND-SMH-BUDGET.xls",
+        "DEPT-Demand/SMH PU-wise Month-wise Actual: PU-DEPT-DEMAND-SMH-ACTUAL.xls",
         "Demand/SMH Budget Summary: DEMAND-SMH-BUGDET.xls",
         "Demand/SMH Month-wise Actual Summary: DEMAND-SMH-ACTUAL.xls"
       ],
       "summary": {
         "puBudgetRows": 47,
         "puMonthRows": 40,
-        "detailRows": 914,
-        "detailBudget": 3366,
-        "detailActual": 1571,
+        "detailRows": 913,
+        "detailBudget": 34145286,
+        "detailActual": 17473340,
         "demandRows": 12,
         "latestMonth": "SEP 2026",
-        "demandMainAECompleted": 1658,
-        "demandMainBPCompleted": 1359,
+        "demandMainAECompleted": 16528995,
+        "demandMainBPCompleted": 13581613,
         "pyBudgetRows": 0,
         "pyMonthRows": 0
       }
@@ -240,17 +235,11 @@
   "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026",
   "smokeTest": {
     "ok": true,
-    "testedAt": "2026-09-22T11:45:02+05:30",
+    "testedAt": "2026-09-17T11:03:43+05:30",
     "sourceFileCount": 6,
     "calculationGate": true,
     "portalGate": true,
     "exportGate": true,
     "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026"
-  },
-  "history": {
-    "latestSnapshotId": "2026-09-22_114502_c99e1666e737",
-    "snapshotCount": 3,
-    "indexPath": "data/mb-budget-sync/history/history-index.json",
-    "snapshotPath": "data/mb-budget-sync/history/2026-09-22_114502_c99e1666e737/snapshot-data.json"
   }
 }
