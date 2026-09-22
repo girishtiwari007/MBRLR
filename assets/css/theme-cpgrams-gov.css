@@ -33,7 +33,7 @@ body{background:#EEF2F7;color:#0A1628}
   font-weight:900;
 }
 .hdr::after{
-  content:"Revenue Liability Portal";
+  content:"Ordinary Working Expenses (OWE) Portal";
   position:absolute;
   top:52px;
   right:22px;

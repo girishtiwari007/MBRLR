@@ -1,7 +1,8 @@
 /* Export the displayed report, retaining editable values and native PPT objects. */
 (function(root){
   'use strict';
-  const pages=[['summary','Summary'],['liability','Revenue Liability'],['smhdetail','DEPT-Demand'],['demandsmh','Demand SMH'],['pumaster','PU Master'],['monthwise','Month-wise'],['bpanalysis','BP Analysis'],['budgetcontrol','Budget Control'],['excessshortfall','AE vs BP HQ'],['trend','Graphs'],['aitrend','AI Summary']];
+  const PORTAL_BRAND='Ordinary Working Expenses (OWE) PORTAL - Moradabad Division';
+  const pages=[['summary','Summary'],['liability','OWE Statement'],['smhdetail','Department wise'],['demandsmh','Demand SMH'],['pumaster','PU Master'],['monthwise','Month-wise'],['bpanalysis','BP Analysis'],['budgetcontrol','Budget Control'],['excessshortfall','AE vs BP'],['trend','Graphs'],['aitrend','AI Summary']];
   const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
   function grid(rows,repeatSpan=false){
     const result=[];
@@ -65,28 +66,29 @@
     return s;
   }
   async function excel(reports,meta,ExcelJS){
-    const wb=new ExcelJS.Workbook();wb.creator='MBRLR - Moradabad Division';
+    const wb=new ExcelJS.Workbook();wb.creator=PORTAL_BRAND;
     let count=0;
     for(const report of reports){
       const tables=[...report.tables,...(report.notes.length?[{title:'Review',headers:['Review note'],rows:report.notes.map(n=>[n])}]:[])];
       for(const table of tables) for(const part of bands(table)){
         const ws=wb.addWorksheet(`${++count} ${report.title}`.slice(0,31),{pageSetup:{orientation:'landscape',paperSize:9,scale:100,fitToPage:false,margins:{left:.4,right:.4,top:.5,bottom:.5,header:.2,footer:.2}},views:[{state:'frozen',ySplit:5}]});
         ws.addRow(['NORTHERN RAILWAY - MORADABAD DIVISION']);
+        ws.addRow([PORTAL_BRAND]);
         ws.addRow([report.title+' - '+part.title]);ws.addRow([meta.period]);ws.addRow(['Displayed values and units; '+meta.filters]);ws.addRow(part.headers);
         part.rows.forEach(r=>ws.addRow(r.map((v,c)=>typed(v,c,part.headers[c]))));
         const width=part.headers.length===1?110:part.headers.length<=4?28:18;
         ws.columns=part.headers.map(()=>({width}));
-        for(let r=1;r<=4;r++)if(part.headers.length>1)ws.mergeCells(r,1,r,part.headers.length);
+        for(let r=1;r<=5;r++)if(part.headers.length>1)ws.mergeCells(r,1,r,part.headers.length);
         ws.eachRow((row,i)=>{
           row.height=i<=4?30:Math.max(28,...row.values.slice(1).map(v=>Math.ceil(String(v??'').length/Math.max(width-3,10))*13+8));
           row.eachCell({includeEmpty:true},cell=>{
-            cell.font={name:'Times New Roman',size:10,bold:i<=5};
+            cell.font={name:'Times New Roman',size:10,bold:i<=6};
             cell.alignment={vertical:'middle',wrapText:true};
             if(typeof cell.value==='number')cell.numFmt='#,##0.00;[Red]-#,##0.00';
-            if(i===5) {cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF17365D'}};cell.font={name:'Times New Roman',size:10,bold:true,color:{argb:'FFFFFFFF'}};}
+            if(i===6) {cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF17365D'}};cell.font={name:'Times New Roman',size:10,bold:true,color:{argb:'FFFFFFFF'}};}
           });
         });
-        ws.pageSetup.printTitlesRow='1:5';ws.pageSetup.printArea=`A1:${ws.getColumn(part.headers.length).letter}${ws.rowCount}`;
+        ws.pageSetup.printTitlesRow='1:6';ws.pageSetup.printArea=`A1:${ws.getColumn(part.headers.length).letter}${ws.rowCount}`;
         ws.headerFooter.oddFooter='&LFor Official Use Only&RPage &P of &N';
       }
     }
@@ -101,7 +103,7 @@
       doc.autoTable({head:[part.headers],body:part.rows.map(r=>r.map(v=>typeof v==='number'?v.toFixed(2):v)),startY:92,margin:{top:92,bottom:35,left:32,right:32},theme:'grid',showHead:'everyPage',styles:{font:'TimesNewRoman',fontSize:10,cellPadding:4,overflow:'linebreak'},headStyles:{fillColor:[23,54,93],fontStyle:'bold'},alternateRowStyles:{fillColor:[245,248,251]},rowPageBreak:'avoid',didDrawPage:()=>{
         doc.setFont('TimesNewRoman','bold');doc.setFontSize(14);doc.setTextColor(23,54,93);doc.text(report.title,32,27);
         doc.setFont('TimesNewRoman','normal');doc.setFontSize(10);doc.setTextColor(40);
-        doc.text('Northern Railway - Moradabad Division',32,43);doc.text(meta.period,32,57);
+        doc.text(PORTAL_BRAND,32,43);doc.text(meta.period,32,57);
         doc.text(doc.splitTextToSize(part.title+'; '+meta.filters,W-64).slice(0,2),32,71);
         doc.text('Displayed values and units. For Official Use Only.',32,H-18);doc.text(String(doc.internal.getCurrentPageInfo().pageNumber),W-32,H-18,{align:'right'});
       }});
@@ -109,10 +111,10 @@
     return doc;
   }
   async function ppt(reports,meta,PptxGenJS){
-    const deck=new PptxGenJS();deck.layout='LAYOUT_WIDE';deck.author='MBRLR - Moradabad Division';deck.subject=meta.period;
+    const deck=new PptxGenJS();deck.layout='LAYOUT_WIDE';deck.author=PORTAL_BRAND;deck.subject=meta.period;
     deck.theme={headFontFace:'Times New Roman',bodyFontFace:'Times New Roman',lang:'en-IN'};
-    function slide(title){const s=deck.addSlide();s.addText(title,{x:.5,y:.3,w:12.3,h:.6,fontSize:26,bold:true,color:'17365D',margin:0});s.addText(meta.period,{x:.5,y:.98,w:12.3,h:.35,fontSize:11,margin:0});s.addText('Northern Railway - Moradabad Division. For Official Use Only.',{x:.5,y:7.08,w:11,h:.2,fontSize:10,margin:0});return s;}
-    const cover=slide('Revenue and Budget Review');cover.addText(reports.map(r=>r.title).join('\n'),{x:.6,y:1.6,w:11.8,h:3.8,fontSize:20,breakLine:false,margin:0});cover.addText(meta.filters,{x:.6,y:5.7,w:11.8,h:.7,fontSize:12,margin:0});
+    function slide(title){const s=deck.addSlide();s.addText(title,{x:.5,y:.3,w:12.3,h:.6,fontSize:26,bold:true,color:'17365D',margin:0});s.addText(meta.period,{x:.5,y:.98,w:12.3,h:.35,fontSize:11,margin:0});s.addText(PORTAL_BRAND+'. For Official Use Only.',{x:.5,y:7.08,w:11,h:.2,fontSize:10,margin:0});return s;}
+    const cover=slide('Ordinary Working Expenses Review');cover.addText(reports.map(r=>r.title).join('\n'),{x:.6,y:1.6,w:11.8,h:3.8,fontSize:20,breakLine:false,margin:0});cover.addText(meta.filters,{x:.6,y:5.7,w:11.8,h:.7,fontSize:12,margin:0});
     for(const report of reports){
       for(const chart of report.charts){
         const s=slide(report.title+' - '+chart.title);

@@ -122,7 +122,7 @@ Check the following before using or publishing the recovered portal:
 
 - `data/mb-budget-sync/sync-manifest.json` reports `ok: true` for calculation, portal, export, and smoke-test validation.
 - The month status shows the intended completed and running months.
-- All 13 validated portal pages open and show current figures, including the ninth **AE vs BP - HQ** page.
+- All 13 validated portal pages open and show current figures, including the ninth **AE vs BP** page.
 - PU-wise Revenue shows every applicable actual month, including PU 11.
 - Hover details show the same month values as their underlying tables.
 - Excel, PDF, and PowerPoint export buttons work.

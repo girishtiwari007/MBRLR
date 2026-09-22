@@ -67,7 +67,7 @@
   "confirmedAt": "2026-09-22T11:23:11+05:30",
   "counts": {
     "sourceFiles": 6,
-    "processedFiles": 4,
+    "processedFiles": 3,
     "frFiles": 0,
     "totalFiles": 11
   },
@@ -195,10 +195,6 @@
     {
       "name": "year-sources.json",
       "targetPath": "data/mb-budget-sync/processed/year-sources.json"
-    },
-    {
-      "name": "history-index.json",
-      "targetPath": "data/mb-budget-sync/history/history-index.json"
     }
   ],
   "selectedTargets": [
@@ -246,11 +242,5 @@
     "portalGate": true,
     "exportGate": true,
     "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026"
-  },
-  "history": {
-    "latestSnapshotId": "2026-09-22_112311_d6284ff9bf71",
-    "snapshotCount": 2,
-    "indexPath": "data/mb-budget-sync/history/history-index.json",
-    "snapshotPath": "data/mb-budget-sync/history/2026-09-22_112311_d6284ff9bf71/snapshot-data.json"
   }
 }

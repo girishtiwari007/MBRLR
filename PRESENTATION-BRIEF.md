@@ -8,7 +8,7 @@ The MBRLR portal brings IPAS Excel reports into one place for financial review. 
 | Month-wise Actuals and PU Master | Review monthly bookings and individual PU details. |
 | Trends and AI Analysis | Explore comparison charts and automated observations requiring review. |
 | BP Analysis and Budget Control | Identify excess expenditure, potential savings and watch-list items. |
-| AE vs BP HQ Statement | View an Excel-style report with all-PU/HQ selection and custom sorting. |
+| AE vs BP Statement | View an Excel-style report with all-PU/HQ selection and custom sorting. |
 | Department / Demand / SMH | Narrow the review to the relevant department, expenditure head or PU. |
 | Remarks and Review | Keep supporting observations alongside financial information. |
 
@@ -29,4 +29,4 @@ Compared with the manual workflow after IPAS extraction, the portal reduces repe
 
 Visual page operation, screenshots and actual Excel/PDF browser downloads remain unverified because browser access is blocked by administrator-policy verification. The internal checks above do not establish rendered layout or download success.
 
-Suggested live demonstration: Summary → Trends → AE vs BP HQ Statement → Excel/PPT export.
+Suggested live demonstration: Summary → Trends → AE vs BP Statement → Excel/PPT export.

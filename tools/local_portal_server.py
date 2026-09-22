@@ -1,4 +1,4 @@
-"""Local-only upload and sync server for Revenue Liability Portal.
+"""Local-only upload and sync server for Ordinary Working Expenses (OWE) Portal.
 
 This server is intentionally bound to 127.0.0.1. It lets an admin upload IPAS
 XLS/XLSX source files from a browser, runs tools/local_portal_sync.py, and serves
@@ -98,7 +98,7 @@ LOCAL_SYNC_HTML = r"""<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Revenue Liability Local Sync</title>
+  <title>OWE Local Sync</title>
   <style>
     *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#eef4fa;color:#10243d}
     header{background:#0a315f;color:#fff;padding:14px 18px;border-bottom:4px solid #c9a84c}
@@ -119,7 +119,7 @@ LOCAL_SYNC_HTML = r"""<!doctype html>
 </head>
 <body>
 <header>
-  <h1>Revenue Liability Portal - Local Upload & Sync</h1>
+  <h1>Ordinary Working Expenses (OWE) Portal - Local Upload & Sync</h1>
   <p>Runs on this computer only. Upload files, sync portal data, verify locally, then commit/push in GitHub Desktop.</p>
 </header>
 <main>
@@ -131,7 +131,7 @@ LOCAL_SYNC_HTML = r"""<!doctype html>
         <p class="note">Select the six current-year source files. File names can vary; parser detects report type from sheet columns.</p>
       </div>
       <div>
-        <p class="note"><strong>Expected report types:</strong><br>PU Budget, PU Month Actual, DEPT-Demand Budget, DEPT-Demand Actual, Demand/SMH Budget, Demand/SMH Actual.</p>
+        <p class="note"><strong>Expected report types:</strong><br>PU Budget, PU Month Actual, Department wise Budget, Department wise Actual, Demand/SMH Budget, Demand/SMH Actual.</p>
         <div class="actions">
           <button onclick="uploadFiles()">Upload to Local Folder</button>
           <button class="gold" onclick="clearUploads()">Clear Local Upload Folder</button>
@@ -322,7 +322,7 @@ def main():
     server = ThreadingHTTPServer((args.host, args.port), LocalPortalHandler)
     server.upload_dir = Path(args.upload_dir)
     server.github_dir = Path(args.github)
-    print(f"Revenue Liability local server: http://{args.host}:{args.port}/")
+    print(f"OWE local server: http://{args.host}:{args.port}/")
     print(f"Local upload and sync page: http://{args.host}:{args.port}/local-sync")
     print("Press Ctrl+C to stop.")
     try:

@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260917-export-hub-dual18-autoexports-5932b9e68b04';
+const ASSET_VERSION = '20260922-history-compare19-autoexports-d6284ff9bf71';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -420,13 +420,13 @@ function activePUMeta() {
 }
 
 const SOURCE_REGISTER = {
-  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'Revenue Liability, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
-  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'Revenue Liability, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026; latest loaded month SEP 2026.'},
+  budgetCY: {label:'Current Year PU-wise Budget Available', fy:'2026-2027', source:'PU-BUDGET.xls', used:'OWE, Month-wise Actuals, PU Master, Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 22-Sep-2026; actual till date aligned to APR-SEP month-wise file.'},
+  monthCY: {label:'Current Year PU-wise Month-wise Actuals', fy:'2026-2027', source:'PU-MONTH-ACTUAL.xls', used:'OWE, Month-wise Actuals, Trend, AI Trend, BP Analysis', remarks:'Repository source refreshed from PORTAL DATA on 22-Sep-2026; latest loaded month SEP 2026.'},
   budgetPY: {label:'Previous Year PU-wise Budget Available', fy:'2025-2026', source:'Pre-loaded Budget Available file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
   monthPY: {label:'Previous Year PU-wise Month-wise Actuals', fy:'2025-2026', source:'Pre-loaded Month-wise Actuals file (PY static portal data)', used:'Trend comparison and AI Trend comparison'},
-  smhBudgetCY: {label:'DEPT-Demand Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026.'},
-  smhMonthCY: {label:'DEPT-Demand Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'DEPT-Demand Wise', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026; latest loaded month SEP 2026.'},
-  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 17-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
+  smhBudgetCY: {label:'Department wise Budget Available', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-BUDGET.xls', used:'Department wise', remarks:'Repository source refreshed from PORTAL DATA on 22-Sep-2026.'},
+  smhMonthCY: {label:'Department wise Month-wise Actuals', fy:'2026-2027', source:'PU-DEPT-DEMAND-SMH-ACTUAL.xls', used:'Department wise', remarks:'Repository source refreshed from PORTAL DATA on 22-Sep-2026; latest loaded month SEP 2026.'},
+  demandSmhCY: {label:'Demand / SMH Grant Summary', fy:'2026-2027', source:'DEMAND-SMH-BUGDET.xls + DEMAND-SMH-ACTUAL.xls', used:'Demand / SMH Summary', remarks:'Repository source refreshed from PORTAL DATA on 22-Sep-2026. Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026. Demand 12N/10N Suspense Heads is shown separately.'}
 };
 
 // Budget data from BudgetReport (BG_ISL col, RG col) - Rs'000s
@@ -541,9 +541,9 @@ let _reportingCurrentMonthIdx = 5; // GUI-selected or auto-detected reporting mo
 let _latestActualMonthIdx = 5;
 const FY_MONTHS = ['apr','may','jun','jul','aug','sep','oct','nov','dec','jan','feb','mar'];
 const FY_MONTH_LABELS = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'];
-const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-17T11:03:43+05:30');
+const DEFAULT_DATA_AS_ON_DATE = new Date('2026-09-22T11:23:11+05:30');
 let _dataAsOnDate = new Date(DEFAULT_DATA_AS_ON_DATE);
-const RLP_BUILD_ID = 'rlp-mbd-2026-09-17-export-hub-dual18-5932b9e68b04';
+const RLP_BUILD_ID = 'rlp-mbd-2026-09-22-history-compare19-d6284ff9bf71';
 const RLP_UPLOAD_STATE_KEY = 'rlp_cy_upload_state_' + RLP_BUILD_ID;
 const RLP_PY_UPLOAD_STATE_KEY = 'rlp_py_upload_state_2025_2026';
 const RLP_UPLOAD_CONFIRM_KEY = 'rlp_upload_confirm_history_' + RLP_BUILD_ID;
@@ -1381,7 +1381,7 @@ function biDataForCurrentReport(tab) {
     const overRows = smhRows.filter(r => (Number(r.actualTill)||0) > (Number(r.budget)||0)).sort((a,b) => (b.actualTill-b.budget) - (a.actualTill-a.budget));
     return Object.assign(base, {
       kpis: [
-        ['DEPT-Demand Budget', detailCr(smhTotals.budget), `${smhRows.length} detail rows`, 'good'],
+        ['Department wise Budget', detailCr(smhTotals.budget), `${smhRows.length} detail rows`, 'good'],
         ['Actual Till Date', detailCr(smhTotals.actualTill), `${util.toFixed(1)}% utilised`, util >= 85 ? 'risk' : 'good'],
         ['Balance', detailCr(balance), balance < 0 ? 'Over spent' : 'Budget minus actual', balance < 0 ? 'danger' : 'good'],
         ['No Expense Lines', String(noExp.length), 'Budget available, no expense', 'warn']
@@ -1545,7 +1545,7 @@ function biDataForCurrentReport(tab) {
       barsTitle: 'Source Rule Highlights',
       actions: [
         'Budget Available and Month-wise Actuals feed the main financial tables.',
-        'DEPT-Demand files feed the Department > Demand > PU report.',
+        'Department wise files feed the Department > Demand > PU report.',
         'Department 00, PU-98 recoveries and GST PU-72 to PU-75 are excluded from normal operational view.',
         'Use Remarks Classic Table for exact source-file naming and rule register.'
       ]
@@ -2516,7 +2516,7 @@ function handleTopFilterChange(sourceLabel) {
 }
 
 // Tabs and report menu
-const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','excessshortfall','trend','aitrend','dataexport','admin','remarks','backup'];
+const TAB_IDS = ['summary','liability','smhdetail','demandsmh','pumaster','monthwise','bpanalysis','budgetcontrol','excessshortfall','trend','aitrend','dataexport','historycompare','admin','remarks','backup'];
 
 function syncReportNavigation(name) {
   document.querySelectorAll('[data-report-tab]').forEach(btn => {
@@ -2547,37 +2547,41 @@ const ADMIN_CONFIG_KEY = 'rlp_admin_design_config_v2';
 const ADMIN_MENU_DEFAULTS = {
   summary:'Summary',
   liability:'Main Report',
-  smhdetail:'DEPT-Demand',
+  smhdetail:'Department wise',
   demandsmh:'Demand / SMH',
   pumaster:'PU Master',
   monthwise:'Month-wise',
   bpanalysis:'BP Analysis',
   budgetcontrol:'Budget Control',
+  excessshortfall:'AE vs BP',
   trend:'Graphs',
   aitrend:'AI Summary',
+  historycompare:'History Compare',
   remarks:'Remarks',
   backup:'Backup',
   admin:'Portal Admin'
 };
 const ADMIN_TAB_DEFAULTS = {
   summary:'Executive Summary',
-  liability:'Revenue Liability',
-  smhdetail:'DEPT-Demand Wise',
+  liability:'OWE Statement',
+  smhdetail:'Department wise',
   demandsmh:'Demand / SMH Summary',
   pumaster:'PU Master',
   monthwise:'Month-wise Actuals',
   bpanalysis:'BP Analysis',
   budgetcontrol:'Budget Control',
+  excessshortfall:'AE vs BP',
   trend:'Trend Graphs',
   aitrend:'AI Trend Summary',
+  historycompare:'History Compare',
   remarks:'Remarks',
   backup:'Portal Backup',
   admin:'Portal Admin'
 };
 const ADMIN_DEFAULT_CONFIG = {
-  headerTitle:'REVENUE LIABILITY PORTAL - MORADABAD DIVISION',
+  headerTitle:'ORDINARY WORKING EXPENSES (OWE) PORTAL - MORADABAD DIVISION',
   headerSub:"Northern Railway | Financial Authority Dashboard | All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees",
-  footerText:'Revenue Liability Portal - Moradabad Division / Northern Railway - FY 2026-27 - For Official Use Only',
+  footerText:'Ordinary Working Expenses (OWE) PORTAL - Moradabad Division / Northern Railway - FY 2026-27 - For Official Use Only',
   fontFamily:'Segoe UI, Arial, sans-serif',
   baseFont:12,
   menuFont:10,
@@ -2800,8 +2804,8 @@ function exportAdminConfig() {
 const DIVISION_SETUP_FILES = [
   ['pu-budget', 'PU Wise Budget Available', 'Current year BG_ISL/RG/Actuals Till Date per PU', 'Data Upload > Budget Available - CY'],
   ['pu-month', 'PU Wise Month-wise Actual', 'Current year APR-MAR actuals per PU', 'Data Upload > Month-wise Actuals - CY'],
-  ['dept-budget', 'DEPT-Demand/SMH PU-wise Budget', 'Department, Demand/SMH and PU-wise budget rows', 'Data Upload > Department SMH Budget - CY'],
-  ['dept-actual', 'DEPT-Demand/SMH PU-wise Actual', 'Department, Demand/SMH and PU-wise month actuals', 'Data Upload > Department SMH Month-wise Actuals - CY'],
+  ['dept-budget', 'Department / SMH PU-wise Budget', 'Department, Demand/SMH and PU-wise budget rows', 'Data Upload > Department SMH Budget - CY'],
+  ['dept-actual', 'Department / SMH PU-wise Actual', 'Department, Demand/SMH and PU-wise month actuals', 'Data Upload > Department SMH Month-wise Actuals - CY'],
   ['demand-budget', 'Demand / SMH Budget Summary', 'Demand/SMH level OBA/BG_ISL summary', 'Data Upload > Demand / SMH Budget Summary - CY'],
   ['demand-actual', 'Demand / SMH Actual Summary', 'Demand/SMH level month-wise actual summary', 'Data Upload > Demand / SMH Actual Summary - CY'],
   ['py-budget', 'Previous Year PU Budget', 'Previous year budget for comparison', 'Data Upload > Previous Year Budget'],
@@ -2825,15 +2829,15 @@ function readDivisionSetupForm() {
 
 function divisionSetupConfig(setup) {
   const cfg = readAdminForm();
-  cfg.headerTitle = `REVENUE LIABILITY PORTAL - ${setup.division.toUpperCase()}`;
+  cfg.headerTitle = `ORDINARY WORKING EXPENSES (OWE) PORTAL - ${setup.division.toUpperCase()}`;
   cfg.headerSub = `${setup.railway} | Financial Authority Dashboard | All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees`;
-  cfg.footerText = `Revenue Liability Portal - ${setup.division} / ${setup.railway} - FY ${setup.fy} - For Official Use Only`;
+  cfg.footerText = `Ordinary Working Expenses (OWE) PORTAL - ${setup.division} / ${setup.railway} - FY ${setup.fy} - For Official Use Only`;
   return cfg;
 }
 
 function divisionSetupMarkdown(setup) {
   const lines = [
-    `# Revenue Liability Portal Setup - ${setup.division}`,
+    `# Ordinary Working Expenses (OWE) Portal Setup - ${setup.division}`,
     '',
     `Railway: ${setup.railway}`,
     `Financial Year: ${setup.fy}`,
@@ -2845,7 +2849,7 @@ function divisionSetupMarkdown(setup) {
     '2. Open Portal Admin and apply division branding using the generated admin-config.js.',
     '3. Go to Data Upload and upload the checked source files in the matching upload slots.',
     '4. Click Validate Calculations in the MB-BUDGET Synced Data panel.',
-    '5. Review Revenue Liability, DEPT-Demand Wise, Demand / SMH Summary, BP Analysis, Budget Control and AI Summary.',
+    '5. Review OWE Statement, Department wise, Demand / SMH Summary, BP Analysis, Budget Control and AI Summary.',
     '6. Download Excel and PDF reports and confirm formatting before sharing.',
     '7. Use Portal Backup to download the GitHub-ready ZIP after verification.',
     '',
@@ -2905,7 +2909,7 @@ function downloadDivisionSetupPack() {
   const setup = readDivisionSetupForm();
   const cfg = divisionSetupConfig(setup);
   const setupJson = JSON.stringify({
-    portal:'Revenue Liability Portal',
+    portal:'Ordinary Working Expenses (OWE) Portal',
     generatedAt:new Date().toISOString(),
     division:setup.division,
     railway:setup.railway,
@@ -2922,7 +2926,7 @@ function downloadDivisionSetupPack() {
     {name:'admin-config.js', bytes:new TextEncoder().encode(adminConfigJs)},
     {name:'DIVISION_SETUP_CHECKLIST.md', bytes:new TextEncoder().encode(checklist)}
   ];
-  saveBlob(createZipBlob(entries), `Revenue_Liability_${safeName}_Setup_Pack.zip`);
+  saveBlob(createZipBlob(entries), `OWE_${safeName}_Setup_Pack.zip`);
   const status = document.getElementById('adminSaveStatus');
   if (status) status.textContent = `Downloaded setup pack for ${setup.division}`;
   renderDivisionSetupPreview();
@@ -2969,13 +2973,14 @@ function initDashboardDock() {
 
 const REPORT_LABELS = {
   summary:['Summary','Main points'],
-  liability:['Main Report','Revenue Liability'],
-  smhdetail:['DEPT-Demand','Department > Demand details'],
+  liability:['Main Report','OWE statement'],
+  smhdetail:['Department wise','Department > Demand details'],
   demandsmh:['Demand SMH','Demand / SMH grant summary'],
   pumaster:['PU Master','Code reference'],
   monthwise:['Month-wise','Actuals and projection'],
   bpanalysis:['BP Analysis','Budget Proportionate'],
   budgetcontrol:['Budget Control','Saving/excess action'],
+  excessshortfall:['AE vs BP','Actual expenditure vs budget proportionate'],
   trend:['Graphs','Trend Analysis Graphs'],
   aitrend:['AI Summary','PU risk remarks'],
   remarks:['Remarks','Sources and rules'],
@@ -3195,7 +3200,7 @@ function openTopUtilisationBrief() {
     </div>`;
   }).join('');
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Top Utilisation Brief | Revenue Liability Portal</title>
+  <title>Top Utilisation Brief | Ordinary Working Expenses (OWE) Portal</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Tahoma,"Segoe UI",Arial,sans-serif;background:#F3F7FB;color:#0A1628;padding:18px}
@@ -3230,7 +3235,7 @@ function openTopUtilisationBrief() {
       <div class="tu-kpi"><span>Highest Utilisation</span><strong>${top ? top.utilPct.toFixed(1) + '%' : '0.0%'}</strong><small>${top ? 'PU-' + htmlSafe(top.pu.code) + ' ' + htmlSafe(top.pu.desc) : 'No data'}</small></div>
     </div>
     <div class="tu-body">${bars || '<div class="tu-row">No utilisation data available.</div>'}</div>
-    <div class="tu-footer">Revenue Liability Portal - Moradabad Division / Northern Railway - Generated ${new Date().toLocaleString('en-IN')}</div>
+    <div class="tu-footer">Ordinary Working Expenses (OWE) Portal - Moradabad Division / Northern Railway - Generated ${new Date().toLocaleString('en-IN')}</div>
   </div></body></html>`;
   const w = window.open('', '_blank');
   if (w) {
@@ -3280,7 +3285,7 @@ function openOfficerBriefPDF() {
   const watchList = (d.over.length ? d.over : d.high).map(r => `<tr><td>PU-${htmlSafe(r.pu.code)}</td><td>${htmlSafe(r.pu.desc)}</td><td>${textCr(r.balance)}</td><td>${r.utilPct.toFixed(1)}%</td><td>${r.over ? 'Over budget / support required' : 'High utilisation watch'}</td></tr>`).join('');
   const noExpRows = d.noExp.map(r => `<tr><td>PU-${htmlSafe(r.pu.code)}</td><td>${htmlSafe(r.pu.desc)}</td><td>${textCr(r.budget)}</td><td>Budget available but no actual expense booked</td></tr>`).join('');
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Officer Brief PDF | Revenue Liability Portal</title>
+  <title>Officer Brief PDF | Ordinary Working Expenses (OWE) Portal</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Tahoma,"Segoe UI",Arial,sans-serif;background:#F3F7FB;color:#0A1628;padding:16px}
@@ -3307,7 +3312,7 @@ function openOfficerBriefPDF() {
     @page{size:A4 landscape;margin:10mm}
     @media print{body{background:#fff;padding:0;font-size:10pt}.page{max-width:none;box-shadow:none;border-radius:0}.print{display:none}.body{padding:10px}.sec{break-inside:auto}.kpis,.cards{gap:6px}.kpi,.ob-card{padding:8px}span,small,.foot{font-size:10pt}strong{font-size:14pt}table{table-layout:fixed;width:100%}td,th{font-size:10pt;padding:5px;overflow-wrap:anywhere}thead{display:table-header-group}}
   </style></head><body><div class="page">
-    <div class="head"><div><h1>Officer Brief</h1><p>Revenue Liability Portal - Moradabad Division / Northern Railway<br>FY 2026-27 | Current month: ${cur.label} ${cur.year} | Completed months: ${actualMonths.length} | Generated: ${generated}</p></div><button class="print" onclick="window.print()">Print / Save PDF</button></div>
+    <div class="head"><div><h1>Officer Brief</h1><p>Ordinary Working Expenses (OWE) Portal - Moradabad Division / Northern Railway<br>FY 2026-27 | Current month: ${cur.label} ${cur.year} | Completed months: ${actualMonths.length} | Generated: ${generated}</p></div><button class="print" onclick="window.print()">Print / Save PDF</button></div>
     <div class="body">
       <div class="kpis">
         <div class="kpi"><span>Gross Budget</span><strong>${textCr(d.totals.budget)}</strong><small>Active operational PU budget</small></div>
@@ -3320,7 +3325,7 @@ function openOfficerBriefPDF() {
       <div class="sec"><h2>Top Over Budget / Watch PUs</h2><table><thead><tr><th>PU</th><th>Description</th><th>Balance</th><th>Utilisation</th><th>Action Remark</th></tr></thead><tbody>${watchList || '<tr><td colspan="5">No major watch item found.</td></tr>'}</tbody></table></div>
       <div class="sec"><h2>Budget Available But No Expense</h2><table><thead><tr><th>PU</th><th>Description</th><th>Budget</th><th>Remark</th></tr></thead><tbody>${noExpRows || '<tr><td colspan="4">No major no-expense item found.</td></tr>'}</tbody></table></div>
     </div>
-    <div class="foot">For Official Use Only - Revenue Liability Portal</div>
+    <div class="foot">For Official Use Only - Ordinary Working Expenses (OWE) Portal</div>
   </div></body></html>`;
   const w = window.open('', '_blank');
   if (w) {
@@ -3443,7 +3448,289 @@ function initSmartTools() {
   renderRiskSpotlight();
 }
 
-function renderDataExport(){ if(window.DisplayExport) DisplayExport.init(); }
+const HISTORY_INDEX_URL = 'data/mb-budget-sync/history/history-index.json';
+let _historyIndex = null;
+let _historyCache = {};
+let _historyCompareRows = [];
+let _historySort = {idx:0, dir:1};
+
+async function fetchJsonFresh(url) {
+  const sep = url.includes('?') ? '&' : '?';
+  const response = await fetch(`${url}${sep}v=${encodeURIComponent(ASSET_VERSION || Date.now())}`, {cache:'no-store'});
+  if (!response.ok) throw new Error(`Unable to load ${url}`);
+  return response.json();
+}
+
+function historyMoney(value) {
+  const n = Number(value) || 0;
+  return n.toLocaleString('en-IN', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function historyPct(value) {
+  const n = Number(value) || 0;
+  return `${n.toFixed(2)}%`;
+}
+
+function historySigned(value, pct=false) {
+  const n = Number(value) || 0;
+  const text = pct ? `${Math.abs(n).toFixed(2)}%` : historyMoney(Math.abs(n));
+  return `${n > 0 ? '+' : n < 0 ? '-' : ''}${text}`;
+}
+
+function historySnapshotOption(item) {
+  return item.label || `${item.generatedAt || ''} | ${item.sourceRevision || item.id}`;
+}
+
+function historySelects() {
+  return [
+    document.getElementById('historyFromSync'),
+    document.getElementById('historyToSync'),
+    document.getElementById('historyExportFrom'),
+    document.getElementById('historyExportTo')
+  ].filter(Boolean);
+}
+
+async function loadHistoryIndex() {
+  if (!_historyIndex) _historyIndex = await fetchJsonFresh(HISTORY_INDEX_URL);
+  return _historyIndex;
+}
+
+async function loadHistorySnapshot(id) {
+  if (!id) return null;
+  if (_historyCache[id]) return _historyCache[id];
+  const index = await loadHistoryIndex();
+  const item = (index.snapshots || []).find(s => s.id === id);
+  if (!item) throw new Error(`Snapshot not found: ${id}`);
+  const path = item.snapshotPath || `data/mb-budget-sync/history/${id}/snapshot-data.json`;
+  _historyCache[id] = await fetchJsonFresh(path);
+  return _historyCache[id];
+}
+
+function populateHistorySelects(index) {
+  const snapshots = index && Array.isArray(index.snapshots) ? index.snapshots : [];
+  const markup = snapshots.map(s => `<option value="${htmlSafe(s.id)}">${htmlSafe(historySnapshotOption(s))}</option>`).join('');
+  historySelects().forEach(sel => {
+    const old = sel.value;
+    sel.innerHTML = markup;
+    if (snapshots.some(s => s.id === old)) sel.value = old;
+  });
+  if (snapshots.length >= 2) {
+    const fromDefault = snapshots[snapshots.length - 2].id;
+    const toDefault = snapshots[snapshots.length - 1].id;
+    ['historyFromSync','historyExportFrom'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.value) el.value = fromDefault;
+    });
+    ['historyToSync','historyExportTo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.value) el.value = toDefault;
+    });
+  }
+}
+
+function syncHistoryExportSelection(which, value, skipRender=false) {
+  const targetIds = which === 'from' ? ['historyFromSync','historyExportFrom'] : ['historyToSync','historyExportTo'];
+  targetIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value !== value) el.value = value;
+  });
+  if (!skipRender) renderHistoryCompare();
+}
+
+function historyDiffRows(fromSnapshot, toSnapshot) {
+  const fromMap = new Map((fromSnapshot.puRows || []).map(r => [String(r.pu), r]));
+  const toMap = new Map((toSnapshot.puRows || []).map(r => [String(r.pu), r]));
+  const codes = [...new Set([...fromMap.keys(), ...toMap.keys()])].sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
+  return codes.map(code => {
+    const from = fromMap.get(code) || {};
+    const to = toMap.get(code) || {};
+    const row = {
+      pu: code,
+      description: to.description || from.description || '',
+      fromBudget: Number(from.budget) || 0,
+      toBudget: Number(to.budget) || 0,
+      fromActual: Number(from.actual) || 0,
+      toActual: Number(to.actual) || 0,
+      fromBalance: Number(from.balance) || 0,
+      toBalance: Number(to.balance) || 0,
+      fromUtilPct: Number(from.utilPct) || 0,
+      toUtilPct: Number(to.utilPct) || 0,
+    };
+    row.budgetChange = row.toBudget - row.fromBudget;
+    row.actualChange = row.toActual - row.fromActual;
+    row.balanceChange = row.toBalance - row.fromBalance;
+    row.utilPctChange = row.toUtilPct - row.fromUtilPct;
+    row.status = !fromMap.has(code) ? 'New' : !toMap.has(code) ? 'Removed' :
+      (Math.abs(row.budgetChange) + Math.abs(row.actualChange) + Math.abs(row.balanceChange) + Math.abs(row.utilPctChange) > 0.0001 ? 'Changed' : 'Unchanged');
+    return row;
+  });
+}
+
+function filteredHistoryRows() {
+  const q = (document.getElementById('historyFilter')?.value || '').toLowerCase().trim();
+  let rows = _historyCompareRows.slice();
+  if (q) rows = rows.filter(r => `${r.pu} ${r.description} ${r.status}`.toLowerCase().includes(q));
+  const idx = _historySort.idx;
+  const keys = ['pu','description','fromBudget','toBudget','budgetChange','fromActual','toActual','actualChange','fromBalance','toBalance','balanceChange','fromUtilPct','toUtilPct','utilPctChange','status'];
+  const key = keys[idx] || 'pu';
+  rows.sort((a,b) => {
+    const av = a[key], bv = b[key];
+    if (typeof av === 'number' || typeof bv === 'number') return ((Number(av) || 0) - (Number(bv) || 0)) * _historySort.dir;
+    return String(av || '').localeCompare(String(bv || ''), undefined, {numeric:true}) * _historySort.dir;
+  });
+  return rows;
+}
+
+function renderHistoryCompareRows() {
+  const body = document.getElementById('historyCompareBody');
+  if (!body) return;
+  const rows = filteredHistoryRows();
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:18px">No PU movement found for this selection/filter.</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map(r => `<tr>
+    <td>${htmlSafe(r.pu)}</td><td>${htmlSafe(r.description)}</td>
+    <td class="num">${historyMoney(r.fromBudget)}</td><td class="num">${historyMoney(r.toBudget)}</td><td class="num ${r.budgetChange<0?'neg':'pos'}">${historySigned(r.budgetChange)}</td>
+    <td class="num">${historyMoney(r.fromActual)}</td><td class="num">${historyMoney(r.toActual)}</td><td class="num ${r.actualChange<0?'neg':'pos'}">${historySigned(r.actualChange)}</td>
+    <td class="num">${historyMoney(r.fromBalance)}</td><td class="num">${historyMoney(r.toBalance)}</td><td class="num ${r.balanceChange<0?'neg':'pos'}">${historySigned(r.balanceChange)}</td>
+    <td class="num">${historyPct(r.fromUtilPct)}</td><td class="num">${historyPct(r.toUtilPct)}</td><td class="num ${r.utilPctChange<0?'neg':'pos'}">${historySigned(r.utilPctChange,true)}</td>
+    <td><span class="history-status-pill ${htmlSafe(r.status.toLowerCase())}">${htmlSafe(r.status)}</span></td>
+  </tr>`).join('');
+  applyMobileTableLabels();
+}
+
+function renderHistoryTopList(id, rows, field, sign) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const top = rows.filter(r => sign > 0 ? r[field] > 0 : r[field] < 0)
+    .sort((a,b) => Math.abs(b[field]) - Math.abs(a[field])).slice(0,5);
+  el.innerHTML = top.length ? top.map(r => `<li>PU ${htmlSafe(r.pu)} - ${htmlSafe(r.description)} <strong>${historySigned(r[field])}</strong></li>`).join('') : '<li>No movement</li>';
+}
+
+function renderHistoryKpis(fromSnapshot, toSnapshot) {
+  const box = document.getElementById('historyCompareKpis');
+  if (!box) return;
+  const rows = _historyCompareRows;
+  const totals = rows.reduce((t,r) => {
+    t.budget += r.budgetChange; t.actual += r.actualChange; t.balance += r.balanceChange;
+    if (r.status === 'New') t.newCount += 1;
+    if (r.status === 'Removed') t.removedCount += 1;
+    if (r.status === 'Changed') t.changedCount += 1;
+    return t;
+  }, {budget:0, actual:0, balance:0, newCount:0, removedCount:0, changedCount:0});
+  box.innerHTML = [
+    ['From', fromSnapshot.label || fromSnapshot.id],
+    ['To', toSnapshot.label || toSnapshot.id],
+    ['Budget change', `${historySigned(totals.budget)} (${textCr(totals.budget)})`],
+    ['Actual change', `${historySigned(totals.actual)} (${textCr(totals.actual)})`],
+    ['Balance change', `${historySigned(totals.balance)} (${textCr(totals.balance)})`],
+    ['PU status', `${totals.changedCount} changed, ${totals.newCount} new, ${totals.removedCount} removed`],
+  ].map(([label,value]) => `<div class="history-kpi"><span>${htmlSafe(label)}</span><strong>${htmlSafe(value)}</strong></div>`).join('');
+  renderHistoryTopList('historyTopBudgetUp', rows, 'budgetChange', 1);
+  renderHistoryTopList('historyTopBudgetDown', rows, 'budgetChange', -1);
+  renderHistoryTopList('historyTopActualUp', rows, 'actualChange', 1);
+  renderHistoryTopList('historyTopActualDown', rows, 'actualChange', -1);
+}
+
+async function renderHistoryCompare() {
+  const status = document.getElementById('historyCompareStatus');
+  try {
+    const index = await loadHistoryIndex();
+    populateHistorySelects(index);
+    const snapshots = index.snapshots || [];
+    if (snapshots.length < 2) {
+      if (status) status.textContent = 'Need at least two sync snapshots. Run local sync after new data to build history.';
+      _historyCompareRows = [];
+      renderHistoryCompareRows();
+      return;
+    }
+    const fromId = document.getElementById('historyFromSync')?.value || document.getElementById('historyExportFrom')?.value || snapshots[snapshots.length - 2].id;
+    const toId = document.getElementById('historyToSync')?.value || document.getElementById('historyExportTo')?.value || snapshots[snapshots.length - 1].id;
+    syncHistoryExportSelection('from', fromId, true);
+    syncHistoryExportSelection('to', toId, true);
+    const [fromSnapshot, toSnapshot] = await Promise.all([loadHistorySnapshot(fromId), loadHistorySnapshot(toId)]);
+    _historyCompareRows = historyDiffRows(fromSnapshot, toSnapshot);
+    if (status) status.textContent = `${_historyCompareRows.length} PU rows compared`;
+    renderHistoryKpis(fromSnapshot, toSnapshot);
+    renderHistoryCompareRows();
+    bindHistoryTableSort();
+  } catch (error) {
+    _historyCompareRows = [];
+    if (status) status.textContent = error.message || 'History snapshots are not available yet.';
+    renderHistoryCompareRows();
+  }
+}
+
+function bindHistoryTableSort() {
+  document.querySelectorAll('#historyCompareTable th').forEach((th, idx) => {
+    if (th.dataset.historySortBound === '1') return;
+    th.dataset.historySortBound = '1';
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', () => {
+      _historySort = _historySort.idx === idx ? {idx, dir:_historySort.dir * -1} : {idx, dir:1};
+      document.querySelectorAll('#historyCompareTable th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+      th.classList.add(_historySort.dir > 0 ? 'sort-asc' : 'sort-desc');
+      renderHistoryCompareRows();
+    });
+  });
+}
+
+function showDataExportPanel(panel) {
+  const selected = panel === 'history' ? 'history' : 'reports';
+  document.querySelectorAll('.data-export-tabs button').forEach(btn => btn.classList.toggle('active', btn.dataset.exportPanel === selected));
+  document.querySelectorAll('.data-export-panel').forEach(box => box.classList.toggle('active', box.id === (selected === 'history' ? 'dataExportPanelHistory' : 'dataExportPanelReports')));
+  if (selected === 'history') renderHistoryCompare();
+}
+
+function historyExportRows() {
+  const rows = filteredHistoryRows();
+  return rows.map(r => [r.pu, r.description, r.fromBudget, r.toBudget, r.budgetChange, r.fromActual, r.toActual, r.actualChange, r.fromBalance, r.toBalance, r.balanceChange, Number(r.fromUtilPct.toFixed(2)), Number(r.toUtilPct.toFixed(2)), Number(r.utilPctChange.toFixed(2)), r.status]);
+}
+
+async function downloadHistoryCompareExport(format) {
+  if (!confirmProtectedExport(`History Compare ${format} export`)) return;
+  if (!_historyCompareRows.length) await renderHistoryCompare();
+  const headers = ['PU','Description','From Budget','To Budget','Budget Change','From Actual','To Actual','Actual Change','From Balance','To Balance','Balance Change','From Util %','To Util %','Util % Change','Status'];
+  const rows = historyExportRows();
+  const title = 'Ordinary Working Expenses (OWE) PORTAL - Moradabad Division | History Compare';
+  const filename = `OWE_History_Compare_${new Date().toISOString().slice(0,10)}`;
+  if (format === 'Excel') {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('History Compare', {pageSetup:{orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0}});
+    ws.addRow([title]); ws.mergeCells(1,1,1,headers.length);
+    ws.addRow(headers); rows.forEach(row => ws.addRow(row));
+    ws.eachRow(row => row.eachCell(cell => { cell.font = {name:'Times New Roman', size:10}; cell.alignment = {vertical:'middle', wrapText:true}; cell.border = {top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'}}; }));
+    ws.getRow(1).font = {name:'Times New Roman', size:12, bold:true};
+    ws.getRow(2).font = {name:'Times New Roman', size:10, bold:true};
+    ws.columns.forEach((col, idx) => { col.width = idx === 1 ? 28 : 14; });
+    const buf = await wb.xlsx.writeBuffer();
+    saveBlob(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), `${filename}.xlsx`);
+  } else if (format === 'PDF') {
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
+    if(window.DisplayExport) await DisplayExport.configurePDF(doc);
+    doc.setFont('Times','bold'); doc.setFontSize(12); doc.text(title, 28, 28);
+    doc.autoTable({head:[headers], body:rows, startY:42, theme:'grid', styles:{font:'Times',fontSize:10,cellPadding:2,overflow:'linebreak'}, headStyles:{fillColor:[28,58,94],textColor:255,fontSize:10}, columnStyles:{1:{cellWidth:80}}});
+    saveBlob(doc.output('blob'), `${filename}.pdf`);
+  } else {
+    const pptx = new pptxgen();
+    pptx.layout = 'LAYOUT_WIDE';
+    pptx.author = 'OWE Portal';
+    const chunk = 18;
+    for (let i=0; i<Math.max(rows.length,1); i+=chunk) {
+      const slide = pptx.addSlide();
+      slide.background = {color:'FFFFFF'};
+      slide.addText(title, {x:0.3,y:0.2,w:12.7,h:0.3,fontFace:'Times New Roman',fontSize:14,bold:true,color:'17365D'});
+      const part = rows.slice(i, i+chunk).map(row => row.map(v => typeof v === 'number' ? historyMoney(v) : String(v ?? '')));
+      slide.addTable([headers, ...part], {x:0.2,y:0.65,w:12.9,h:6.4,border:{type:'solid',color:'666666',pt:0.5},fontFace:'Times New Roman',fontSize:10,color:'111111',fit:'shrink',margin:0.03});
+    }
+    const blob = await pptx.write({outputType:'blob'});
+    saveBlob(blob, `${filename}.pptx`);
+  }
+}
+
+function renderDataExport(){ if(window.DisplayExport) DisplayExport.init(); renderHistoryCompare(); }
 function switchTab(name) {
   if(name==='dataexport')renderDataExport();
   if ((name === 'remarks' || name === 'upload' || name === 'backup' || name === 'admin') && !isUploadAdminUnlocked()) {
@@ -3454,6 +3741,7 @@ function switchTab(name) {
   if(name==='summary'){setTimeout(renderSummaryPage,80);}
   if(name==='trend'){setTimeout(renderTrend,80);}
   if(name==='aitrend'){setTimeout(renderAITrendSummary,80);}
+  if(name==='historycompare'){setTimeout(renderHistoryCompare,80);}
   if(name==='bpanalysis'){setTimeout(renderBPAnalysis,80);}
   if(name==='budgetcontrol'){setTimeout(renderBudgetControl,80);}
   if(name==='excessshortfall'){setTimeout(renderExcessShortfall,80);}
@@ -3472,7 +3760,7 @@ function switchTab(name) {
   if(name==='upload') { renderCurDataGrid(); updateHostedUploadGuard(); }
   if(name==='backup') renderBackupPage();
   if(name==='smhdetail'){setTimeout(renderSMHDetail,80);}
-  setTimeout(applyMobileTableLabels, 140);
+  setTimeout(()=>{makeReportTablesSortable();applyMobileTableLabels();}, 140);
   setTimeout(renderBIView, 160);
 }
 
@@ -3486,6 +3774,11 @@ window.exportAdminConfig = exportAdminConfig;
 window.applyDivisionSetup = applyDivisionSetup;
 window.downloadDivisionSetupPack = downloadDivisionSetupPack;
 window.renderDivisionSetupPreview = renderDivisionSetupPreview;
+window.renderHistoryCompare = renderHistoryCompare;
+window.renderHistoryCompareRows = renderHistoryCompareRows;
+window.showDataExportPanel = showDataExportPanel;
+window.syncHistoryExportSelection = syncHistoryExportSelection;
+window.downloadHistoryCompareExport = downloadHistoryCompareExport;
 
 function textCr(n) {
   if (!n || isNaN(n)) return '0.00 Cr';
@@ -3648,7 +3941,7 @@ async function downloadPortalBackup() {
       entries.push({name:file, bytes:new Uint8Array(await res.arrayBuffer())});
     }
     const manifest = [
-      'Revenue Liability Portal Backup',
+      'Ordinary Working Expenses (OWE) Portal Backup',
       `Created: ${new Date().toLocaleString('en-IN')}`,
       `Financial Year: 2026-27`,
       '',
@@ -3659,7 +3952,7 @@ async function downloadPortalBackup() {
     ].join('\n');
     entries.push({name:'BACKUP_MANIFEST.txt', bytes:new TextEncoder().encode(manifest)});
     const fileDate = new Date().toISOString().slice(0,10);
-    saveBlob(createZipBlob(entries), `Revenue_Liability_Portal_GitHub_Backup_${fileDate}.zip`);
+    saveBlob(createZipBlob(entries), `OWE_Portal_GitHub_Backup_${fileDate}.zip`);
     if (status) status.textContent = 'Downloaded';
     if (detail) detail.textContent = `${entries.length} files packaged successfully.`;
   } catch (err) {
@@ -3763,7 +4056,7 @@ function syncManifestSnapshot() {
   const demandTotals = demandSMHTotals();
   const generatedAt = (_dataAsOnDate instanceof Date ? _dataAsOnDate : new Date()).toISOString();
   return {
-    portal:'Revenue Liability Portal',
+    portal:'Ordinary Working Expenses (OWE) Portal',
     division:'Moradabad Division',
     railway:'Northern Railway',
     financialYear:'2026-2027',
@@ -3831,7 +4124,7 @@ async function downloadHostedUpdatePack() {
       {name:'data/mb-budget-sync/processed/reports-data.json', bytes:encoder.encode(jsonForPortal(reportsDataSnapshot()))},
       {name:'data/mb-budget-sync/sync-manifest.json', bytes:encoder.encode(jsonForPortal(syncManifestSnapshot()))},
       {name:'GITHUB_UPDATE_README.txt', bytes:encoder.encode([
-        'Revenue Liability Portal - GitHub Update Pack',
+        'Ordinary Working Expenses (OWE) Portal - GitHub Update Pack',
         `Created: ${now.toLocaleString('en-IN')}`,
         `Mode: ${hostedUploadModeLabel()}`,
         '',
@@ -3844,7 +4137,7 @@ async function downloadHostedUpdatePack() {
         'Note: GitHub Pages is static hosting. Browser upload cannot write repository files directly; this pack carries the parsed session data into commit-ready files.'
       ].join('\n'))}
     ];
-    saveBlob(createZipBlob(entries), `Revenue_Liability_GitHub_Update_Pack_${fileDate}.zip`);
+    saveBlob(createZipBlob(entries), `OWE_GitHub_Update_Pack_${fileDate}.zip`);
     showPortalNotice('GitHub Update Pack downloaded. Extract into repo root, then commit and push.', 'ok');
   } catch (err) {
     console.error('GitHub update pack failed', err);
@@ -4521,7 +4814,7 @@ function renderSMHDetail() {
   } catch (err) {
     console.error('SMH detail render failed', err);
     head.innerHTML = '<tr><th>Department</th><th>Demand</th><th>Primary Unit (PU)</th><th>Status</th></tr>';
-    body.innerHTML = `<tr><td colspan="4" style="color:#9B0000;font-weight:700;padding:14px">Could not render DEPT-Demand Wise report: ${htmlSafe(err.message || err)}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="4" style="color:#9B0000;font-weight:700;padding:14px">Could not render Department wise report: ${htmlSafe(err.message || err)}</td></tr>`;
     refreshBIViewSoon();
   }
 }
@@ -4722,12 +5015,12 @@ async function downloadExcel() {
   const useExcelJS = !!window.ExcelJS;
   const wb = useExcelJS ? new ExcelJS.Workbook() : XLSX.utils.book_new();
   if (useExcelJS) {
-    wb.creator = 'Revenue Liability Portal';
+    wb.creator = 'Ordinary Working Expenses (OWE) Portal';
     wb.created = new Date();
     wb.modified = new Date();
     wb.properties.date1904 = false;
   }
-  const HDR_TITLE = 'REVENUE LIABILITY PORTAL - MORADABAD DIVISION';
+  const HDR_TITLE = 'ORDINARY WORKING EXPENSES (OWE) PORTAL - MORADABAD DIVISION';
   const HDR_SUB   = "Northern Railway  |  Financial Authority Dashboard  |  All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees";
   const {cur} = getMonthStatus();
 
@@ -4936,7 +5229,7 @@ async function downloadExcel() {
     lt[10],lt[11],lt[12],'',lt[14],lt[15],lt[16],
     lt[4]?parseFloat((lt[14]/lt[4]*100).toFixed(1))+'%':'-',''];
   totRow._tot=true; liabRows.push(totRow);
-  addSheet(wb,'Revenue Liability',HDR_TITLE,HDR_SUB,liabHdrs,liabRows,
+  addSheet(wb,'OWE',HDR_TITLE,HDR_SUB,liabHdrs,liabRows,
     [6,24,14,12,14,10,14,10,14,10,14,14,14,10,15,14,14,10,16]);
 
   // ── Sheet 2: MONTH WISE ───────────────────────────────────
@@ -5111,12 +5404,12 @@ async function downloadExcel() {
   const xsTotalRow = ['',`TOTAL - ${xsRows.length} PUs`,...['pyAnnual','budget','bpPrevious','bpCurrent','pyPrevious','actualPrevious','pyCurrent','actualCurrent','budgetVsPY','variancePrevious','varianceCurrent','latestMovement'].map(k => xsToCr(xsTotals[k])),'Calculated from all PUs.'];
   xsTotalRow._tot = true;
   xsRows.push(xsTotalRow);
-  addSheet(wb,'AE vs BP HQ',HDR_TITLE,
+  addSheet(wb,'AE vs BP',HDR_TITLE,
     `Figures Rs Cr | BP ${xsPrevLabel} = BG / 12 x ${xsPrevCount}; BP ${xsCurLabel} = BG / 12 x ${xsCurCount}; AE-BP = cumulative AE minus BP; Movement = current variance minus previous variance`,
     xsHeaders,xsRows,[7,34,13,13,15,15,17,15,17,15,14,15,15,14,40],
     {textCols:[1,2,15], twoDecimalCols:[3,4,5,6,7,8,9,10,11,12,13,14]});
 
-  // Sheet 7: DEPT-Demand Wise - visible report style, no internal raw JSON
+  // Sheet 7: Department wise - visible report style, no internal raw JSON
   if (window.DETAIL_SMH_DATA && Array.isArray(window.DETAIL_SMH_DATA.rows)) {
     const smhData = window.DETAIL_SMH_DATA;
     const smhExportRows = smhData.rows.filter(r => !isSkippedDisplayPU(r.puCode));
@@ -5190,7 +5483,7 @@ async function downloadExcel() {
       deptTotalRow._tot = true;
       smhRows.push(deptTotalRow);
     });
-    addSheet(wb,'DEPT-Demand Wise',HDR_TITLE,'Department > Demand > Primary Unit - Budget vs Expenditure',smhHeaders,smhRows,
+    addSheet(wb,'Department wise',HDR_TITLE,'Department > Demand > Primary Unit - Budget vs Expenditure',smhHeaders,smhRows,
       [18,14,32,16].concat(smhVisibleMonths.map(()=>14)).concat([16,18,28,18,36]));
   }
 
@@ -5247,9 +5540,9 @@ async function downloadExcel() {
   if (useExcelJS) {
     const buffer = await wb.xlsx.writeBuffer();
     saveBlob(new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
-      `Revenue_Liability_MBD_FY2026-27_${fileDate}.xlsx`);
+      `OWE_MBD_FY2026-27_${fileDate}.xlsx`);
   } else {
-    XLSX.writeFile(wb, `Revenue_Liability_MBD_FY2026-27_${fileDate}.xlsx`);
+    XLSX.writeFile(wb, `OWE_MBD_FY2026-27_${fileDate}.xlsx`);
   }
   document.body.dataset.exportStatus = 'excel-finished';
   } catch (err) {
@@ -5607,7 +5900,7 @@ async function downloadPDFReport() {
   function footer() {
     doc.setTextColor(96, 112, 128);
     doc.setFontSize(10);
-    doc.text(`Revenue Liability Portal - For Official Use Only - Session ${securitySessionId()}`, margin, pageH - 16);
+    doc.text(`Ordinary Working Expenses (OWE) Portal - For Official Use Only - Session ${securitySessionId()}`, margin, pageH - 16);
     doc.text(String(doc.internal.getNumberOfPages()), pageW - margin, pageH - 16, {align:'right'});
   }
   function addPage(title) {
@@ -5639,7 +5932,7 @@ async function downloadPDFReport() {
         }
         if (callerDidParseCell) callerDidParseCell(data);
       },
-      didDrawPage: () => { header(opts.pageTitle || 'Revenue Liability Report'); footer(); }
+      didDrawPage: () => { header(opts.pageTitle || 'OWE Report'); footer(); }
     }, opts);
     mergedOpts.margin = Object.assign({top:52, bottom:30, left:margin, right:margin}, mergedOpts.margin || {});
     mergedOpts.styles = Object.assign({}, mergedOpts.styles || {}, {
@@ -5667,11 +5960,11 @@ async function downloadPDFReport() {
     doc.autoTable(mergedOpts);
   }
 
-  addPage('Revenue Liability Report - Executive Summary');
+  addPage('OWE Report - Executive Summary');
   doc.setTextColor(10, 22, 40);
   doc.setFont('times', 'bold');
   doc.setFontSize(22);
-  doc.text('Revenue Liability Portal', margin, 96);
+  doc.text('Ordinary Working Expenses (OWE) Portal', margin, 96);
   doc.setFontSize(14);
   doc.text('Moradabad Division / Northern Railway', margin, 120);
   doc.setFont('times', 'normal');
@@ -5680,7 +5973,7 @@ async function downloadPDFReport() {
   doc.text(`Budget basis: ${isRGActive() ? 'RG where allotted; otherwise BG_ISL' : 'RG not active - using BG_ISL'} | Excluded: PU-72, 73, 74, 75 GST heads and PU-98 recoveries from normal expenditure view.`, margin, 162);
   autoTable({
     startY: 190,
-    pageTitle:'Revenue Liability Report - Executive Summary',
+    pageTitle:'OWE Report - Executive Summary',
     head:[['KPI','Value']],
     body:[
       ['Gross Budget', textCr(totals.budget)],
@@ -5696,20 +5989,20 @@ async function downloadPDFReport() {
   });
   autoTable({
     startY: doc.lastAutoTable.finalY + 18,
-    pageTitle:'Revenue Liability Report - Executive Summary',
+    pageTitle:'OWE Report - Executive Summary',
     head:[['Data Area','FY','Source / File']],
     body:sourceRows.map(r => [r[0], r[1], r[2]]),
     columnStyles:{2:{cellWidth:320}}
   });
   autoTable({
     startY: doc.lastAutoTable.finalY + 18,
-    pageTitle:'Revenue Liability Report - Executive Summary',
+    pageTitle:'OWE Report - Executive Summary',
     head:[['Coverage Area','Current Position','Officer Note']],
     body:portalSummaryRows.concat([['Demand / SMH Summary', `${demandRows.length} grant rows + Suspense separate`, `OBA ${detailCr(demandTotals.oba)}, AE ${detailCr(demandTotals.ae)}, BP utilisation ${detailNum(demandTotals.bpPct)}%. Demand 12N/10N Suspense Heads is separately calculated.`]]),
     columnStyles:{2:{cellWidth:360}}
   });
 
-  addPage('Revenue Liability Report - Graphs');
+  addPage('OWE Report - Graphs');
   const monthLabels = FY_MONTH_LABELS.map((m,i) => m + (i <= 8 ? '-26' : '-27'));
   const cyMonthly = FY_MONTHS.map(m => rows.reduce((s,r) => s + (Number((MONTH[r.pu.code] || {})[m]) || 0), 0) / 10000);
   const pyMonthly = FY_MONTHS.map(m => rows.reduce((s,r) => s + (Number((MONTH_PY[r.pu.code] || {})[m]) || 0), 0) / 10000);
@@ -5722,42 +6015,42 @@ async function downloadPDFReport() {
   doc.addImage(makeBarChart('Top Utilisation PUs (%)', topUtil.map(r => 'PU-' + r.pu.code), topUtil.map(r => Math.min(150, r.utilPct)), topUtil.map(r => r.utilPct > 100 ? '#B00020' : r.utilPct > 85 ? '#E85D04' : '#1A7A4A')), 'PNG', margin + 395, 62, 360, 124);
   doc.addImage(makeGroupedBarChart('Major PUs - Budget vs Actual (Rs Cr)', topActual.map(r => 'PU-' + r.pu.code), topActual.map(r => r.budget / 10000), topActual.map(r => r.actual / 10000)), 'PNG', margin, 216, 755, 124);
 
-  addPage('Revenue Liability Report - Risk Analysis');
+  addPage('OWE Report - Risk Analysis');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - Risk Analysis',
+    pageTitle:'OWE Report - Risk Analysis',
     head:[['PU','Description','Budget','Actual','Balance','Util %','Status','Suggested Review']],
     body:highRisk.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), textCr(r.actual), textCr(r.balance), r.utilPct.toFixed(1) + '%', r.over ? 'Over Budget' : r.utilPct >= 85 ? 'High Utilisation' : 'Watch', r.over ? 'Budget support / booking control' : r.noExpense ? 'Check pending booking' : 'Monitor next booking cycle']),
     columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
   });
   autoTable({
     startY: doc.lastAutoTable.finalY + 16,
-    pageTitle:'Revenue Liability Report - Risk Analysis',
+    pageTitle:'OWE Report - Risk Analysis',
     head:[['PU','Description','Budget','Remark']],
     body:noExp.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), 'Budget available but no expense booked']),
     columnStyles:{2:{halign:'right'}}
   });
 
-  addPage('Revenue Liability Report - BP and AI Summary');
+  addPage('OWE Report - BP and AI Summary');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - BP and AI Summary',
+    pageTitle:'OWE Report - BP and AI Summary',
     head:[['PU','Description','Budget','BP','Actual','Variance','Util %','BP Status','Accounts Remark']],
     body:bpRows.map(r => ['PU-' + r.pu.code, r.pu.desc, textCr(r.budget), textCr(r.bp), textCr(r.actualTill), signedCr(r.variance), r.budget ? r.utilPct.toFixed(1) + '%' : '0.0%', r.status, r.remark]),
     columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
   });
   autoTable({
     startY: doc.lastAutoTable.finalY + 16,
-    pageTitle:'Revenue Liability Report - BP and AI Summary',
+    pageTitle:'OWE Report - BP and AI Summary',
     head:[['PU','AI Trend / Liability Remark']],
     body:aiRows.map(r => ['PU-' + r.pu.code, `${r.risk.toUpperCase()}: CY as-on ${textCr(r.cyTotalAsOn)} vs PY ${textCr(r.pyTotalAsOn)}; balance ${textCr(r.cv.balanceBudget)}; utilisation ${r.utilPct.toFixed(1)}%.`]),
     columnStyles:{1:{cellWidth:620}}
   });
 
-  addPage('Revenue Liability Report - Budget Control');
+  addPage('OWE Report - Budget Control');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - Budget Control',
+    pageTitle:'OWE Report - Budget Control',
     head:[['PU','Description','Action','Projected','Ask','Surrender','Util %','Budget Stage','Remark']],
     body:bcRows.map(r => [
       'PU-' + r.pu.code,
@@ -5786,52 +6079,52 @@ async function downloadPDFReport() {
     const bi = b.hqIndex < 0 ? 999 : b.hqIndex;
     return ai - bi || a.pu.code.localeCompare(b.pu.code, undefined, {numeric:true});
   });
-  addPage('Revenue Liability Report - AE vs BP HQ Statement');
+  addPage('OWE Report - AE vs BP Statement');
   doc.setTextColor(45, 65, 88); doc.setFont('times','normal'); doc.setFontSize(10);
   doc.text(`BP ${xsPdfPrevLabel} = BG / 12 x ${xsPdfPrevCount}; BP ${xsPdfCurLabel} = BG / 12 x ${xsPdfCurCount}; AE-BP = cumulative AE minus BP; movement = current variance minus previous variance.`, margin, 60, {maxWidth:pageW-margin*2});
   autoTable({
     startY:78,
-    pageTitle:'Revenue Liability Report - AE vs BP HQ Statement',
+    pageTitle:'OWE Report - AE vs BP Statement',
     head:[['AU','PU','PY AE','BG',`BP ${xsPdfPrevLabel}`,`BP ${xsPdfCurLabel}`,`PY ${xsPdfPrevLabel}`,`AE ${xsPdfPrevLabel}`,`PY ${xsPdfCurLabel}`,`AE ${xsPdfCurLabel}`,'BG-PY AE','Prev AE-BP','Current AE-BP','Movement','Remark']],
     body:xsPdfRows.map(r => ['MB',`PU-${r.pu.code} ${r.pu.desc}`,textCr(r.pyAnnual),textCr(r.budget),textCr(r.bpPrevious),textCr(r.bpCurrent),textCr(r.pyPrevious),textCr(r.actualPrevious),textCr(r.pyCurrent),textCr(r.actualCurrent),signedCr(r.budgetVsPY),signedCr(r.variancePrevious),signedCr(r.varianceCurrent),signedCr(r.latestMovement),r.remark]),
     styles:{fontSize:10, cellPadding:2.2, overflow:'linebreak'},
     columnStyles:{1:{cellWidth:170},14:{cellWidth:170}}
   });
 
-  addPage('Revenue Liability Report - PU-wise Liability Annexure');
+  addPage('OWE Report - PU-wise Liability Annexure');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - PU-wise Liability Annexure',
+    pageTitle:'OWE Report - PU-wise Liability Annexure',
     head:[['PU','Description','Type','Liability','Budget','Actual','Balance','Util %','Status']],
     body:liabilityAnnexure,
     styles:{fontSize:10, cellPadding:2.5, overflow:'linebreak'},
     columnStyles:{1:{cellWidth:170},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'}}
   });
 
-  addPage('Revenue Liability Report - Month-wise Actual Annexure');
+  addPage('OWE Report - Month-wise Actual Annexure');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - Month-wise Actual Annexure',
+    pageTitle:'OWE Report - Month-wise Actual Annexure',
     head:[['PU','Description'].concat(completedMonthKeys.map(m => FY_MONTH_LABELS[FY_MONTHS.indexOf(m)])).concat(['Total Actual','Balance'])],
     body:monthWiseAnnexure,
     styles:{fontSize:10, cellPadding:2.5, overflow:'linebreak'},
     columnStyles:{1:{cellWidth:170}}
   });
 
-  addPage('Revenue Liability Report - PU Master Annexure');
+  addPage('OWE Report - PU Master Annexure');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - PU Master Annexure',
+    pageTitle:'OWE Report - PU Master Annexure',
     head:[['PU','Description','PU Type','Liability','Budget','Actual','Balance','Util %']],
     body:puMasterAnnexure,
     styles:{fontSize:10, cellPadding:2.5, overflow:'linebreak'},
     columnStyles:{1:{cellWidth:210},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'}}
   });
 
-  addPage('Revenue Liability Report - Sources and Clarifications');
+  addPage('OWE Report - Sources and Clarifications');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - Sources and Clarifications',
+    pageTitle:'OWE Report - Sources and Clarifications',
     head:[['Data Area','FY','Source / File','Used In','Remarks']],
     body:sourceRows,
     styles:{fontSize:10, cellPadding:3, overflow:'linebreak'},
@@ -5839,33 +6132,33 @@ async function downloadPDFReport() {
   });
   autoTable({
     startY: doc.lastAutoTable.finalY + 16,
-    pageTitle:'Revenue Liability Report - Sources and Clarifications',
+    pageTitle:'OWE Report - Sources and Clarifications',
     head:[['Code / Rule','Treatment in Portal','Clarification']],
     body:exclusionRows,
     columnStyles:{2:{cellWidth:440}}
   });
 
-  addPage('Revenue Liability Report - DEPT-Demand Summary');
+  addPage('OWE Report - Department wise Summary');
   autoTable({
     startY: 58,
-    pageTitle:'Revenue Liability Report - DEPT-Demand Summary',
+    pageTitle:'OWE Report - Department wise Summary',
     head:[['Department','Budget','Actual','Balance']],
     body:smhDept.map(r => [r.name, detailCr(r.budget), detailCr(r.actual), detailCr(r.balance)]),
     columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'}}
   });
   autoTable({
     startY: doc.lastAutoTable.finalY + 16,
-    pageTitle:'Revenue Liability Report - DEPT-Demand Summary',
+    pageTitle:'OWE Report - Department wise Summary',
     head:[['Department','Demand','Primary Unit','Budget','Actual','Balance','Status','BP Status']],
     body:smhDetailAnnexure,
     styles:{fontSize:10, cellPadding:2.2, overflow:'linebreak'},
     columnStyles:{0:{cellWidth:120},2:{cellWidth:185},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}}
   });
   if (smhNoExpenseAnnexure.length) {
-    addPage('Revenue Liability Report - Budget Available No Expense');
+    addPage('OWE Report - Budget Available No Expense');
     autoTable({
       startY: 58,
-      pageTitle:'Revenue Liability Report - Budget Available No Expense',
+      pageTitle:'OWE Report - Budget Available No Expense',
       head:[['Department','Demand','Primary Unit','Budget','Remark']],
       body:smhNoExpenseAnnexure,
       styles:{fontSize:10, cellPadding:3, overflow:'linebreak'},
@@ -5874,10 +6167,10 @@ async function downloadPDFReport() {
   }
 
   if (demandAnnexure.length) {
-    addPage('Revenue Liability Report - Demand / SMH Grant Summary');
+    addPage('OWE Report - Demand / SMH Grant Summary');
     autoTable({
       startY: 58,
-      pageTitle:'Revenue Liability Report - Demand / SMH Grant Summary',
+      pageTitle:'OWE Report - Demand / SMH Grant Summary',
       head:[['Demand / SMH','DEPT','OBA','BP','AE','Variation','% BP','Budget Remaining','% OBA Utilized']],
       body:demandAnnexure
         .concat([['Total','', detailCr(demandTotals.oba), detailCr(demandTotals.bp), detailCr(demandTotals.ae), signedCr(demandTotals.variation), detailNum(demandTotals.bpPct) + '%', detailCr(demandTotals.budgetRemaining), detailNum(demandTotals.obaUtil) + '%']])
@@ -5898,7 +6191,7 @@ async function downloadPDFReport() {
     });
   }
 
-  doc.save(`Revenue_Liability_MBD_Report_FY2026-27_${today}.pdf`);
+  doc.save(`OWE_MBD_Report_FY2026-27_${today}.pdf`);
   document.body.dataset.exportStatus = 'pdf-finished';
   } catch (err) {
     console.error('PDF export failed', err);
@@ -5930,11 +6223,11 @@ function buildPowerPointBlob(audit) {
   const xsPptLabel = xsPptMode.bpThrough ? `${xsPptMode.bpThrough.label} ${xsPptMode.bpThrough.year}` : 'completed month';
   const xsPptTop = buildExcessShortfallRows().filter(r => r.hqIndex >= 0).sort((a,b) => b.varianceCurrent - a.varianceCurrent).slice(0,8);
   const slides = [
-    ['Revenue Liability Portal - Fresh Export', [`Financial Year 2026-27 | Moradabad Division`,`Generated: ${indianDateTime(audit.generatedAt)}`,`Actual data through: ${audit.latestMonth}`,`Validation ID: ${audit.id}`,`Rule: live data reconciled before export; minimum font 10 pt; all content within 0.5 inch margins.`]],
+    ['Ordinary Working Expenses (OWE) Portal - Fresh Export', [`Financial Year 2026-27 | Moradabad Division`,`Generated: ${indianDateTime(audit.generatedAt)}`,`Actual data through: ${audit.latestMonth}`,`Validation ID: ${audit.id}`,`Rule: live data reconciled before export; minimum font 10 pt; all content within 0.5 inch margins.`]],
     ['Executive Summary', [`Active expenditure PUs: ${rows.length}`,`Gross budget: ${textCr(totals.budget)}`,`Actual / committed: ${textCr(totals.actual)}`,`Balance: ${textCr(totals.balance)}`,`Utilisation: ${totals.budget ? (totals.actual/totals.budget*100).toFixed(1) : '0.0'}%`]],
     ['Month-wise Actuals', actualMonths.map(month => `${FY_MONTH_LABELS[FY_MONTHS.indexOf(month)]}: ${textCr(rows.reduce((s,r)=>s+(Number((MONTH[r.pu.code]||{})[month])||0),0))}`).concat([`Total actual: ${textCr(totals.actual)}`])],
     ['PU Utilisation - Highest', top.map(r => `PU-${r.pu.code} | ${r.pu.desc.slice(0,46)} | ${r.budget ? r.utilPct.toFixed(1)+'%' : 'No budget'} | Actual ${textCr(r.actual)}`)],
-    ['AE vs BP - HQ PU Summary', [`Logic: BP = BG / 12 x ${xsPptMode.bpMonthCount}; AE-BP = cumulative actual minus BP.`,`Reporting through: ${xsPptLabel}`,`HQ list: ${HQ_EXCESS_SHORTFALL_PUS.map(code => 'PU-'+code).join(', ')}`].concat(xsPptTop.map(r => `PU-${r.pu.code} | AE ${textCr(r.actualCurrent)} | BP ${textCr(r.bpCurrent)} | Variance ${signedCr(r.varianceCurrent)}`))],
+    ['AE vs BP PU Summary', [`Logic: BP = BG / 12 x ${xsPptMode.bpMonthCount}; AE-BP = cumulative actual minus BP.`,`Reporting through: ${xsPptLabel}`,`HQ list: ${HQ_EXCESS_SHORTFALL_PUS.map(code => 'PU-'+code).join(', ')}`].concat(xsPptTop.map(r => `PU-${r.pu.code} | AE ${textCr(r.actualCurrent)} | BP ${textCr(r.bpCurrent)} | Variance ${signedCr(r.varianceCurrent)}`))],
     ['Validation and Fixed Export Rules', audit.checks.map(c => `${c.state.toUpperCase()}: ${c.title} - ${c.detail}`).concat(['Excel: landscape, fit-to-one-page-wide, print margins, minimum 10 pt.','PDF: landscape A4, repeating headers, horizontal page breaks, minimum 10 pt.','PowerPoint: 16:9, 0.5 inch safe margins, minimum 10 pt.','Exports are created on demand from current portal memory; old downloaded files are not reused.'])]
   ];
   const enc = new TextEncoder();
@@ -5958,8 +6251,8 @@ function buildPowerPointBlob(audit) {
   const entries = [
     entry('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>${slideOverrides}</Types>`),
     entry('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`),
-    entry('docProps/core.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Revenue Liability Portal Fresh Report</dc:title><dc:creator>Revenue Liability Portal</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created></cp:coreProperties>`),
-    entry('docProps/app.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Revenue Liability Portal</Application><Slides>${slides.length}</Slides><PresentationFormat>Widescreen</PresentationFormat></Properties>`),
+    entry('docProps/core.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Ordinary Working Expenses (OWE) Portal Fresh Report</dc:title><dc:creator>Ordinary Working Expenses (OWE) Portal</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created></cp:coreProperties>`),
+    entry('docProps/app.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Ordinary Working Expenses (OWE) Portal</Application><Slides>${slides.length}</Slides><PresentationFormat>Widescreen</PresentationFormat></Properties>`),
     entry('ppt/presentation.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst>${sldIds}</p:sldIdLst><p:sldSz cx="12192000" cy="6858000" type="screen16x9"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>`),
     entry('ppt/_rels/presentation.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${presRels}</Relationships>`),
     entry('ppt/slideMasters/slideMaster1.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:clrMap accent1="1A3A6A" accent2="1A7A4A" accent3="C9A84C" accent4="607080" accent5="4472C4" accent6="70AD47" bg1="lt1" bg2="lt2" folHlink="folHlink" hlink="hlink" tx1="dk1" tx2="dk2"/><p:sldLayoutIdLst><p:sldLayoutId id="1" r:id="rId1"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle/><p:bodyStyle/><p:otherStyle/></p:txStyles></p:sldMaster>`),
@@ -5981,7 +6274,7 @@ function downloadPowerPoint() {
   try {
     const audit = prepareFreshExport('PowerPoint');
     const fileDate = new Date().toISOString().slice(0,10);
-    saveBlob(buildPowerPointBlob(audit), `Revenue_Liability_MBD_FY2026-27_${fileDate}.pptx`);
+    saveBlob(buildPowerPointBlob(audit), `OWE_MBD_FY2026-27_${fileDate}.pptx`);
     document.body.dataset.exportStatus = 'ppt-finished';
   } catch (err) {
     console.error('PowerPoint export failed', err);
@@ -6105,7 +6398,7 @@ function openPUDetail(code) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PU-${pu.code} - ${pu.desc} | Revenue Liability Portal</title>
+<title>PU-${pu.code} - ${pu.desc} | Ordinary Working Expenses (OWE) Portal</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#F0F4FA;color:#0A1628;font-size:13px}
@@ -6260,7 +6553,7 @@ function openPUDetail(code) {
 
 <footer>
   PU-${pu.code}: ${pu.desc}  -  Moradabad Division / Northern Railway  -  FY 2026-27  -  For Official Use Only<br>
-  Generated: ${new Date().toLocaleString('en-IN')}  -  Revenue Liability Portal v4.0
+  Generated: ${new Date().toLocaleString('en-IN')}  -  Ordinary Working Expenses (OWE) Portal v4.0
 </footer>
 </body></html>`;
 
@@ -6613,7 +6906,7 @@ function portalValidationChecks() {
   const detailBudget = detailRows.reduce((sum, row) => sum + (Number(row.budget) || 0), 0);
   checks.push({
     state: detailRows.length ? 'ok' : 'warn',
-    title: 'DEPT-Demand detail',
+    title: 'Department wise detail',
     detail: detailRows.length ? `${detailRows.length} detail rows available, ${textCr(detailBudget)} detail budget.` : 'Department > SMH > PU detail data is not loaded.'
   });
   checks.push({
@@ -7448,7 +7741,7 @@ function applyUploads() {
   if(hadCYUpdate || hadPYUpdate || hadSMHUpdate || hadDemandSMHUpdate) {
     const parts = [];
     if (hadCYUpdate) parts.push('CY PU data');
-    if (hadSMHUpdate) parts.push('CY DEPT-Demand detail');
+    if (hadSMHUpdate) parts.push('CY Department wise detail');
     if (hadDemandSMHUpdate) parts.push('CY Demand / SMH summary');
     if (hadPYUpdate) parts.push('PY comparison data');
     const files = Object.values(pendingNames).filter(Boolean).join(' | ');
@@ -7558,7 +7851,7 @@ function renderRemarks() {
 
   const aiSkipCodes = staffCommitted.map(pu => `PU-${pu.code}`).join(', ');
   ruleBody.innerHTML = [
-    ['Department skip from IPAS detail file', 'DEPARTMENTCODE = 00', 'DEPT-Demand Wise import/parsing', 'Department 00 rows are treated as non-operational/control rows and are not included in detail display.'],
+    ['Department skip from IPAS detail file', 'DEPARTMENTCODE = 00', 'Department wise import/parsing', 'Department 00 rows are treated as non-operational/control rows and are not included in detail display.'],
     ['Credit / recovery skip', 'PU-98 Credit or Recoveries', 'All normal budget/expense display; kept separately for recovery reference/export', 'Recoveries are negative/credit nature and are not mixed with expenditure analysis.'],
     ['GST PU display skip', 'PU-72 CGST, PU-73 SGST, PU-74 UTGST, PU-75 IGST', 'All visible tabs/tables and analysis pages', 'These are tax adjustment heads and are excluded from operational expenditure view.'],
     ['AI Trend committed staff skip', aiSkipCodes, 'AI Trend Analysis Summary only', 'Staff committed liability is regular payroll type spending, so AI Trend focuses on controllable/non-committed pressure.'],
@@ -8060,6 +8353,7 @@ function renderAll() {
   initPopup();
   initExportButtons();
   initReportMenuButtons();
+  initTableSortObserver();
   initDashboardDock();
   initSmartTools();
   initReportViewMode();
@@ -8082,7 +8376,8 @@ function renderAll() {
   document.getElementById('rgNote').textContent=isRGActive()?'RG where allotted; otherwise BG_ISL':'BG_ISL';
   const {cur:_cur}=getMonthStatus();
   const _cmb=document.getElementById('curMonBadge'); if(_cmb) _cmb.textContent=_cur.label+' '+_cur.year;
-  setTimeout(()=>{addDualScroll();attachPUPopup();applyMobileTableLabels();},80);
+  setTimeout(()=>{addDualScroll();attachPUPopup();makeReportTablesSortable();applyMobileTableLabels();},80);
+  setTimeout(()=>{makeReportTablesSortable();applyMobileTableLabels();},260);
 }
 
 function tableHeaderLabels(table) {
@@ -8125,6 +8420,184 @@ function applyMobileTableLabels() {
         });
       });
     });
+  });
+}
+
+const TABLE_SORT_STATE = new Map();
+let _tableSortObserver = null;
+let _tableSortTimer = null;
+
+function sortTableId(table) {
+  if (!table.dataset.sortId) {
+    const section = table.closest('.tab-content');
+    const page = section ? section.id.replace(/^tab-/, '') : 'page';
+    const index = Array.from((section || document).querySelectorAll('table')).indexOf(table);
+    table.dataset.sortId = `${page}:${index}`;
+  }
+  return table.dataset.sortId;
+}
+
+function headerCellStartColumn(row, cell) {
+  let col = 0;
+  Array.from(row.cells).some(th => {
+    if (th === cell) return true;
+    col += Math.max(1, th.colSpan || 1);
+    return false;
+  });
+  return col;
+}
+
+function sortValueFromText(text) {
+  const s = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!s || s === '-' || s === '--') return {type:'blank', value:''};
+  const pct = /%$/.test(s);
+  const numeric = s
+    .replace(/[₹,\s]/g, '')
+    .replace(/\(([-+]?\d+(?:\.\d+)?)\)/, '-$1')
+    .replace(/cr$/i, '')
+    .replace(/'/g, '');
+  if (/^[-+]?\d+(?:\.\d+)?%?$/.test(numeric)) {
+    return {type:'number', value:Number(numeric.replace('%', ''))};
+  }
+  const firstNumber = s.match(/[-+]?\d[\d,]*(?:\.\d+)?/);
+  if (pct && firstNumber) return {type:'number', value:Number(firstNumber[0].replace(/,/g, ''))};
+  return {type:'text', value:s.toLowerCase()};
+}
+
+function tableRowIsLocked(row) {
+  const text = String(row.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const first = String(row.cells[0]?.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  return row.classList.contains('tot') ||
+    row.classList.contains('dept-total') ||
+    row.classList.contains('demand-smh-total') ||
+    row.classList.contains('grand-total') ||
+    /^total\b|grand total|subtotal|sub-total/.test(first) ||
+    /^total\b|grand total|subtotal|sub-total/.test(text);
+}
+
+function rowGroupKeyText(group, col) {
+  for (const row of group) {
+    const text = row.cells[col] ? row.cells[col].textContent : '';
+    if (String(text || '').trim()) return text;
+  }
+  return '';
+}
+
+function sortableRowGroups(tbody) {
+  const groups = [];
+  Array.from(tbody.rows).forEach(row => {
+    if (tableRowIsLocked(row)) {
+      groups.push({locked:true, rows:[row]});
+      return;
+    }
+    const first = String(row.cells[0]?.textContent || '').trim();
+    const prev = groups[groups.length - 1];
+    if (!first && prev && !prev.locked) prev.rows.push(row);
+    else groups.push({locked:false, rows:[row]});
+  });
+  return groups;
+}
+
+function applyTableSort(table, col, dir) {
+  const tbody = table.tBodies && table.tBodies[0];
+  if (!tbody || col == null) return;
+  const groups = sortableRowGroups(tbody);
+  let segment = [];
+  const output = [];
+  const flush = () => {
+    segment.sort((a, b) => {
+      const av = sortValueFromText(rowGroupKeyText(a.rows, col));
+      const bv = sortValueFromText(rowGroupKeyText(b.rows, col));
+      if (av.type === 'blank' && bv.type !== 'blank') return 1;
+      if (bv.type === 'blank' && av.type !== 'blank') return -1;
+      const cmp = av.type === 'number' && bv.type === 'number'
+        ? av.value - bv.value
+        : String(av.value).localeCompare(String(bv.value), undefined, {numeric:true, sensitivity:'base'});
+      return dir === 'desc' ? -cmp : cmp;
+    });
+    output.push(...segment);
+    segment = [];
+  };
+  groups.forEach(group => {
+    if (group.locked) {
+      flush();
+      output.push(group);
+    } else {
+      segment.push(group);
+    }
+  });
+  flush();
+  const orderedRows = output.flatMap(group => group.rows);
+  const currentRows = Array.from(tbody.rows);
+  if (orderedRows.every((row, index) => row === currentRows[index])) return;
+  orderedRows.forEach(row => tbody.appendChild(row));
+}
+
+function setTableSortIndicators(table, col, dir) {
+  table.querySelectorAll('th[data-sort-col]').forEach(th => {
+    const active = Number(th.dataset.sortCol) === col;
+    th.classList.toggle('sort-asc', active && dir === 'asc');
+    th.classList.toggle('sort-desc', active && dir === 'desc');
+    th.setAttribute('aria-sort', active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none');
+  });
+}
+
+function makeReportTablesSortable(scope=document) {
+  scope.querySelectorAll('.tab-content table').forEach(table => {
+    const thead = table.tHead || table.querySelector('thead');
+    const tbody = table.tBodies && table.tBodies[0];
+    if (!thead || !tbody || !tbody.rows.length) return;
+    table.classList.add('sortable-table');
+    const id = sortTableId(table);
+    Array.from(thead.rows).forEach(row => {
+      Array.from(row.cells).forEach(cell => {
+        const col = headerCellStartColumn(row, cell);
+        cell.dataset.sortCol = String(col);
+        cell.title = 'Click to sort this table';
+        if (cell.dataset.sortBound === '1') return;
+        cell.dataset.sortBound = '1';
+        cell.tabIndex = 0;
+        cell.addEventListener('click', () => {
+          const current = TABLE_SORT_STATE.get(id);
+          const nextDir = current && current.col === col && current.dir === 'asc' ? 'desc' : 'asc';
+          TABLE_SORT_STATE.set(id, {col, dir:nextDir});
+          applyTableSort(table, col, nextDir);
+          setTableSortIndicators(table, col, nextDir);
+          applyMobileTableLabels();
+        });
+        cell.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            cell.click();
+          }
+        });
+      });
+    });
+    const saved = TABLE_SORT_STATE.get(id);
+    if (saved) {
+      applyTableSort(table, saved.col, saved.dir);
+      setTableSortIndicators(table, saved.col, saved.dir);
+    }
+  });
+}
+
+function scheduleTableSortRefresh() {
+  clearTimeout(_tableSortTimer);
+  _tableSortTimer = setTimeout(() => {
+    makeReportTablesSortable();
+    applyMobileTableLabels();
+  }, 60);
+}
+
+function initTableSortObserver() {
+  if (_tableSortObserver) return;
+  _tableSortObserver = new MutationObserver(mutations => {
+    if (mutations.some(m => m.target && m.target.closest && m.target.closest('.tab-content'))) {
+      scheduleTableSortRefresh();
+    }
+  });
+  document.querySelectorAll('.tab-content').forEach(section => {
+    _tableSortObserver.observe(section, {childList:true, subtree:true});
   });
 }
 

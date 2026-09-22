@@ -1,6 +1,6 @@
 {
   "financialYear": "2026-2027",
-  "generatedAt": "2026-09-17T11:03:43+05:30",
+  "generatedAt": "2026-09-22T11:23:11+05:30",
   "sourceFolder": "D:\\PORTAL DATA\\current year",
   "files": {
     "pu_budget": {
@@ -16,12 +16,12 @@
     "detail_budget": {
       "detectedFile": "PU-DEPT-DEMAND-SMH-BUDGET.xls",
       "storedAs": "pu-dept-demand-smh-budget.xls",
-      "label": "DEPT-Demand/SMH PU-wise Budget"
+      "label": "Department / SMH PU-wise Budget"
     },
     "detail_actual": {
       "detectedFile": "PU-DEPT-DEMAND-SMH-ACTUAL.xls",
       "storedAs": "pu-dept-demand-smh-actual.xls",
-      "label": "DEPT-Demand/SMH PU-wise Month-wise Actual"
+      "label": "Department / SMH PU-wise Month-wise Actual"
     },
     "demand_budget": {
       "detectedFile": "DEMAND-SMH-BUGDET.xls",

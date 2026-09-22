@@ -2,18 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- Revenue Liability Portal v2.1.0 | GitHub Pages cache-safe build | Moradabad Division / Northern Railway | Split static merged build -->
+<!-- Ordinary Working Expenses Portal v2.1.0 | GitHub Pages cache-safe build | Moradabad Division / Northern Railway | Split static merged build -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="portal-build" content="rlp-mbd-2026-09-17-export-hub-dual18-5932b9e68b04">
-<title>Revenue Liability Portal - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260917-export-hub-dual18-autoexports-5932b9e68b04">
+<meta name="portal-build" content="rlp-mbd-2026-09-22-history-compare19-d6284ff9bf71">
+<title>Ordinary Working Expenses (OWE) PORTAL - Moradabad Division | Northern Railway</title>
+<link rel="stylesheet" href="assets/css/main.css?v=20260922-history-compare19-autoexports-d6284ff9bf71">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
 <body>
+<a class="mb-budget-link" href="https://girishtiwari007.github.io/MB-BUDGET/" title="Back to MB-BUDGET PORTAL">← Back to MB-BUDGET PORTAL</a>
 
 <!-- LOGIN OVERLAY -->
 <div id="loginOverlay" class="hidden">
@@ -76,12 +77,12 @@
     <circle cx="50" cy="50" r="6" fill="#F4A932"/>
   </svg>
   <div class="ht">
-    <h1>REVENUE LIABILITY PORTAL - MORADABAD DIVISION</h1>
+    <h1>ORDINARY WORKING EXPENSES (OWE) PORTAL - MORADABAD DIVISION</h1>
     <p>Northern Railway &nbsp;|&nbsp; Financial Authority Dashboard &nbsp;|&nbsp; All figures in Rs Thousands ('000s) - multiply by 1,000 for actual rupees</p>
   </div>
   <div class="hdr-r">
     <span class="fy-badge">FY 2026-27</span>
-    <span class="as-on" id="asOnLabel">As on: 17-Sep-2026 11:03</span>
+    <span class="as-on" id="asOnLabel">As on: 22-Sep-2026 11:23</span>
   </div>
 </div>
 
@@ -100,10 +101,10 @@
       <span>Summary</span><small>Main points</small><em>NEW</em>
     </button>
     <button class="report-menu-btn active" type="button" data-report-tab="liability" aria-pressed="true">
-      <span>Main Report</span><small>Revenue Liability</small>
+      <span>Main Report</span><small>OWE statement</small>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="smhdetail" aria-pressed="false">
-      <span>DEPT-Demand</span><small>Wise details</small><em>NEW</em>
+      <span>Department wise</span><small>Wise details</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="demandsmh" aria-pressed="false">
       <span>Demand / SMH</span><small>Grant summary</small><em>NEW</em>
@@ -130,7 +131,10 @@
       <span>AI Summary</span><small>PU risk remarks</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="dataexport" aria-pressed="false">
-      <span>12. Data Export</span><small>Editable reports and SMH PDFs</small>
+      <span>Data Export</span><small>Editable reports and SMH PDFs</small>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="historycompare" aria-pressed="false">
+      <span>History Compare</span><small>Sync-to-sync progress</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="remarks" aria-pressed="false" style="display:none">
       <span>Remarks</span><small>Sources and rules</small><em>NEW</em>
@@ -139,7 +143,7 @@
       <span>Backup</span><small>Admin zip export</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="admin" id="adminMenuBtn" aria-pressed="false" hidden style="display:none">
-      <span>13. Portal Admin</span><small>Names, layout, sources and backup</small><em>NEW</em>
+      <span>Portal Admin</span><small>Names, layout, sources and backup</small><em>NEW</em>
     </button>
   </div>
 </div>
@@ -191,10 +195,6 @@
     <label for="quickSearch">Quick Search</label>
     <input id="quickSearch" type="search" placeholder="Search report, PU code, PU name..." autocomplete="off">
     <div class="quick-results" id="quickResults"></div>
-  </div>
-  <div class="risk-spotlight" id="riskSpotlight">
-    <span class="risk-title">Risk Spotlight</span>
-    <div class="risk-items" id="riskItems"></div>
   </div>
   <div class="smart-actions">
     <div class="bi-mode-toggle" id="reportViewToggle" aria-label="Report view mode">
@@ -274,18 +274,19 @@
 <!-- TABS -->
 <div class="tabs legacy-tabs" aria-hidden="true">
   <div class="tab tab-feature" onclick="switchTab('summary')">Summary</div>
-  <div class="tab active" onclick="switchTab('liability')">Revenue Liability</div>
-  <div class="tab" onclick="switchTab('smhdetail')">DEPT-Demand Wise</div>
+  <div class="tab active" onclick="switchTab('liability')">OWE Statement</div>
+  <div class="tab" onclick="switchTab('smhdetail')">Department wise</div>
   <div class="tab" onclick="switchTab('demandsmh')">Demand / SMH Summary</div>
   <div class="tab" onclick="switchTab('pumaster')">PU Master</div>
   <div class="tab" onclick="switchTab('monthwise')">Month-wise Actuals</div>
   <div class="tab tab-feature" onclick="switchTab('bpanalysis')">Budget Proportionate Analysis</div>
   <div class="tab tab-feature" onclick="switchTab('budgetcontrol')">Budget Control</div>
-  <div class="tab tab-feature" onclick="switchTab('excessshortfall')">AE vs BP - HQ</div>
+  <div class="tab tab-feature" onclick="switchTab('excessshortfall')">AE vs BP</div>
   <div class="tab" onclick="switchTab('trend')">Trend Analysis Graphs</div>
   <div class="tab" onclick="switchTab('aitrend')">AI Trend Analysis Summary</div>
-  <div class="tab" onclick="switchTab('dataexport')">12. Data Export</div>
-  <div class="tab" id="adminTab" onclick="switchTab('admin')" hidden style="display:none">13. Portal Admin</div>
+  <div class="tab" onclick="switchTab('dataexport')">Data Export</div>
+  <div class="tab tab-feature" onclick="switchTab('historycompare')">History Compare</div>
+  <div class="tab" id="adminTab" onclick="switchTab('admin')" hidden style="display:none">Portal Admin</div>
   <div class="tab" onclick="switchTab('remarks')">Remarks / Clarification</div>
   <div class="tab" id="backupTab" onclick="switchTab('backup')">Portal Backup</div>
 </div>
@@ -301,6 +302,10 @@
       <button class="summary-open-main" type="button" onclick="switchTab('liability')">Open Main Report</button>
     </div>
     <div class="summary-main-grid" id="summaryMainPoints"></div>
+    <div class="risk-spotlight summary-risk-spotlight" id="riskSpotlight">
+      <span class="risk-title">Risk Spotlight</span>
+      <div class="risk-items" id="riskItems"></div>
+    </div>
     <div class="cards summary-cards" id="summaryPageCards"></div>
     <div class="summary-section">
       <div class="summary-section-title"><span id="summaryCurMonLabel">Current Month</span> - Highest Utilised PU Progress</div>
@@ -316,7 +321,7 @@
 <div class="tab-content active" id="tab-liability">
   <div class="twrap">
     <div class="thead-bar">
-      <span class="ttitle">PU-wise Revenue Liability Statement - FY 2026-27</span>
+      <span class="ttitle">PU-wise Ordinary Working Expenses Statement - FY 2026-27</span>
       <div class="legend">
         <div class="leg-item"><div class="leg-box cs"></div>Staff PU / Committed</div>
         <div class="leg-item"><div class="leg-box co"></div>Other Committed</div>
@@ -882,18 +887,70 @@
 
 <div class="tab-content" id="tab-dataexport">
   <div style="padding:24px;background:white;color:#17365D">
-    <h2>12. Data Export</h2>
+    <h2>Data Export</h2>
     <p>Export the displayed report values and units. Excel cells and PowerPoint tables/charts remain editable. PDF and Excel use Times New Roman, minimum 10 pt. Wide reports continue across sheets/pages.</p>
     <p>Set filters on the report first. Combined exports use each report's currently rendered data. Downloads are snapshots; later portal updates do not change files already downloaded.</p>
-    <h3>Combined reports</h3>
-    <button onclick="DisplayExport.run('Excel','all')">Combined Excel</button>
-    <button onclick="DisplayExport.run('PDF','all')">Combined PDF</button>
-    <button onclick="DisplayExport.run('PPT','all')">Combined PowerPoint</button>
-    <h3>Page-wise reports</h3>
-    <table style="width:100%;text-align:left"><thead><tr><th>Report page</th><th>Excel</th><th>PDF</th><th>PowerPoint</th></tr></thead><tbody id="displayExportPages"></tbody></table>
-    <h3>SMH matrix reports</h3>
-    <p>Each numeric cell shows Rs thousands at 10 pt and the equivalent Rs crores beneath at 8 pt.</p>
-    <button onclick="downloadSMHMatrixPDF('dual')">SMH Matrix PDF - Thousands + Crores</button>
+    <div class="data-export-tabs">
+      <button type="button" class="active" data-export-panel="reports" onclick="showDataExportPanel('reports')">Report exports</button>
+      <button type="button" data-export-panel="history" onclick="showDataExportPanel('history')">History Compare</button>
+    </div>
+    <div class="data-export-panel active" id="dataExportPanelReports">
+      <h3>Combined reports</h3>
+      <button onclick="DisplayExport.run('Excel','all')">Combined Excel</button>
+      <button onclick="DisplayExport.run('PDF','all')">Combined PDF</button>
+      <button onclick="DisplayExport.run('PPT','all')">Combined PowerPoint</button>
+      <h3>Page-wise reports</h3>
+      <table style="width:100%;text-align:left"><thead><tr><th>Report page</th><th>Excel</th><th>PDF</th><th>PowerPoint</th></tr></thead><tbody id="displayExportPages"></tbody></table>
+      <h3>SMH matrix reports</h3>
+      <p>Each numeric cell shows Rs thousands at 10 pt and the equivalent Rs crores beneath at 8 pt.</p>
+      <button onclick="downloadSMHMatrixPDF('dual')">SMH Matrix PDF - Thousands + Crores</button>
+    </div>
+    <div class="data-export-panel" id="dataExportPanelHistory">
+      <h3>History Compare exports</h3>
+      <p>Uses the selected From Sync / To Sync, current search/filter and displayed sorting from the History Compare page.</p>
+      <div class="history-inline-controls">
+        <label>From Sync <select id="historyExportFrom" onchange="syncHistoryExportSelection('from', this.value)"></select></label>
+        <label>To Sync <select id="historyExportTo" onchange="syncHistoryExportSelection('to', this.value)"></select></label>
+      </div>
+      <button onclick="downloadHistoryCompareExport('Excel')">History Compare Excel</button>
+      <button onclick="downloadHistoryCompareExport('PDF')">History Compare PDF</button>
+      <button onclick="downloadHistoryCompareExport('PPT')">History Compare PowerPoint</button>
+    </div>
+  </div>
+</div>
+<div class="tab-content" id="tab-historycompare">
+  <div class="history-compare-wrap">
+    <div class="history-head">
+      <div>
+        <h2>History Compare</h2>
+        <p>Compare any two local sync snapshots to review PU-wise movement in budget, actual, balance and utilisation.</p>
+      </div>
+      <div class="history-status" id="historyCompareStatus">Loading snapshot index...</div>
+    </div>
+    <div class="history-controls">
+      <label>From Sync <select id="historyFromSync" onchange="renderHistoryCompare()"></select></label>
+      <label>To Sync <select id="historyToSync" onchange="renderHistoryCompare()"></select></label>
+      <label>Filter <input id="historyFilter" type="search" placeholder="PU or description..." oninput="renderHistoryCompareRows()"></label>
+      <button type="button" onclick="renderHistoryCompare()">Refresh compare</button>
+    </div>
+    <div class="history-kpis" id="historyCompareKpis"></div>
+    <div class="history-top-grid">
+      <div><h3>Top budget increases</h3><ol id="historyTopBudgetUp"></ol></div>
+      <div><h3>Top budget decreases</h3><ol id="historyTopBudgetDown"></ol></div>
+      <div><h3>Top actual increases</h3><ol id="historyTopActualUp"></ol></div>
+      <div><h3>Top actual decreases</h3><ol id="historyTopActualDown"></ol></div>
+    </div>
+    <div class="table-wrap">
+      <table class="report-table history-table sortable-report" id="historyCompareTable">
+        <thead><tr>
+          <th>PU</th><th>Description</th><th>From Budget</th><th>To Budget</th><th>Budget Change</th>
+          <th>From Actual</th><th>To Actual</th><th>Actual Change</th>
+          <th>From Balance</th><th>To Balance</th><th>Balance Change</th>
+          <th>From Utilisation %</th><th>To Utilisation %</th><th>Utilisation % Change</th><th>Status</th>
+        </tr></thead>
+        <tbody id="historyCompareBody"><tr><td colspan="15">Load at least two sync snapshots to compare.</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 <div class="tab-content" id="tab-admin">
@@ -937,8 +994,8 @@
       <div class="division-file-grid">
         <label><input type="checkbox" data-setup-file="pu-budget" checked> PU Wise Budget Available</label>
         <label><input type="checkbox" data-setup-file="pu-month" checked> PU Wise Month-wise Actual</label>
-        <label><input type="checkbox" data-setup-file="dept-budget" checked> DEPT-Demand/SMH PU-wise Budget</label>
-        <label><input type="checkbox" data-setup-file="dept-actual" checked> DEPT-Demand/SMH PU-wise Actual</label>
+        <label><input type="checkbox" data-setup-file="dept-budget" checked> Department / SMH PU-wise Budget</label>
+        <label><input type="checkbox" data-setup-file="dept-actual" checked> Department / SMH PU-wise Actual</label>
         <label><input type="checkbox" data-setup-file="demand-budget" checked> Demand / SMH Budget Summary</label>
         <label><input type="checkbox" data-setup-file="demand-actual" checked> Demand / SMH Actual Summary</label>
         <label><input type="checkbox" data-setup-file="py-budget" checked> Previous Year PU Budget</label>
@@ -983,8 +1040,8 @@
       <section class="admin-card admin-preview-card">
         <h3>Live Preview</h3>
         <div class="admin-preview" id="adminPreview">
-          <div class="admin-preview-head">Revenue Liability Portal</div>
-          <div class="admin-preview-menu"><button>Main Report</button><button>DEPT-Demand</button><button>AI Summary</button></div>
+          <div class="admin-preview-head">Ordinary Working Expenses (OWE) Portal</div>
+          <div class="admin-preview-menu"><button>Main Report</button><button>Department wise</button><button>AI Summary</button></div>
           <table><thead><tr><th>PU</th><th>Description</th><th>Budget</th></tr></thead><tbody><tr><td>32</td><td>Contractual payments</td><td>117,051</td></tr></tbody></table>
         </div>
       </section>
@@ -1003,19 +1060,19 @@
 </div>
 
 <div id="portalFooter" style="text-align:center;padding:10px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
-  Revenue Liability Portal &nbsp;-&nbsp; Moradabad Division / Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
+  Ordinary Working Expenses (OWE) PORTAL - Moradabad Division &nbsp;-&nbsp; Northern Railway &nbsp;-&nbsp; FY 2026-27 &nbsp;-&nbsp; For Official Use Only
 </div>
 
-<script src="assets/js/detail-data.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
-<script src="assets/js/demand-smh-data.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
-<script src="assets/js/admin-config.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
+<script src="assets/js/detail-data.js?v=20260922-history-compare19-autoexports-d6284ff9bf71"></script>
+<script src="assets/js/demand-smh-data.js?v=20260922-history-compare19-autoexports-d6284ff9bf71"></script>
+<script src="assets/js/admin-config.js?v=20260922-history-compare19-autoexports-d6284ff9bf71"></script>
 <script src="assets/vendor/exceljs.min.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
-<script src="assets/js/smh-matrix-export.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
+<script src="assets/js/smh-matrix-export.js?v=20260922-history-compare19-autoexports-d6284ff9bf71"></script>
 <script src="assets/vendor/pptxgen.bundle.js"></script>
-<script src="assets/js/display-export.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
-<script src="assets/js/app.js?v=20260917-export-hub-dual18-autoexports-5932b9e68b04"></script>
+<script src="assets/js/display-export.js?v=20260922-history-compare19-autoexports-d6284ff9bf71"></script>
+<script src="assets/js/app.js?v=20260922-history-compare19-autoexports-d6284ff9bf71"></script>
 <script>DisplayExport.init();</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

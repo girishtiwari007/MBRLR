@@ -1,4 +1,4 @@
-"""Refresh Revenue Liability Portal static data from local IPAS/MB budget XLS files.
+"""Refresh Ordinary Working Expenses (OWE) Portal static data from local IPAS/MB budget XLS files.
 
 Default source folder:
   C:\\Users\\HP\\Downloads\\PORTAL DATA
@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 FY = "2026-2027"
 FY_SHORT = "2026-27"
-PORTAL_CODE_REVISION = "export-hub-dual18"
+PORTAL_CODE_REVISION = "history-compare19"
 IST = timezone(timedelta(hours=5, minutes=30))
 MONTH_KEYS = ["apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "jan", "feb", "mar"]
 MONTH_LABELS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -97,8 +97,8 @@ SOURCE_NAMES = {
 ROLE_LABELS = {
     "pu_budget": "PU-wise Budget Available",
     "pu_month": "PU-wise Month-wise Actual",
-    "detail_budget": "DEPT-Demand/SMH PU-wise Budget",
-    "detail_actual": "DEPT-Demand/SMH PU-wise Month-wise Actual",
+    "detail_budget": "Department / SMH PU-wise Budget",
+    "detail_actual": "Department / SMH PU-wise Month-wise Actual",
     "demand_budget": "Demand/SMH Budget Summary",
     "demand_actual": "Demand/SMH Month-wise Actual Summary",
 }
@@ -345,6 +345,112 @@ def effective_source_budget(sheet, row, bg_col, rg_col):
     return rg if rg != 0 else (as_number(sheet.cell_value(row, bg_col)) if bg_col is not None else 0)
 
 
+def effective_budget_value(values: dict) -> int:
+    """Portal-equivalent effective budget: RG as soon as available, otherwise BG_ISL."""
+    rg = int(values.get("rg") or 0)
+    return rg if values.get("rg_available") is True or rg != 0 else int(values.get("bg_isl") or 0)
+
+
+def build_history_snapshot(snapshot_id: str, generated_at: str, source_revision: str, version: str,
+                           source_dir: Path, budget: dict, month: dict, pu_names: dict,
+                           summary: dict, manifest: dict, source_files: list[dict]) -> dict:
+    codes = sorted({str(code) for code in budget.keys() if code != "TOTAL"} | {str(code) for code in month.keys() if code != "TOTAL"})
+    rows = []
+    for code in codes:
+        b = budget.get(code, {})
+        months = month.get(code, {})
+        eff_budget = effective_budget_value(b)
+        actual = int(sum(int(months.get(key, 0) or 0) for key in MONTH_KEYS))
+        balance = eff_budget - actual
+        util = (actual / eff_budget * 100) if eff_budget else (999 if actual else 0)
+        rows.append({
+            "pu": code,
+            "description": pu_names.get(code) or PU_DESCRIPTIONS.get(code, ""),
+            "budget": eff_budget,
+            "bg_isl": int(b.get("bg_isl") or 0),
+            "rg": int(b.get("rg") or 0),
+            "rgAvailable": bool(b.get("rg_available") or int(b.get("rg") or 0) != 0),
+            "actual": actual,
+            "balance": balance,
+            "utilPct": round(util, 4),
+            "months": {key: int(months.get(key, 0) or 0) for key in MONTH_KEYS},
+        })
+    totals = {
+        "budget": sum(row["budget"] for row in rows),
+        "actual": sum(row["actual"] for row in rows),
+        "balance": sum(row["balance"] for row in rows),
+    }
+    totals["utilPct"] = round((totals["actual"] / totals["budget"] * 100) if totals["budget"] else 0, 4)
+    month_status = manifest.get("monthStatus", {})
+    label_month = month_status.get("latestUploadedMonth") or summary.get("latestMonth") or ""
+    return {
+        "id": snapshot_id,
+        "label": f"{generated_at.replace('T', ' ')[:16]} | {label_month} | {source_revision}",
+        "generatedAt": generated_at,
+        "sourceRevision": source_revision,
+        "assetVersion": version,
+        "financialYear": FY,
+        "sourceFolder": str(source_dir),
+        "monthStatus": month_status,
+        "summary": summary,
+        "sourceFiles": source_files,
+        "puRows": rows,
+        "totals": totals,
+    }
+
+
+def write_history_snapshot(root: Path, snapshot: dict, manifest: dict, reports: dict, current_payload: dict) -> dict:
+    history_root = root / "data/mb-budget-sync/history"
+    history_root.mkdir(parents=True, exist_ok=True)
+    base_id = snapshot["id"]
+    snapshot_id = base_id
+    suffix = 2
+    while (history_root / snapshot_id).exists():
+        snapshot_id = f"{base_id}-{suffix}"
+        suffix += 1
+    snapshot["id"] = snapshot_id
+    snap_dir = history_root / snapshot_id
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    (snap_dir / "snapshot-data.json").write_text(json.dumps(snapshot, indent=2), encoding="utf-8", newline="\n")
+    (snap_dir / "reports-data.json").write_text(json.dumps(reports, indent=2), encoding="utf-8", newline="\n")
+    (snap_dir / "current_payload.js").write_text("window.CURRENT_PAYLOAD = " + json.dumps(current_payload, separators=(",", ":")) + ";\n", encoding="utf-8", newline="\n")
+    (snap_dir / "sync-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
+    (snap_dir / "source-files.json").write_text(json.dumps(snapshot.get("sourceFiles", []), indent=2), encoding="utf-8", newline="\n")
+    index_path = history_root / "history-index.json"
+    try:
+        index = json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else {"snapshots": []}
+    except (OSError, ValueError):
+        index = {"snapshots": []}
+    snapshots = [item for item in index.get("snapshots", []) if item.get("id") != snapshot_id]
+    snapshots.append({
+        "id": snapshot_id,
+        "label": snapshot.get("label", snapshot_id),
+        "generatedAt": snapshot.get("generatedAt"),
+        "sourceRevision": snapshot.get("sourceRevision"),
+        "assetVersion": snapshot.get("assetVersion"),
+        "financialYear": snapshot.get("financialYear"),
+        "latestUploadedMonth": snapshot.get("monthStatus", {}).get("latestUploadedMonth"),
+        "completedThrough": snapshot.get("monthStatus", {}).get("completedThrough"),
+        "sourceFolder": snapshot.get("sourceFolder"),
+        "snapshotPath": f"data/mb-budget-sync/history/{snapshot_id}/snapshot-data.json",
+        "totals": snapshot.get("totals", {}),
+    })
+    snapshots = sorted(snapshots, key=lambda item: (item.get("generatedAt") or "", item.get("id") or ""))[-200:]
+    index = {
+        "ok": True,
+        "generatedAt": snapshot.get("generatedAt"),
+        "latestSnapshotId": snapshot_id,
+        "snapshots": snapshots,
+    }
+    index_path.write_text(json.dumps(index, indent=2), encoding="utf-8", newline="\n")
+    return {
+        "latestSnapshotId": snapshot_id,
+        "snapshotCount": len(snapshots),
+        "indexPath": "data/mb-budget-sync/history/history-index.json",
+        "snapshotPath": f"data/mb-budget-sync/history/{snapshot_id}/snapshot-data.json",
+    }
+
+
 def parse_pu_budget(path: Path):
     sh = read_sheet(path)
     hr, headers = find_header(sh, ["PUCODE"])
@@ -589,6 +695,7 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
         "tab-pumaster": "function renderPUMaster",
         "tab-trend": "function renderTrend",
         "tab-aitrend": "function renderAITrendSummary",
+        "tab-historycompare": "function renderHistoryCompare",
         "tab-bpanalysis": "function renderBPAnalysis",
         "tab-budgetcontrol": "function renderBudgetControl",
         "tab-excessshortfall": "function renderExcessShortfall",
@@ -618,6 +725,7 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
         "PDF crore two decimals": ").toFixed(2) + ' Cr'",
         "PowerPoint 16:9": '<p:sldSz cx="12192000" cy="6858000" type="screen16x9"/>',
         "PowerPoint minimum 10pt": "Math.max(1000,size)",
+        "History compare export": "function downloadHistoryCompareExport",
     }
     missing_exports = [label for label, token in export_contract.items() if token not in app]
     if missing_exports:
@@ -914,6 +1022,23 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
     }
     if not manifest["smokeTest"]["ok"]:
         raise RuntimeError("Mandatory end-to-end smoke test failed")
+    snapshot_id = f"{now.strftime('%Y-%m-%d_%H%M%S')}_{source_revision}"
+    snapshot = build_history_snapshot(
+        snapshot_id,
+        generated_at,
+        source_revision,
+        version,
+        source_dir,
+        budget,
+        month,
+        pu_names,
+        summary,
+        manifest,
+        source_file_entries + py_source_file_entries,
+    )
+    manifest["history"] = write_history_snapshot(root, snapshot, manifest, reports, current_payload)
+    manifest["counts"]["processedFiles"] = 4
+    manifest["processedFiles"].append({"name": "history-index.json", "targetPath": manifest["history"]["indexPath"]})
     audit_path = root / "data/mb-budget-sync/audit-history.json"
     try:
         audit_history = json.loads(audit_path.read_text(encoding="utf-8")) if audit_path.exists() else []

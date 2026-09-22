@@ -1,6 +1,6 @@
-﻿# Revenue Liability Portal
+# Ordinary Working Expenses (OWE) Portal
 
-Static GitHub-ready split build for the Moradabad Division Revenue Liability Portal.
+Static GitHub-ready split build for the Moradabad Division Ordinary Working Expenses (OWE) Portal.
 
 For complete loss recovery and rebuilding from the original Excel reports, follow [PORTAL-RECOVERY-README.md](PORTAL-RECOVERY-README.md).
 
