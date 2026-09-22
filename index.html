@@ -38,6 +38,7 @@
         <span class="login-eye" onclick="var i=document.getElementById('loginPwd');i.type=i.type==='password'?'text':'password'">Show</span>
       </div>
     </div>
+    <div class="human-check" id="adminHumanCheck" aria-live="polite"></div>
     <button class="login-btn" onclick="doLogin()">UNLOCK UPLOAD</button>
     <button class="login-cancel" type="button" onclick="closeUploadLogin()">CANCEL</button>
     <div class="login-err" id="loginErr"></div>
@@ -56,6 +57,7 @@
       <input class="login-inp" type="password" id="exportLoginPwd" placeholder="Enter export password" autocomplete="off" onkeydown="if(event.key==='Enter')doExportLogin()">
       <span class="login-eye" onclick="var i=document.getElementById('exportLoginPwd');i.type=i.type==='password'?'text':'password'">Show</span>
     </div></div>
+    <div class="human-check" id="exportHumanCheck" aria-live="polite"></div>
     <button class="login-btn" type="button" onclick="doExportLogin()">UNLOCK EXPORTS</button>
     <button class="login-cancel" type="button" onclick="closeExportLogin()">CANCEL</button>
     <div class="login-err" id="exportLoginErr"></div>
