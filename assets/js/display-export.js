@@ -3,6 +3,7 @@
   'use strict';
   const PORTAL_BRAND='Ordinary Working Expenses (OWE) PORTAL - Moradabad Division';
   const pages=[['summary','Summary'],['liability','OWE Statement'],['smhdetail','Department wise'],['demandsmh','Demand wise'],['pumaster','PU Master'],['monthwise','Month-wise'],['bpanalysis','BP Analysis'],['budgetcontrol','Budget Control'],['excessshortfall','AE vs BP'],['trend','Graphs'],['aitrend','AI Summary'],['historycompare','History Compare']];
+  const tablePages=pages.filter(([id])=>id!=='summary');
   const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
   const cleanLine=s=>String(s??'').replace(/[ \t\r\f\v]+/g,' ').replace(/\n+/g,'\n').trim();
   function visible(el){
@@ -82,7 +83,8 @@
       sort:sorts.length?sorts.join(' | '):'Current displayed order',generated,source:`Source ${audit.id}`,
       period:`${report.title} | ${generated}`};
   }
-  function capture(id){
+  function capture(id,options={}){
+    const tableOnly=!!options.tableOnly;
     const section=(document.body.classList.contains('bi-view-active') && id===(root.activeTabName?.()||id) && document.getElementById('biViewPanel'))
       ? document.getElementById('biViewPanel')
       : document.getElementById('tab-'+id);
@@ -92,7 +94,9 @@
       const header=grid(t.tHead?.rows||[],true), rows=grid(bodyRows);
       const n=Math.max(0,...header.map(r=>r.length),...rows.map(r=>r.length));
       const headers=Array.from({length:n},(_,c)=>[...new Set(header.map(r=>r[c]).filter(Boolean))].join(' / ')||`Column ${c+1}`);
-      return {title:clean(t.caption?.textContent)||`Table ${i+1}`,headers,rows:rows.map(r=>Array.from({length:n},(_,c)=>r[c]||'')),rowStyles:bodyRows.map(rowExportStyle)};
+      const context=t.closest('.twrap,.bp-wrap,.bc-wrap,.smh-wrap,.demand-smh-wrap,.history-compare-wrap,.ai-pu-card,.card')||section;
+      const tableTitle=clean(t.caption?.textContent)||clean(t.getAttribute('aria-label'))||clean(context.querySelector?.('h2,h3,.ttitle,.bp-title,.bc-title,.smh-title,.ai-pu-title,.tchart-title')?.textContent)||`Table ${i+1}`;
+      return {title:tableTitle,headers,rows:rows.map(r=>Array.from({length:n},(_,c)=>r[c]||'')),rowStyles:bodyRows.map(rowExportStyle)};
     }).filter(t=>t.rows.length);
     const charts=[];
     section.querySelectorAll('canvas').forEach(canvas=>{
@@ -101,7 +105,7 @@
       const series=chart.data.datasets.filter((_,i)=>chart.isDatasetVisible(i)).map(d=>({name:clean(d.label),labels,values:d.data.map(v=>v==null?null:Number(v))}));
       if(series.length) charts.push({title:canvas.id,type:chart.config.type,series});
     });
-    if(!charts.length)for(const table of tables){
+    if(!tableOnly&&!charts.length)for(const table of tables){
       const monthCols=table.headers.map((h,i)=>/\b(APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC|JAN|FEB|MAR)\b/i.test(h)?i:-1).filter(i=>i>=0);
       if(monthCols.length<2)continue;
       const series=table.rows.map(row=>({name:clean(row[0])+' '+clean(row[1]),labels:monthCols.map(i=>table.headers[i]),values:monthCols.map(i=>{
@@ -110,7 +114,7 @@
       for(let i=0;i<series.length;i+=6)charts.push({title:table.title+' monthly series '+(i/6+1),type:'line',series:series.slice(i,i+6)});
     }
     for(const chart of charts) tables.push({title:chart.title+' (chart data)',headers:['Category',...chart.series.map(s=>s.name)],rows:chart.series[0].labels.map((label,i)=>[label,...chart.series.map(s=>s.values[i])])});
-    const notes=[...new Set([...section.querySelectorAll('.kpi,.card,.summary-card,.summary-point,.prog-item,.ai-dash-kpi,.bi-kpi,.ai-pu-head,.ai-kpi-row,.ai-bullets,.ai-digest-head,.ai-summary-card,.chart-note,.formula-note,.pu-master-kpi,.pu-card')].filter(visible).map(n=>clean(n.innerText||n.textContent)).filter(Boolean))];
+    const notes=tableOnly?[]:[...new Set([...section.querySelectorAll('.kpi,.card,.summary-card,.summary-point,.prog-item,.ai-dash-kpi,.bi-kpi,.ai-pu-head,.ai-kpi-row,.ai-bullets,.ai-digest-head,.ai-summary-card,.chart-note,.formula-note,.pu-master-kpi,.pu-card')].filter(visible).map(n=>clean(n.innerText||n.textContent)).filter(Boolean))];
     if(!tables.length && !notes.length) throw new Error('Open '+id+' first and allow its data to finish loading before exporting.');
     return {id,title:(pages.find(p=>p[0]===id)||[id,id])[1],tables,charts,notes};
   }
@@ -224,7 +228,8 @@
     }
     return doc;
   }
-  async function ppt(reports,meta,PptxGenJS){
+  async function ppt(reports,meta,PptxGenJS,options={}){
+    const tableOnly=!!options.tableOnly;
     const deck=new PptxGenJS();deck.layout='LAYOUT_WIDE';deck.author=PORTAL_BRAND;deck.subject=meta.period;
     deck.theme={headFontFace:'Times New Roman',bodyFontFace:'Times New Roman',lang:'en-IN'};
     const safe={left:.5,top:1.25,width:12.3,height:5.65};
@@ -243,18 +248,22 @@
       const styles=table.rowStyles||[];
       return table.rows.map((row,i)=>({row,style:styles[i]})).filter(r=>r.style&&r.style!=='').slice(0,12);
     }
-    const cover=slide('Ordinary Working Expenses Review','Current View Export');
-    cover.addText(reports.map(r=>r.title).join('\n'),{x:.65,y:1.55,w:11.9,h:2.6,fontSize:20,bold:true,color:'17365D',breakLine:false,fit:'shrink',margin:0});
-    cover.addText('Reporting basis: '+meta.basis+'\nFilters / search: '+meta.filters+'\nSort order: '+meta.sort+'\nGenerated: '+meta.generated,{x:.65,y:4.1,w:11.9,h:1.35,fontSize:12,color:'40566E',fit:'shrink',margin:0});
-    cover.addText('Generated from the visible portal view, including its current columns, row order, search results and table highlights.',{x:.65,y:5.65,w:11.9,h:.7,fontSize:12,color:'111111',fit:'shrink',margin:0});
+    if(!tableOnly){
+      const cover=slide('Ordinary Working Expenses Review','Current View Export');
+      cover.addText(reports.map(r=>r.title).join('\n'),{x:.65,y:1.55,w:11.9,h:2.6,fontSize:20,bold:true,color:'17365D',breakLine:false,fit:'shrink',margin:0});
+      cover.addText('Reporting basis: '+meta.basis+'\nFilters / search: '+meta.filters+'\nSort order: '+meta.sort+'\nGenerated: '+meta.generated,{x:.65,y:4.1,w:11.9,h:1.35,fontSize:12,color:'40566E',fit:'shrink',margin:0});
+      cover.addText('Generated from the visible portal view, including its current columns, row order, search results and table highlights.',{x:.65,y:5.65,w:11.9,h:.7,fontSize:12,color:'111111',fit:'shrink',margin:0});
+    }
     for(const report of reports){
-      const summary=slide(report.title+' - summary','Portal current view summary');
-      addBullets(summary,report.notes.length?report.notes:report.tables.flatMap(t=>t.rows.slice(0,3).map(r=>r.slice(0,3).join(' | '))),1.35,'Visible cards / review notes');
-      for(const chart of report.charts){
+      if(!tableOnly){
+        const summary=slide(report.title+' - summary','Portal current view summary');
+        addBullets(summary,report.notes.length?report.notes:report.tables.flatMap(t=>t.rows.slice(0,3).map(r=>r.slice(0,3).join(' | '))),1.35,'Visible cards / review notes');
+      }
+      if(!tableOnly)for(const chart of report.charts){
         const s=slide(report.title+' - '+chart.title);
         s.addChart(deck.ChartType.line,chart.series,{x:.6,y:1.45,w:12.1,h:5.25,showLegend:true,showTitle:false,catAxisLabelFontSize:10,valAxisLabelFontSize:10,legendFontSize:10,showValue:false,chartColors:['17365D','31836A','B87824','9B2226','C9A84C'],showBorder:false});
       }
-      for(const table of report.tables){
+      if(!tableOnly)for(const table of report.tables){
         const highlighted=exceptionRows(table);
         if(highlighted.length){
           const ex={title:table.title+' - highlighted rows',headers:table.headers,rows:highlighted.map(x=>x.row),rowStyles:highlighted.map(x=>x.style)};
@@ -272,13 +281,13 @@
       for(const table of report.tables)for(const part of bands(table,6)){
         const rowsPer=tableRowsForSlides(part);
         for(let offset=0;offset<part.rows.length;offset+=rowsPer){
-          const s=slide(report.title+' - appendix','Editable table appendix');
+          const s=slide(report.title+(tableOnly?' - table data':' - appendix'),tableOnly?'Formatted report table':'Editable table appendix');
           s.addText(part.title+` (rows ${offset+1}-${Math.min(offset+rowsPer,part.rows.length)})`,{x:safe.left,y:1.2,w:safe.width,h:.25,fontSize:10,color:'40566E',margin:0});
           const bodyRows=part.rows.slice(offset,offset+rowsPer).map((r,ri)=>r.map(v=>({text:String(v??''),options:{fill:pptFillForStyle(part.rowStyles?.[offset+ri]),color:'111111'}})));
           s.addTable([part.headers.map(text=>({text,options:{bold:true,color:'FFFFFF',fill:'17365D'}})),...bodyRows],{x:safe.left,y:1.55,w:safe.width,fontFace:'Times New Roman',fontSize:10,border:{type:'solid',pt:.5,color:'000000'},margin:4,autoPage:false,rowH:.42,verbose:false});
         }
       }
-      if(report.notes.length){
+      if(!tableOnly&&report.notes.length){
         const lines=report.notes.flatMap(n=>n.match(/.{1,105}(?:\s|$)|.{1,105}/g)||[]);
         for(let i=0;i<lines.length;i+=12){const s=slide(report.title+' - review notes');addBullets(s,lines.slice(i,i+12),1.35,'Detailed review notes');}
       }
@@ -302,25 +311,28 @@
       return {};
     }
   }
-  async function run(format,which){
-    if(!confirmProtectedExport(`Display ${format} ${which}`))return;
+  async function run(format,which,options={}){
+    const tableOnly=!!options.tableOnly;
+    if(!confirmProtectedExport(`Display ${format} ${which}${tableOnly?' TableOnly':''}`))return;
     try{
       const audit=prepareFreshExport(format);
     renderSMHDetail();renderExcessShortfall();
       await new Promise(resolve=>setTimeout(resolve,200));
-      const chosen=which==='all'?pages:(pages.some(p=>p[0]===which)?pages.filter(p=>p[0]===which):[[which,which]]);
-      const reports=chosen.map(p=>capture(p[0]));
+      const availablePages=tableOnly?tablePages:pages;
+      const chosen=which==='all'?availablePages:(availablePages.some(p=>p[0]===which)?availablePages.filter(p=>p[0]===which):[[which,which]]);
+      const reports=chosen.map(p=>capture(p[0],{tableOnly}));
+      if(tableOnly&&!reports.some(report=>report.tables.length))throw new Error('No visible table is available for this report.');
       const meta=viewMeta(which,reports[0],audit);
       const safeTitle=reports[0].title.replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
-      const name='MBRLR_'+safeTitle+'_visible_view_'+new Date().toISOString().slice(0,10);
+      const name='MBRLR_'+safeTitle+(tableOnly?'_table_data_':'_visible_view_')+new Date().toISOString().slice(0,10);
       if(format==='Excel')saveBlob(new Blob([await excel(reports,meta,root.ExcelJS)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),name+'.xlsx');
       else if(format==='PDF')(await pdf(reports,meta,root.jspdf.jsPDF,await fonts())).save(name+'.pdf');
-      else await (await ppt(reports,meta,root.PptxGenJS)).writeFile({fileName:name+'.pptx'});
+      else await (await ppt(reports,meta,root.PptxGenJS,{tableOnly})).writeFile({fileName:name+'.pptx'});
     }catch(e){showPortalNotice('Displayed export failed: '+e.message,'err');}
   }
   function init(){
     const box=document.getElementById('displayExportPages');
-    if(box)box.innerHTML=pages.map(([id,title],i)=>`<tr><td>${i+1}. ${title}</td>${['Excel','PDF','PPT'].map(format=>`<td><button type="button" onclick="DisplayExport.run('${format}','${id}')">${format==='PPT'?'PowerPoint':format}</button></td>`).join('')}</tr>`).join('');
+    if(box)box.innerHTML=tablePages.map(([id,title],i)=>`<tr><td>${i+1}. ${title}</td>${['Excel','PDF','PPT'].map(format=>`<td><button type="button" onclick="DisplayExport.run('${format}','${id}',{tableOnly:true})">${format==='PPT'?'PowerPoint':format}</button></td>`).join('')}</tr>`).join('');
     pages.forEach(([id])=>{
       const section=document.getElementById('tab-'+id);
       if(section)section.querySelectorAll('.display-export-actions').forEach(bar=>bar.remove());

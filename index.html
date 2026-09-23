@@ -965,9 +965,9 @@
     </div>
     <div class="data-export-panel active" id="dataExportPanelReports">
       <h3>All visible portal pages</h3>
-      <button onclick="DisplayExport.run('Excel','all')">Combined Excel</button>
-      <button onclick="DisplayExport.run('PDF','all')">Combined PDF</button>
-      <button onclick="DisplayExport.run('PPT','all')">Combined PowerPoint</button>
+      <button onclick="DisplayExport.run('Excel','all',{tableOnly:true})">Combined Excel</button>
+      <button onclick="DisplayExport.run('PDF','all',{tableOnly:true})">Combined PDF</button>
+      <button onclick="DisplayExport.run('PPT','all',{tableOnly:true})">Combined PowerPoint</button>
       <h3>Page-wise reports</h3>
       <table style="width:100%;text-align:left"><thead><tr><th>Report page</th><th>Excel</th><th>PDF</th><th>PowerPoint</th></tr></thead><tbody id="displayExportPages"></tbody></table>
       <h3>Full master downloads</h3>
@@ -1143,8 +1143,8 @@
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
 <script src="assets/js/smh-matrix-export.js?v=20260922-history-compare19-autoexports-9787bac88361"></script>
 <script src="assets/vendor/pptxgen.bundle.js"></script>
-<script src="assets/js/display-export.js?v=20260923-export-fetch-fallback"></script>
-<script src="assets/js/app.js?v=20260923-export-fetch-fallback"></script>
+<script src="assets/js/display-export.js?v=20260923-table-only-data-export"></script>
+<script src="assets/js/app.js?v=20260923-table-only-data-export"></script>
 <script>DisplayExport.init();</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

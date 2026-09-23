@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260923-export-fetch-fallback';
+const ASSET_VERSION = '20260923-table-only-data-export';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -206,7 +206,7 @@ async function doExportLogin() {
   _pendingExportLabel = '';
   showSecurityNotice('EXPORT user unlocked for this browser session.');
   setTimeout(() => {
-    if (pending.startsWith('Display ')) { const parts=pending.split(' '); DisplayExport.run(parts[1],parts[2]); }
+    if (pending.startsWith('Display ')) { const parts=pending.split(' '); DisplayExport.run(parts[1],parts[2],{tableOnly:parts[3]==='TableOnly'}); }
     else if (pending.startsWith('SMH matrix')) downloadSMHMatrixPDF(pending.includes('dual')?'dual':pending.includes('crore')?'crore':'thousand');
     else if (pending.includes('Excel')) downloadExcel();
     else if (pending.includes('PDF')) downloadPDFReport();

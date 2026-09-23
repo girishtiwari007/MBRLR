@@ -21,5 +21,7 @@ const fonts={normal:fs.readFileSync(path.join(root,'assets/fonts/times.ttf')).to
  fs.writeFileSync(path.join(dir,'display.xlsx'),Buffer.from(await api.excel([report],meta,ExcelJS)));
  fs.writeFileSync(path.join(dir,'display.pdf'),Buffer.from((await api.pdf([report],meta,jsPDF,fonts)).output('arraybuffer')));
  const deck=await api.ppt([report],meta,PptxGenJS);await deck.writeFile({fileName:path.join(dir,'display.pptx')});
+ const tableDeck=await api.ppt([{...report,charts:[],notes:[]}],meta,PptxGenJS,{tableOnly:true});
+ assert.ok(tableDeck._slides.length>0&&tableDeck._slides.length<deck._slides.length,'table-only PPT must contain formatted table slides without portal summary content');
  console.log('PASS: typed data, wide-table column coverage, and three generated editable/report formats',dir);
 })().catch(e=>{console.error(e);process.exitCode=1;});
