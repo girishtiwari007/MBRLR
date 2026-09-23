@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   const PORTAL_BRAND='Ordinary Working Expenses (OWE) PORTAL - Moradabad Division';
-  const pages=[['summary','Summary'],['liability','OWE Statement'],['smhdetail','Department wise'],['demandsmh','Demand SMH'],['pumaster','PU Master'],['monthwise','Month-wise'],['bpanalysis','BP Analysis'],['budgetcontrol','Budget Control'],['excessshortfall','AE vs BP'],['trend','Graphs'],['aitrend','AI Summary'],['historycompare','History Compare']];
+  const pages=[['summary','Summary'],['liability','OWE Statement'],['smhdetail','Department wise'],['demandsmh','Demand wise'],['pumaster','PU Master'],['monthwise','Month-wise'],['bpanalysis','BP Analysis'],['budgetcontrol','Budget Control'],['excessshortfall','AE vs BP'],['trend','Graphs'],['aitrend','AI Summary'],['historycompare','History Compare']];
   const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
   function grid(rows,repeatSpan=false){
     const result=[];
@@ -46,7 +46,7 @@
       for(let i=0;i<series.length;i+=6)charts.push({title:table.title+' monthly series '+(i/6+1),type:'line',series:series.slice(i,i+6)});
     }
     for(const chart of charts) tables.push({title:chart.title+' (chart data)',headers:['Category',...chart.series.map(s=>s.name)],rows:chart.series[0].labels.map((label,i)=>[label,...chart.series.map(s=>s.values[i])])});
-    const notes=[...new Set([...section.querySelectorAll('.kpi,.card,.summary-card,.summary-point,.prog-item,.ai-dash-kpi,.bi-kpi,.ai-pu-head,.ai-kpi-row,.ai-bullets,.ai-digest-head,.ai-summary-card,.chart-note,.formula-note')].map(n=>clean(n.innerText||n.textContent)).filter(Boolean))];
+    const notes=[...new Set([...section.querySelectorAll('.kpi,.card,.summary-card,.summary-point,.prog-item,.ai-dash-kpi,.bi-kpi,.ai-pu-head,.ai-kpi-row,.ai-bullets,.ai-digest-head,.ai-summary-card,.chart-note,.formula-note,.pu-master-kpi,.pu-card')].map(n=>clean(n.innerText||n.textContent)).filter(Boolean))];
     if(!tables.length && !notes.length) throw new Error('Open '+id+' first and allow its data to finish loading before exporting.');
     return {id,title:(pages.find(p=>p[0]===id)||[id,id])[1],tables,charts,notes};
   }

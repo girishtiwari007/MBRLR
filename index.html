@@ -13,7 +13,7 @@
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
-<body>
+<body class="professional-preview">
 <a class="mb-budget-link" href="https://girishtiwari007.github.io/MB-BUDGET/" title="Back to MB-BUDGET PORTAL">← Back to MB-BUDGET PORTAL</a>
 
 <!-- LOGIN OVERLAY -->
@@ -109,7 +109,7 @@
       <span>Department wise</span><small>Wise details</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="demandsmh" aria-pressed="false">
-      <span>Demand / SMH</span><small>Grant summary</small><em>NEW</em>
+      <span>Demand wise</span><small>Grant summary</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="pumaster" aria-pressed="false">
       <span>PU Master</span><small>Code reference</small>
@@ -137,6 +137,9 @@
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="historycompare" aria-pressed="false">
       <span>History Compare</span><small>Sync-to-sync progress</small><em>NEW</em>
+    </button>
+    <button class="report-menu-btn" type="button" data-report-tab="additionalremarks" aria-pressed="false">
+      <span>Additional Remarks</span><small>Sources and page notes</small><em>NEW</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="remarks" aria-pressed="false" style="display:none">
       <span>Remarks</span><small>Sources and rules</small><em>NEW</em>
@@ -199,6 +202,14 @@
     <div class="quick-results" id="quickResults"></div>
   </div>
   <div class="smart-actions">
+    <div class="preview-style-picker" aria-label="Professional preview style">
+      <label for="previewStyleSelect">Preview Style</label>
+      <select id="previewStyleSelect">
+        <option value="a">A - Railway Navy + Gold</option>
+        <option value="b">B - Dashboard Blue / White</option>
+        <option value="c">C - Govt Report Compact</option>
+      </select>
+    </div>
     <div class="bi-mode-toggle" id="reportViewToggle" aria-label="Report view mode">
       <button type="button" class="active" data-report-view-mode="classic">Classic Table</button>
       <button type="button" data-report-view-mode="bi">BI-AI View</button>
@@ -284,7 +295,7 @@
   <div class="tab tab-feature" onclick="switchTab('summary')">Summary</div>
   <div class="tab active" onclick="switchTab('liability')">OWE Statement</div>
   <div class="tab" onclick="switchTab('smhdetail')">Department wise</div>
-  <div class="tab" onclick="switchTab('demandsmh')">Demand / SMH Summary</div>
+  <div class="tab" onclick="switchTab('demandsmh')">Demand wise</div>
   <div class="tab" onclick="switchTab('pumaster')">PU Master</div>
   <div class="tab" onclick="switchTab('monthwise')">Month-wise Actuals</div>
   <div class="tab tab-feature" onclick="switchTab('bpanalysis')">Budget Proportionate Analysis</div>
@@ -294,6 +305,7 @@
   <div class="tab" onclick="switchTab('aitrend')">AI Trend Analysis Summary</div>
   <div class="tab" onclick="switchTab('dataexport')">Data Export</div>
   <div class="tab tab-feature" onclick="switchTab('historycompare')">History Compare</div>
+  <div class="tab tab-feature" onclick="switchTab('additionalremarks')">Additional Remarks</div>
   <div class="tab" id="adminTab" onclick="switchTab('admin')" hidden style="display:none">Portal Admin</div>
   <div class="tab" onclick="switchTab('remarks')">Remarks / Clarification</div>
   <div class="tab" id="backupTab" onclick="switchTab('backup')">Portal Backup</div>
@@ -410,18 +422,50 @@
 
 <!-- TAB: PU MASTER -->
 <div class="tab-content" id="tab-pumaster">
-  <div class="twrap">
-    <div class="thead-bar"><span class="ttitle">Revenue PU Master - Code & Classification</span></div>
-    <table>
-      <thead><tr>
-        <th class="la">PU Code</th><th class="la">Description</th>
-        <th class="la">Type of PU</th><th class="la">Type of Liability</th>
-        <th>Remaining Budget</th>
-        <th>Effective Budget / OBA (Rs'000s)</th><th>Budget (Rs Cr)</th><th>Actuals Till Date (Rs'000s)</th>
-        <th>Status</th>
-      </tr></thead>
-      <tbody id="pu-tbody"></tbody>
-    </table>
+  <div class="pu-master-wrap">
+    <div class="pu-master-head">
+      <div>
+        <div class="pu-master-title">PU Master &amp; Status</div>
+        <div class="pu-master-sub">Primary Unit reference with budget, actual, balance, utilisation and quick drill-down actions.</div>
+      </div>
+      <div class="pu-master-toggle" role="group" aria-label="PU Master view">
+        <button type="button" class="active" id="puCardViewBtn" onclick="setPUMasterView('card')">Card View</button>
+        <button type="button" id="puTableViewBtn" onclick="setPUMasterView('table')">Table View</button>
+      </div>
+    </div>
+    <div class="pu-master-kpis" id="puMasterKpis"></div>
+    <div class="pu-master-filters">
+      <select id="puMasterTypeFilter" onchange="renderPUMaster()"><option value="all">All PU Types</option></select>
+      <select id="puMasterLiabFilter" onchange="renderPUMaster()"><option value="all">All Liability Types</option></select>
+      <select id="puMasterBudgetFilter" onchange="renderPUMaster()">
+        <option value="all">All Budget Status</option>
+        <option value="budget">Budget Available</option>
+        <option value="nobudget">No Budget</option>
+      </select>
+      <select id="puMasterActualFilter" onchange="renderPUMaster()">
+        <option value="all">All Actual Status</option>
+        <option value="actual">Actual Booked</option>
+        <option value="noactual">No Actual</option>
+      </select>
+      <select id="puMasterUtilFilter" onchange="renderPUMaster()">
+        <option value="all">All Utilisation</option>
+        <option value="low">Low &lt; 60%</option>
+        <option value="normal">Normal 60-85%</option>
+        <option value="high">High 85-100%</option>
+        <option value="over">Over 100%</option>
+      </select>
+    </div>
+    <div class="pu-card-grid" id="puMasterCards"></div>
+    <div class="pu-master-table-wrap" id="puMasterTableWrap" style="display:none">
+      <table class="pu-master-table sortable-report">
+        <thead><tr>
+          <th class="la">PU Code</th><th class="la">Description</th>
+          <th class="la">Type of PU</th><th class="la">Type of Liability</th>
+          <th>Budget</th><th>Actual</th><th>Balance</th><th>Utilisation</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="pu-tbody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -782,8 +826,8 @@
   <div class="demand-smh-wrap">
     <div class="demand-smh-head">
       <div>
-        <div class="demand-smh-title">Demand / SMH Wise Summary</div>
-        <div class="demand-smh-sub" id="demandSmhMeta">Current year grant summary by Demand / SMH and department code mapping.</div>
+        <div class="demand-smh-title">Demand wise</div>
+        <div class="demand-smh-sub" id="demandSmhMeta">Current year grant summary by Demand and department code mapping.</div>
       </div>
       <div class="bp-mode-pack compact demand-mode-pack">
         <div class="demand-smh-source" id="demandSmhSource">Source: SMH Wise Budget + Demand/SMH Code</div>
@@ -793,14 +837,14 @@
     <div class="demand-smh-kpis" id="demandSmhKpis"></div>
     <div class="demand-smh-table-card">
       <div class="demand-smh-table-title">
-        <span>Demand / SMH Wise</span>
+        <span>Demand wise</span>
         <em>Figures in thousands</em>
       </div>
       <div class="demand-smh-scroll">
         <table class="demand-smh-table">
           <thead>
             <tr>
-              <th>Demand / SMH</th>
+              <th>Demand wise</th>
               <th>DEPT</th>
               <th>OBA</th>
               <th>BP</th>
@@ -815,6 +859,19 @@
         </table>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-additionalremarks">
+  <div class="additional-remarks-wrap">
+    <div class="additional-remarks-head">
+      <div>
+        <div class="additional-remarks-title">Additional Remarks</div>
+        <div class="additional-remarks-sub">Source remarks and calculation notes grouped by report page, kept here to keep main pages clean.</div>
+      </div>
+      <div class="additional-remarks-badge">Preview</div>
+    </div>
+    <div class="additional-remarks-grid" id="additionalRemarksGrid"></div>
   </div>
 </div>
 
