@@ -201,18 +201,20 @@
   }
   async function pdf(reports,meta,jsPDF,fonts){
     const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
-    for(const [style,data] of Object.entries(fonts)){doc.addFileToVFS(style+'.ttf',data);doc.addFont(style+'.ttf','TimesNewRoman',style);}
+    const embeddedFonts=fonts&&Object.keys(fonts).length===2;
+    if(embeddedFonts)for(const [style,data] of Object.entries(fonts)){doc.addFileToVFS(style+'.ttf',data);doc.addFont(style+'.ttf','TimesNewRoman',style);}
+    const pdfFont=embeddedFonts?'TimesNewRoman':'times';
     const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();let started=false;
     for(const report of reports) for(const table of [...report.tables,...(report.notes.length?[{title:'Review',headers:['Review note'],rows:report.notes.map(n=>[n])}]:[])])for(const part of bands(table)){
       if(started)doc.addPage();started=true;
-      doc.autoTable({head:[part.headers],body:part.rows.map(r=>r.map(v=>typeof v==='number'?v.toFixed(2):v)),startY:113,margin:{top:113,bottom:35,left:32,right:32},theme:'grid',showHead:'everyPage',styles:{font:'TimesNewRoman',fontSize:10,cellPadding:4,overflow:'linebreak',lineColor:[0,0,0],lineWidth:.35},headStyles:{fillColor:[23,54,93],fontStyle:'bold',lineColor:[0,0,0]},alternateRowStyles:{fillColor:[245,248,251]},rowPageBreak:'avoid',didParseCell:data=>{
+      doc.autoTable({head:[part.headers],body:part.rows.map(r=>r.map(v=>typeof v==='number'?v.toFixed(2):v)),startY:113,margin:{top:113,bottom:35,left:32,right:32},theme:'grid',showHead:'everyPage',styles:{font:pdfFont,fontSize:10,cellPadding:4,overflow:'linebreak',lineColor:[0,0,0],lineWidth:.35},headStyles:{fillColor:[23,54,93],fontStyle:'bold',lineColor:[0,0,0]},alternateRowStyles:{fillColor:[245,248,251]},rowPageBreak:'avoid',didParseCell:data=>{
         if(data.section==='body'){
           const fill=pdfFillForStyle(part.rowStyles?.[data.row.index]);
           if(fill)data.cell.styles.fillColor=fill;
         }
       },didDrawPage:()=>{
-        doc.setFont('TimesNewRoman','bold');doc.setFontSize(14);doc.setTextColor(23,54,93);doc.text(report.title,32,27);
-        doc.setFont('TimesNewRoman','normal');doc.setFontSize(10);doc.setTextColor(40);
+        doc.setFont(pdfFont,'bold');doc.setFontSize(14);doc.setTextColor(23,54,93);doc.text(report.title,32,27);
+        doc.setFont(pdfFont,'normal');doc.setFontSize(10);doc.setTextColor(40);
         doc.text(PORTAL_BRAND,32,43);doc.text('Reporting basis: '+meta.basis,32,57);
         doc.text(doc.splitTextToSize('Filters / search: '+meta.filters,W-64).slice(0,2),32,71);
         doc.text(doc.splitTextToSize('Sort order: '+meta.sort,W-64).slice(0,1),32,91);
@@ -283,11 +285,22 @@
     }
     return deck;
   }
+  let fontCache=null;
   async function fonts(){
-    const result={};for(const [style,file] of [['normal','times.ttf'],['bold','timesbd.ttf']]){
-      const response=await fetch('assets/fonts/'+file);if(!response.ok)throw new Error('Times New Roman font unavailable');
-      const bytes=new Uint8Array(await response.arrayBuffer());let raw='';for(const b of bytes)raw+=String.fromCharCode(b);result[style]=btoa(raw);
-    }return result;
+    if(fontCache)return fontCache;
+    try{
+      const result={};
+      for(const [style,file] of [['normal','times.ttf'],['bold','timesbd.ttf']]){
+        const url=new URL('assets/fonts/'+file,document.baseURI).href;
+        const response=await fetch(url,{cache:'force-cache'});
+        if(!response.ok)throw new Error(`font request ${response.status}`);
+        const bytes=new Uint8Array(await response.arrayBuffer());let raw='';for(const b of bytes)raw+=String.fromCharCode(b);result[style]=btoa(raw);
+      }
+      fontCache=result;return result;
+    }catch(error){
+      console.warn('Custom PDF font unavailable; using built-in Times font.',error);
+      return {};
+    }
   }
   async function run(format,which){
     if(!confirmProtectedExport(`Display ${format} ${which}`))return;

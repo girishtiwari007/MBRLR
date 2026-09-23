@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260923-standard-export-select';
+const ASSET_VERSION = '20260923-export-fetch-fallback';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
