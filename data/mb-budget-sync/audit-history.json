@@ -2037,5 +2037,91 @@
       "exportGate": true,
       "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026"
     }
+  },
+  {
+    "testedAt": "2026-09-23T23:25:18+05:30",
+    "sourceRevision": "7c5f0527b28e",
+    "assetVersion": "20260923-history-compare19-autoexports-7c5f0527b28e",
+    "sourceFolder": "E:\\GITHUB\\source-files\\2026-2027",
+    "monthStatus": {
+      "systemMonth": "SEP 2026",
+      "reportingCurrentMonth": "SEP 2026",
+      "latestUploadedMonth": "SEP 2026",
+      "completedThrough": "AUG 2026",
+      "reportingMonthIndex": 5,
+      "completedMonthCount": 5,
+      "selectionMode": "auto"
+    },
+    "summary": {
+      "puBudgetRows": 47,
+      "puMonthRows": 40,
+      "detailRows": 910,
+      "detailBudget": 34145286,
+      "detailActual": 17273494,
+      "demandRows": 12,
+      "latestMonth": "SEP 2026",
+      "demandMainAECompleted": 16528995,
+      "demandMainBPCompleted": 13581613,
+      "pyBudgetRows": 0,
+      "pyMonthRows": 0
+    },
+    "calculationValidation": {
+      "ok": true,
+      "puMonthMismatches": 0,
+      "detailRows": 910,
+      "detailActual": 17273494,
+      "demandRows": 12,
+      "demandMainAE": 16528995
+    },
+    "portalValidation": {
+      "ok": true,
+      "viewCount": 16,
+      "views": [
+        "tab-liability",
+        "tab-dataexport",
+        "tab-summary",
+        "tab-monthwise",
+        "tab-pumaster",
+        "tab-trend",
+        "tab-aitrend",
+        "tab-historycompare",
+        "tab-bpanalysis",
+        "tab-budgetcontrol",
+        "tab-excessshortfall",
+        "tab-smhdetail",
+        "tab-demandsmh",
+        "tab-remarks",
+        "tab-backup",
+        "tab-admin"
+      ],
+      "freshAsset": "20260923-history-compare19-autoexports-7c5f0527b28e",
+      "reportingMonthIndex": 5,
+      "uploadControls": 0
+    },
+    "exportValidation": {
+      "ok": true,
+      "formats": [
+        "xlsx",
+        "pdf",
+        "pptx"
+      ],
+      "minimumFontPt": 10,
+      "explicitFontRulesChecked": 10,
+      "excel": "Data Export is table-only; landscape, fit-to-one-page-wide, crore values fixed at 2 decimals",
+      "pdf": "Data Export is table-only; A4 landscape, repeating tabular layout, crore values fixed at 2 decimals",
+      "powerPoint": "Data Export is table-only; editable tables on a 16:9 canvas, minimum 10pt",
+      "freshnessGuards": 3,
+      "securityRulesChecked": 5,
+      "dataExportRulesChecked": 6
+    },
+    "smokeTest": {
+      "ok": true,
+      "testedAt": "2026-09-23T23:25:18+05:30",
+      "sourceFileCount": 6,
+      "calculationGate": true,
+      "portalGate": true,
+      "exportGate": true,
+      "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026"
+    }
   }
 ]

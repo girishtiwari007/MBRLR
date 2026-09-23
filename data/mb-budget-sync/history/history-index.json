@@ -1,7 +1,7 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-22T17:27:37+05:30",
-  "latestSnapshotId": "2026-09-22_172707_9787bac88361",
+  "generatedAt": "2026-09-23T23:25:18+05:30",
+  "latestSnapshotId": "2026-09-23_232518_7c5f0527b28e",
   "snapshots": [
     {
       "id": "2026-09-17_110343_5932b9e68b04",
@@ -38,6 +38,24 @@
         "actual": 18407567,
         "balance": 14175261,
         "utilPct": 56.4947
+      }
+    },
+    {
+      "id": "2026-09-23_232518_7c5f0527b28e",
+      "label": "2026-09-23 23:25 | SEP 2026 | 7c5f0527b28e",
+      "generatedAt": "2026-09-23T23:25:18+05:30",
+      "sourceRevision": "7c5f0527b28e",
+      "assetVersion": "20260923-history-compare19-autoexports-7c5f0527b28e",
+      "financialYear": "2026-2027",
+      "latestUploadedMonth": "SEP 2026",
+      "completedThrough": "AUG 2026",
+      "sourceFolder": "E:\\GITHUB\\source-files\\2026-2027",
+      "snapshotPath": "data/mb-budget-sync/history/2026-09-23_232518_7c5f0527b28e/snapshot-data.json",
+      "totals": {
+        "budget": 32582828,
+        "actual": 18161940,
+        "balance": 14420888,
+        "utilPct": 55.7408
       }
     }
   ]

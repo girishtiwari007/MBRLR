@@ -694,6 +694,7 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
     """Block publishing unless every portal view and export fixed rule is present."""
     html = (root / "index.html").read_text(encoding="utf-8")
     app = (root / "assets/js/app.js").read_text(encoding="utf-8")
+    display_export = (root / "assets/js/display-export.js").read_text(encoding="utf-8")
     view_contract = {
         "tab-liability": "function renderLiability",
         "tab-dataexport": "function renderDataExport",
@@ -737,6 +738,27 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
     missing_exports = [label for label, token in export_contract.items() if token not in app]
     if missing_exports:
         raise RuntimeError("Export contract failed: " + ", ".join(missing_exports))
+    security_contract = {
+        "Admin human verification": "humanCheckVerified('admin')",
+        "Export human verification": "humanCheckVerified('export')",
+        "Export password digest": "EXPORT_USER_DIGEST",
+        "Session-only export access": "sessionStorage.setItem(EXPORT_USER_SESSION_KEY, '1')",
+        "Protected display exports": "confirmProtectedExport(`Display ${format} ${which}",
+    }
+    missing_security = [label for label, token in security_contract.items() if token not in (app + display_export)]
+    if missing_security:
+        raise RuntimeError("Login/security contract failed: " + ", ".join(missing_security))
+    data_export_contract = {
+        "Table-only page exports": "{tableOnly:true}",
+        "Table-only combined exports": "DisplayExport.run('Excel','all',{tableOnly:true})",
+        "No card notes in table exports": "const notes=tableOnly?[]:",
+        "Editable PowerPoint table slides": "tableOnly?'Formatted report table'",
+        "Table-data filenames": "'_table_data_'",
+        "Summary excluded from table matrix": "const tablePages=pages.filter(([id])=>id!=='summary')",
+    }
+    missing_data_export = [label for label, token in data_export_contract.items() if token not in (html + display_export)]
+    if missing_data_export:
+        raise RuntimeError("Data Export contract failed: " + ", ".join(missing_data_export))
     export_text = app[app.index("async function downloadExcel"):app.index("window.downloadHostedUpdatePack")]
     pdf_fonts = [float(value) for value in re.findall(r"fontSize\s*:\s*(\d+(?:\.\d+)?)", export_text)]
     excel_fonts = [float(value) for value in re.findall(r"font\s*:\s*\{[^}]*?size\s*:\s*(\d+(?:\.\d+)?)", export_text)]
@@ -755,10 +777,12 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
         "formats": ["xlsx", "pdf", "pptx"],
         "minimumFontPt": 10,
         "explicitFontRulesChecked": len(pdf_fonts) + len(excel_fonts),
-        "excel": "landscape, fit-to-one-page-wide, crore values fixed at 2 decimals",
-        "pdf": "A4 landscape, repeating tabular layout, crore values fixed at 2 decimals",
-        "powerPoint": "16:9 canvas, minimum 10pt",
+        "excel": "Data Export is table-only; landscape, fit-to-one-page-wide, crore values fixed at 2 decimals",
+        "pdf": "Data Export is table-only; A4 landscape, repeating tabular layout, crore values fixed at 2 decimals",
+        "powerPoint": "Data Export is table-only; editable tables on a 16:9 canvas, minimum 10pt",
         "freshnessGuards": 3,
+        "securityRulesChecked": len(security_contract),
+        "dataExportRulesChecked": len(data_export_contract),
     }
 
 

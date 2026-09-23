@@ -43,3 +43,11 @@ Every GUI run is protected by four visible mandatory gates: source detection, ca
 Month sensing is automatic. The latest non-zero month found in the uploaded actual workbooks is treated as the reporting/current month, and the preceding months are treated as completed. The computer calendar is only a fallback when no populated actual month can be detected, so a month-end rollover cannot prematurely close provisional data. If the GUI is opened in a new calendar month—or remains open across a month boundary—it automatically reruns the complete simulation, portal refresh, and export refresh workflow using that uploaded reporting cutoff.
 
 The GUI also provides **Completed Through** and **Current / Running Month** selectors. Leave both on Auto for normal operation, or select an explicit consecutive pair such as `JUL 2026` and `AUG 2026`. The chosen pair is validated, recorded in the sync manifest, included in the cache revision, and applied consistently to portal labels, calculations, projections, Excel, PDF, and PowerPoint exports.
+
+## Fixed portal rules
+
+- Portal Admin and export access require their configured password digest plus the visible Neural Shield human check. Export access lasts only for the current browser session.
+- Browser uploads remain disabled. Data refreshes run through `START-MBRLR-LOCAL-SYNC.bat`, which requires six detected current-year workbooks and completes calculation, page and export gates before writing a successful manifest.
+- Data Export page downloads are table-only. Excel, PDF and PowerPoint contain report metadata, headers, visible table rows and table formatting; page cards and narrative content are excluded. Graph values are represented as tables, and the card-only Summary page is omitted.
+- Full master Excel/PDF/PowerPoint downloads remain separate from table-only Data Export downloads.
+- `tools/local_portal_sync.py` enforces these login, export, freshness and GUI-sync contracts on every refresh so later data updates cannot silently remove them.

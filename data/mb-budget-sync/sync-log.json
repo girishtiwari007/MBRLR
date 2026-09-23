@@ -1,6 +1,6 @@
 [
   {
-    "at": "2026-09-22T17:27:07+05:30",
+    "at": "2026-09-23T23:25:18+05:30",
     "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
     "status": "confirmed",
     "files": [
@@ -8,15 +8,15 @@
       "PU-wise Month-wise Actual: PU-MONTH-ACTUAL.xls",
       "Department / SMH PU-wise Budget: PU-DEPT-DEMAND-SMH-BUDGET.xls",
       "Department / SMH PU-wise Month-wise Actual: PU-DEPT-DEMAND-SMH-ACTUAL.xls",
-      "Demand/SMH Budget Summary: DEMAND-SMH-BUGDET.xls",
+      "Demand/SMH Budget Summary: demand-smh-budget.xls",
       "Demand/SMH Month-wise Actual Summary: DEMAND-SMH-ACTUAL.xls"
     ],
     "summary": {
       "puBudgetRows": 47,
       "puMonthRows": 40,
-      "detailRows": 914,
+      "detailRows": 910,
       "detailBudget": 34145286,
-      "detailActual": 17556099,
+      "detailActual": 17273494,
       "demandRows": 12,
       "latestMonth": "SEP 2026",
       "demandMainAECompleted": 16528995,
