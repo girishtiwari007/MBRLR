@@ -38,6 +38,7 @@
     [...rows].filter(visible).forEach((row,i)=>{
       result[i] ||= []; let col=0;
       for(const cell of row.cells){
+        if(!visible(cell))continue;
         while(result[i][col]!==undefined) col++;
         const text=cellText(cell);
         for(let y=0;y<(cell.rowSpan||1);y++) for(let x=0;x<(cell.colSpan||1);x++){
@@ -47,6 +48,39 @@
       }
     });
     return result;
+  }
+  function controlName(el){
+    const explicit=el.getAttribute?.('aria-label')||document.querySelector?.(`label[for="${el.id}"]`)?.textContent;
+    const parent=el.closest?.('label');
+    return clean(explicit||parent?.childNodes?.[0]?.textContent||el.name||el.id||'Filter');
+  }
+  function viewMeta(id,report,audit){
+    const section=document.getElementById('tab-'+id),controls=[],seen=new Set();
+    const addControl=el=>{
+      if(!el||seen.has(el)||!visible(el)||/password/i.test(el.type||''))return;
+      seen.add(el);const name=controlName(el);
+      if(el.tagName==='SELECT'){
+        const value=clean(el.selectedOptions?.[0]?.textContent||el.value);
+        if(value&&!/^all\b/i.test(value))controls.push(`${name}: ${value}`);
+      }else if(el.type==='checkbox'||el.type==='radio'){
+        if(el.checked)controls.push(`${name}: On`);
+      }else{const value=clean(el.value);if(value)controls.push(`${name}: ${value}`);}
+    };
+    ['typeFilter','liabFilter','activityFilter','puFocusFilter','utilCompare','utilPctFilter','quickSearch'].forEach(key=>addControl(document.getElementById(key)));
+    section?.querySelectorAll('select,input[type="search"],input[type="text"],input[type="number"],input[type="checkbox"],input[type="radio"]').forEach(addControl);
+    const sorts=[];
+    section?.querySelectorAll('table').forEach(table=>{
+      const active=table.querySelector('th[aria-sort="ascending"],th[aria-sort="descending"],th.sort-asc,th.sort-desc');
+      if(active)sorts.push(`${clean(active.textContent)} ${active.getAttribute('aria-sort')||(active.classList.contains('sort-desc')?'descending':'ascending')}`);
+    });
+    const status=root.getMonthStatus?.()||{},bp=root.getBPModeStatus?.()||{},cur=status.cur||{};
+    const completed=bp.bpThrough?`${bp.bpThrough.label} ${bp.bpThrough.year||''}`.trim():'None';
+    const running=cur.label?`${cur.label} ${cur.year||''}`.trim():'Not selected';
+    const generated=new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+    return {title:report.title,basis:`Completed through ${completed}; running month ${running}`,
+      filters:controls.length?controls.join(' | '):'No active filters; all visible rows',
+      sort:sorts.length?sorts.join(' | '):'Current displayed order',generated,source:`Source ${audit.id}`,
+      period:`${report.title} | ${generated}`};
   }
   function capture(id){
     const section=(document.body.classList.contains('bi-view-active') && id===(root.activeTabName?.()||id) && document.getElementById('biViewPanel'))
@@ -123,38 +157,43 @@
     for(const report of reports){
       const tables=[...report.tables,...(report.notes.length?[{title:'Review',headers:['Review note'],rows:report.notes.map(n=>[n])}]:[])];
       for(const table of tables) for(const part of bands(table)){
-        const ws=wb.addWorksheet(`${++count} ${report.title}`.slice(0,31),{pageSetup:{orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.35,right:.35,top:.5,bottom:.45,header:.2,footer:.2}},views:[{state:'frozen',ySplit:6}]});
+        const ws=wb.addWorksheet(`${++count} ${report.title}`.slice(0,31),{pageSetup:{orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.35,right:.35,top:.5,bottom:.45,header:.2,footer:.2}},views:[{state:'frozen',ySplit:8}]});
         ws.addRow(['NORTHERN RAILWAY - MORADABAD DIVISION']);
         ws.addRow([PORTAL_BRAND]);
-        ws.addRow([report.title+' - '+part.title]);ws.addRow([meta.period]);ws.addRow(['Displayed values and units; '+meta.filters]);ws.addRow(part.headers);
+        ws.addRow([report.title+' - '+part.title]);
+        ws.addRow(['Reporting basis: '+meta.basis]);
+        ws.addRow(['Filters / search: '+meta.filters]);
+        ws.addRow(['Sort order: '+meta.sort]);
+        ws.addRow(['Generated: '+meta.generated+'; '+meta.source]);
+        ws.addRow(part.headers);
         part.rows.forEach(r=>ws.addRow(r.map((v,c)=>typed(v,c,part.headers[c]))));
         const widths=part.headers.map((h,c)=>{
           const maxLen=Math.max(String(h||'').length,...part.rows.slice(0,80).map(r=>String(r[c]??'').split('\n').reduce((m,line)=>Math.max(m,line.length),0)));
           return Math.max(12,Math.min(part.headers.length===1?110:34,maxLen+3));
         });
         ws.columns=widths.map(width=>({width}));
-        for(let r=1;r<=5;r++)if(part.headers.length>1)ws.mergeCells(r,1,r,part.headers.length);
-        ws.autoFilter={from:{row:6,column:1},to:{row:Math.max(6,ws.rowCount),column:part.headers.length}};
+        for(let r=1;r<=7;r++)if(part.headers.length>1)ws.mergeCells(r,1,r,part.headers.length);
+        ws.autoFilter={from:{row:8,column:1},to:{row:Math.max(8,ws.rowCount),column:part.headers.length}};
         ws.eachRow((row,i)=>{
           row.height=i<=4?30:Math.max(24,...row.values.slice(1).map((v,idx)=>{
             const width=widths[Math.max(0,idx-1)] || 18;
             const lines=String(v??'').split('\n');
             return lines.reduce((sum,line)=>sum+Math.max(1,Math.ceil(line.length/Math.max(width-3,10))),0)*13+8;
           }));
-          const bodyStyle=i>6?part.rowStyles?.[i-7]:'';
+          const bodyStyle=i>8?part.rowStyles?.[i-9]:'';
           const rowFill=fillForStyle(bodyStyle);
           row.eachCell({includeEmpty:true},cell=>{
-            cell.font={name:'Times New Roman',size:10,bold:i<=6};
+            cell.font={name:'Times New Roman',size:10,bold:i<=8};
             cell.alignment={vertical:'middle',wrapText:true};
             cell.border={top:{style:'thin',color:{argb:'FF000000'}},left:{style:'thin',color:{argb:'FF000000'}},bottom:{style:'thin',color:{argb:'FF000000'}},right:{style:'thin',color:{argb:'FF000000'}}};
             if(typeof cell.value==='number')cell.numFmt='#,##0.00;[Red]-#,##0.00';
             if(i<=2){cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF17365D'}};cell.font={name:'Times New Roman',size:12,bold:true,color:{argb:'FFFFFFFF'}};}
             else if(i===3){cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD2E2F4'}};cell.font={name:'Times New Roman',size:11,bold:true,color:{argb:'FF17365D'}};}
-            else if(i===6) {cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF17365D'}};cell.font={name:'Times New Roman',size:10,bold:true,color:{argb:'FFFFFFFF'}};}
+            else if(i===8) {cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF17365D'}};cell.font={name:'Times New Roman',size:10,bold:true,color:{argb:'FFFFFFFF'}};}
             else if(rowFill){cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:rowFill}};}
           });
         });
-        ws.pageSetup.printTitlesRow='1:6';ws.pageSetup.printArea=`A1:${ws.getColumn(part.headers.length).letter}${ws.rowCount}`;
+        ws.pageSetup.printTitlesRow='1:8';ws.pageSetup.printArea=`A1:${ws.getColumn(part.headers.length).letter}${ws.rowCount}`;
         ws.headerFooter.oddFooter='&LFor Official Use Only&RPage &P of &N';
       }
     }
@@ -166,7 +205,7 @@
     const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();let started=false;
     for(const report of reports) for(const table of [...report.tables,...(report.notes.length?[{title:'Review',headers:['Review note'],rows:report.notes.map(n=>[n])}]:[])])for(const part of bands(table)){
       if(started)doc.addPage();started=true;
-      doc.autoTable({head:[part.headers],body:part.rows.map(r=>r.map(v=>typeof v==='number'?v.toFixed(2):v)),startY:92,margin:{top:92,bottom:35,left:32,right:32},theme:'grid',showHead:'everyPage',styles:{font:'TimesNewRoman',fontSize:10,cellPadding:4,overflow:'linebreak',lineColor:[0,0,0],lineWidth:.35},headStyles:{fillColor:[23,54,93],fontStyle:'bold',lineColor:[0,0,0]},alternateRowStyles:{fillColor:[245,248,251]},rowPageBreak:'avoid',didParseCell:data=>{
+      doc.autoTable({head:[part.headers],body:part.rows.map(r=>r.map(v=>typeof v==='number'?v.toFixed(2):v)),startY:113,margin:{top:113,bottom:35,left:32,right:32},theme:'grid',showHead:'everyPage',styles:{font:'TimesNewRoman',fontSize:10,cellPadding:4,overflow:'linebreak',lineColor:[0,0,0],lineWidth:.35},headStyles:{fillColor:[23,54,93],fontStyle:'bold',lineColor:[0,0,0]},alternateRowStyles:{fillColor:[245,248,251]},rowPageBreak:'avoid',didParseCell:data=>{
         if(data.section==='body'){
           const fill=pdfFillForStyle(part.rowStyles?.[data.row.index]);
           if(fill)data.cell.styles.fillColor=fill;
@@ -174,8 +213,10 @@
       },didDrawPage:()=>{
         doc.setFont('TimesNewRoman','bold');doc.setFontSize(14);doc.setTextColor(23,54,93);doc.text(report.title,32,27);
         doc.setFont('TimesNewRoman','normal');doc.setFontSize(10);doc.setTextColor(40);
-        doc.text(PORTAL_BRAND,32,43);doc.text(meta.period,32,57);
-        doc.text(doc.splitTextToSize(part.title+'; '+meta.filters,W-64).slice(0,2),32,71);
+        doc.text(PORTAL_BRAND,32,43);doc.text('Reporting basis: '+meta.basis,32,57);
+        doc.text(doc.splitTextToSize('Filters / search: '+meta.filters,W-64).slice(0,2),32,71);
+        doc.text(doc.splitTextToSize('Sort order: '+meta.sort,W-64).slice(0,1),32,91);
+        doc.text('Generated: '+meta.generated,32,105);
         doc.text('Displayed values and units. For Official Use Only.',32,H-18);doc.text(String(doc.internal.getCurrentPageInfo().pageNumber),W-32,H-18,{align:'right'});
       }});
     }
@@ -202,8 +243,8 @@
     }
     const cover=slide('Ordinary Working Expenses Review','Current View Export');
     cover.addText(reports.map(r=>r.title).join('\n'),{x:.65,y:1.55,w:11.9,h:2.6,fontSize:20,bold:true,color:'17365D',breakLine:false,fit:'shrink',margin:0});
-    cover.addText(meta.filters,{x:.65,y:4.55,w:11.9,h:.8,fontSize:12,color:'40566E',fit:'shrink',margin:0});
-    cover.addText('Generated from the visible portal view: filters, sort order, selected rows, table highlights and available chart data.',{x:.65,y:5.55,w:11.9,h:.7,fontSize:12,color:'111111',fit:'shrink',margin:0});
+    cover.addText('Reporting basis: '+meta.basis+'\nFilters / search: '+meta.filters+'\nSort order: '+meta.sort+'\nGenerated: '+meta.generated,{x:.65,y:4.1,w:11.9,h:1.35,fontSize:12,color:'40566E',fit:'shrink',margin:0});
+    cover.addText('Generated from the visible portal view, including its current columns, row order, search results and table highlights.',{x:.65,y:5.65,w:11.9,h:.7,fontSize:12,color:'111111',fit:'shrink',margin:0});
     for(const report of reports){
       const summary=slide(report.title+' - summary','Portal current view summary');
       addBullets(summary,report.notes.length?report.notes:report.tables.flatMap(t=>t.rows.slice(0,3).map(r=>r.slice(0,3).join(' | '))),1.35,'Visible cards / review notes');
@@ -256,17 +297,16 @@
       await new Promise(resolve=>setTimeout(resolve,200));
       const chosen=which==='all'?pages:(pages.some(p=>p[0]===which)?pages.filter(p=>p[0]===which):[[which,which]]);
       const reports=chosen.map(p=>capture(p[0]));
-      const status=getMonthStatus();
-      const meta={period:`Completed through ${getBPModeStatus().bpThrough?.label||'NONE'}; running ${status.cur.label} ${status.cur.year}. Generated ${new Date().toLocaleDateString('en-IN')}`,filters:'Current displayed filters; amounts retain displayed units. Source '+audit.id};
-      const name='MBRLR_'+which+'_current_view_'+new Date().toISOString().slice(0,10);
+      const meta=viewMeta(which,reports[0],audit);
+      const safeTitle=reports[0].title.replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+      const name='MBRLR_'+safeTitle+'_visible_view_'+new Date().toISOString().slice(0,10);
       if(format==='Excel')saveBlob(new Blob([await excel(reports,meta,root.ExcelJS)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),name+'.xlsx');
       else if(format==='PDF')(await pdf(reports,meta,root.jspdf.jsPDF,await fonts())).save(name+'.pdf');
       else await (await ppt(reports,meta,root.PptxGenJS)).writeFile({fileName:name+'.pptx'});
     }catch(e){showPortalNotice('Displayed export failed: '+e.message,'err');}
   }
   function init(){
-    const box=document.getElementById('displayExportPages');if(!box)return;
-    box.innerHTML=pages.map(([id,title],i)=>`<tr><td>${i+1}. ${title}</td>${['Excel','PDF','PPT'].map(f=>`<td><button type="button" onclick="DisplayExport.run('${f}','${id}')">${f}</button></td>`).join('')}</tr>`).join('');
+    const box=document.getElementById('displayExportPages');if(box)box.innerHTML='';
     pages.forEach(([id])=>{
       const section=document.getElementById('tab-'+id);
       if(section)section.querySelectorAll('.display-export-actions').forEach(bar=>bar.remove());
@@ -279,6 +319,6 @@
       for(const name of ['times','helvetica','TimesNewRoman'])doc.addFont(style+'.ttf',name,style);
     }
   }
-  root.DisplayExport={pages,grid,bands,typed,capture,excel,pdf,ppt,run,init,configurePDF,fonts};
+  root.DisplayExport={pages,grid,bands,typed,capture,viewMeta,excel,pdf,ppt,run,init,configurePDF,fonts};
   if(typeof module!=='undefined')module.exports=root.DisplayExport;
 })(typeof window!=='undefined'?window:globalThis);

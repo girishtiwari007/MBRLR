@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260922-history-compare19-autoexports-9787bac88361';
+const ASSET_VERSION = '20260923-unified-visible-export';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -2599,8 +2599,8 @@ function activeTabName() {
 
 function exportCurrentView(format) {
   const tab = activeTabName();
-  if (tab === 'dataexport' || tab === 'admin' || tab === 'backup') {
-    showPortalNotice('Current-view export is available on report pages. Use Data Export for combined reports.', 'warn');
+  if (['dataexport','admin','backup','upload','remarks','additionalremarks'].includes(tab)) {
+    showPortalNotice('Current-view export is available on analysis and report pages. Use Download Full Dataset / Full Report for master exports.', 'warn');
     return;
   }
   if (!window.DisplayExport || typeof DisplayExport.run !== 'function') {
@@ -2608,6 +2608,39 @@ function exportCurrentView(format) {
     return;
   }
   DisplayExport.run(format, tab);
+  const menu = document.getElementById('reportExportMenu');
+  if (menu) menu.open = false;
+}
+
+function updateReportExportMenu(tab=activeTabName()) {
+  const menu = document.getElementById('reportExportMenu');
+  const title = document.getElementById('reportExportTitle');
+  const label = document.getElementById('reportExportCurrentLabel');
+  if (!menu) return;
+  const excluded = new Set(['dataexport','admin','backup','upload','remarks','additionalremarks']);
+  const report = currentReportTitle(tab);
+  if (report.title === 'Current Report' && window.DisplayExport?.pages) {
+    const page = DisplayExport.pages.find(item => item[0] === tab);
+    if (page) report.title = page[1];
+  }
+  const canExportView = !excluded.has(tab) && !!document.getElementById('tab-' + tab);
+  menu.classList.toggle('no-current-view', !canExportView);
+  if (title) title.textContent = canExportView ? report.title : 'Full portal downloads';
+  if (label) label.textContent = canExportView ? report.title : 'Master exports';
+  menu.querySelectorAll('[data-current-export]').forEach(button => {
+    button.disabled = !canExportView;
+    button.setAttribute('aria-hidden', canExportView ? 'false' : 'true');
+  });
+}
+
+function initReportExportMenu() {
+  updateReportExportMenu();
+  if (document.body.dataset.reportExportBound === '1') return;
+  document.body.dataset.reportExportBound = '1';
+  document.addEventListener('click', event => {
+    const menu = document.getElementById('reportExportMenu');
+    if (menu && menu.open && !menu.contains(event.target)) menu.open = false;
+  });
 }
 
 function showFilterAlert(message) {
@@ -4007,6 +4040,7 @@ function switchTab(name) {
   document.querySelectorAll('.tab-content').forEach(tc => {
     tc.classList.toggle('active', tc.id==='tab-'+name);
   });
+  updateReportExportMenu(name);
   if(_pp){ _pp.style.opacity='0'; _pp.style.transform='translateY(6px)'; }
   if(['liability','monthwise','pumaster'].includes(name)){setTimeout(renderAll,50);}
   if(name==='upload') { renderCurDataGrid(); updateHostedUploadGuard(); }
@@ -4020,6 +4054,7 @@ window.jumpReport = jumpReport;
 window.switchTab = switchTab;
 window.activeTabName = activeTabName;
 window.exportCurrentView = exportCurrentView;
+window.updateReportExportMenu = updateReportExportMenu;
 window.filterPUChecklist = filterPUChecklist;
 window.closePUDrawer = closePUDrawer;
 window.saveAdminDesign = saveAdminDesign;
@@ -8896,6 +8931,7 @@ function renderMonthwise() {
 function renderAll() {
   initPopup();
   initExportButtons();
+  initReportExportMenu();
   initReportMenuButtons();
   initTableSortObserver();
   initDashboardDock();

@@ -10,7 +10,9 @@ const ctx={console,Blob,TextEncoder,TextDecoder,Uint8Array,Uint32Array,DataView,
  document:{body:{dataset:{},classList:{add(){},remove(){},contains(){return false;}}},getElementById:()=>null,querySelectorAll:()=>[],querySelector:()=>null,addEventListener(){}},
  addEventListener(){},confirm:()=>true,alert:console.log};
 ctx.window=ctx;ctx.globalThis=ctx;ctx.crypto=require('crypto').webcrypto;
-const {createCanvas}=require('C:/Users/HP/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/@napi-rs/canvas');
+const os=require('os');
+const bundledModules=path.join(os.homedir(),'.cache','codex-runtimes','codex-primary-runtime','dependencies','node','node_modules');
+const {createCanvas}=require(path.join(bundledModules,'@napi-rs','canvas'));
 ctx.document.createElement=tag=>{if(tag==='canvas')return createCanvas(1,1);throw new Error('Unsupported test DOM element: '+tag);};
 ctx.ExcelJS=require(path.join(root,'assets/vendor/exceljs.min.js'));
 ctx.XLSX=require(path.join(root,'assets/vendor/xlsx.full.min.js'));
