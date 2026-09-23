@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="portal-build" content="rlp-mbd-2026-09-22-history-compare19-9787bac88361">
 <title>Ordinary Working Expenses (OWE) PORTAL - Moradabad Division | Northern Railway</title>
-<link rel="stylesheet" href="assets/css/main.css?v=20260923-unified-visible-export">
+<link rel="stylesheet" href="assets/css/main.css?v=20260923-standard-export-select">
 <link id="themeStylesheet" rel="stylesheet" href="">
 <script src="assets/vendor/xlsx.full.min.js"></script>
 </head>
@@ -202,39 +202,26 @@
     <div class="quick-results" id="quickResults"></div>
   </div>
   <div class="smart-actions">
-    <div class="preview-style-picker" aria-label="Professional preview style">
-      <label for="previewStyleSelect">Preview Style</label>
-      <select id="previewStyleSelect">
-        <option value="a">A - Railway Navy + Gold</option>
-        <option value="b">B - Dashboard Blue / White</option>
-        <option value="c">C - Govt Report Compact</option>
-      </select>
-    </div>
     <div class="bi-mode-toggle" id="reportViewToggle" aria-label="Report view mode">
       <button type="button" class="active" data-report-view-mode="classic">Classic Table</button>
       <button type="button" data-report-view-mode="bi">BI-AI View</button>
     </div>
-    <details class="report-export-menu" id="reportExportMenu">
-      <summary aria-label="Open Report and Export menu"><span>Report / Export</span><small id="reportExportCurrentLabel">Current page</small></summary>
-      <div class="report-export-popover">
-        <div class="report-export-head">
-          <strong id="reportExportTitle">Current report</strong>
-          <span>Visible view only</span>
-        </div>
-        <div class="report-export-group">
-          <div class="report-export-group-title">Export current visible view</div>
-          <button type="button" data-current-export="Excel" onclick="exportCurrentView('Excel')"><b>Excel</b><small>Visible rows and columns</small></button>
-          <button type="button" data-current-export="PDF" onclick="exportCurrentView('PDF')"><b>PDF</b><small>Current report layout</small></button>
-          <button type="button" data-current-export="PPT" onclick="exportCurrentView('PPT')"><b>PowerPoint</b><small>Editable current-view deck</small></button>
-        </div>
-        <div class="report-export-group report-export-master">
-          <div class="report-export-group-title">Download Full Dataset / Full Report</div>
-          <button type="button" onclick="downloadExcel()"><b>Full Excel dataset</b><small>All portal report data</small></button>
-          <button type="button" onclick="downloadPDFReport()"><b>Full PDF report</b><small>Complete portal report</small></button>
-          <button type="button" onclick="downloadPowerPoint()"><b>Full PowerPoint</b><small>Complete presentation</small></button>
-        </div>
-      </div>
-    </details>
+    <label class="report-export-select" id="reportExportMenu">
+      <span>Report / Export</span>
+      <select id="reportExportSelect" aria-label="Report and export options" onchange="handleReportExportSelection(this)">
+        <option value="">Select export...</option>
+        <optgroup label="Current visible view" id="currentViewExportOptions">
+          <option value="view:Excel">Excel - current visible view</option>
+          <option value="view:PDF">PDF - current visible view</option>
+          <option value="view:PPT">PowerPoint - current visible view</option>
+        </optgroup>
+        <optgroup label="Download Full Dataset / Full Report">
+          <option value="full:Excel">Excel - full dataset</option>
+          <option value="full:PDF">PDF - full report</option>
+          <option value="full:PPT">PowerPoint - full report</option>
+        </optgroup>
+      </select>
+    </label>
     <button type="button" id="saveViewBtn">Save View</button>
     <button type="button" id="startTourBtn">Tour</button>
     <button type="button" id="officerBriefBtn">Officer Brief</button>
@@ -566,6 +553,10 @@
         <option value="all">All PUs</option>
         <option value="over">Overspent / High Risk</option>
       </select>
+      <div class="ai-summary-expand-actions">
+        <button type="button" onclick="setAISummaryExpanded(true)">Expand all</button>
+        <button type="button" onclick="setAISummaryExpanded(false)">Collapse all</button>
+      </div>
     </div>
     <div id="aiTrendSummary" class="ai-summary-list"></div>
   </div>
@@ -964,13 +955,38 @@
 </div>
 
 <div class="tab-content" id="tab-dataexport">
-  <div class="export-hub-info">
-    <h2>Report / Export</h2>
-    <p>Open the report page you want, apply its filters, search and sort order, then use the single <strong>Report / Export</strong> menu above. Current-view downloads contain only what is visible on that page.</p>
-    <div class="export-hub-cards">
-      <div><strong>Current visible view</strong><span>Active page, visible rows and columns, selected filters, search results, sort order and reporting basis.</span></div>
-      <div><strong>Download Full Dataset / Full Report</strong><span>Use the separately labelled master options in the same menu when a complete portal export is required.</span></div>
-      <div><strong>Public GitHub Pages</strong><span>All files continue to be generated in the browser with no server dependency.</span></div>
+  <div style="padding:24px;background:white;color:#17365D">
+    <h2>Data Export</h2>
+    <p>Download Excel, PDF or PowerPoint for every visible portal report. Page-wise files use that page's current filters, search results, sort order, visible columns and reporting basis.</p>
+    <p>Combined exports capture the currently rendered report pages. Use the separate full downloads when the complete master dataset or full report is required.</p>
+    <div class="data-export-tabs">
+      <button type="button" class="active" data-export-panel="reports" onclick="showDataExportPanel('reports')">Report exports</button>
+      <button type="button" data-export-panel="history" onclick="showDataExportPanel('history')">History Compare</button>
+    </div>
+    <div class="data-export-panel active" id="dataExportPanelReports">
+      <h3>All visible portal pages</h3>
+      <button onclick="DisplayExport.run('Excel','all')">Combined Excel</button>
+      <button onclick="DisplayExport.run('PDF','all')">Combined PDF</button>
+      <button onclick="DisplayExport.run('PPT','all')">Combined PowerPoint</button>
+      <h3>Page-wise reports</h3>
+      <table style="width:100%;text-align:left"><thead><tr><th>Report page</th><th>Excel</th><th>PDF</th><th>PowerPoint</th></tr></thead><tbody id="displayExportPages"></tbody></table>
+      <h3>Full master downloads</h3>
+      <button onclick="downloadExcel()">Download Full Dataset - Excel</button>
+      <button onclick="downloadPDFReport()">Download Full Report - PDF</button>
+      <button onclick="downloadPowerPoint()">Download Full Report - PowerPoint</button>
+      <h3>SMH matrix reports</h3>
+      <button onclick="downloadSMHMatrixPDF('dual')">SMH Matrix PDF - Thousands + Crores</button>
+    </div>
+    <div class="data-export-panel" id="dataExportPanelHistory">
+      <h3>History Compare exports</h3>
+      <p>Uses the selected From Sync / To Sync, current search/filter and displayed sorting from History Compare.</p>
+      <div class="history-inline-controls">
+        <label>From Sync <select id="historyExportFrom" onchange="syncHistoryExportSelection('from', this.value)"></select></label>
+        <label>To Sync <select id="historyExportTo" onchange="syncHistoryExportSelection('to', this.value)"></select></label>
+      </div>
+      <button onclick="downloadHistoryCompareExport('Excel')">History Compare Excel</button>
+      <button onclick="downloadHistoryCompareExport('PDF')">History Compare PDF</button>
+      <button onclick="downloadHistoryCompareExport('PPT')">History Compare PowerPoint</button>
     </div>
   </div>
 </div>
@@ -1127,8 +1143,8 @@
 <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
 <script src="assets/js/smh-matrix-export.js?v=20260922-history-compare19-autoexports-9787bac88361"></script>
 <script src="assets/vendor/pptxgen.bundle.js"></script>
-<script src="assets/js/display-export.js?v=20260923-unified-visible-export"></script>
-<script src="assets/js/app.js?v=20260923-unified-visible-export"></script>
+<script src="assets/js/display-export.js?v=20260923-standard-export-select"></script>
+<script src="assets/js/app.js?v=20260923-standard-export-select"></script>
 <script>DisplayExport.init();</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

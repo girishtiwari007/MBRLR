@@ -306,7 +306,8 @@
     }catch(e){showPortalNotice('Displayed export failed: '+e.message,'err');}
   }
   function init(){
-    const box=document.getElementById('displayExportPages');if(box)box.innerHTML='';
+    const box=document.getElementById('displayExportPages');
+    if(box)box.innerHTML=pages.map(([id,title],i)=>`<tr><td>${i+1}. ${title}</td>${['Excel','PDF','PPT'].map(format=>`<td><button type="button" onclick="DisplayExport.run('${format}','${id}')">${format==='PPT'?'PowerPoint':format}</button></td>`).join('')}</tr>`).join('');
     pages.forEach(([id])=>{
       const section=document.getElementById('tab-'+id);
       if(section)section.querySelectorAll('.display-export-actions').forEach(bar=>bar.remove());

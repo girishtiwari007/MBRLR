@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260923-unified-visible-export';
+const ASSET_VERSION = '20260923-standard-export-select';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
@@ -2608,14 +2608,21 @@ function exportCurrentView(format) {
     return;
   }
   DisplayExport.run(format, tab);
-  const menu = document.getElementById('reportExportMenu');
-  if (menu) menu.open = false;
+}
+
+function handleReportExportSelection(select) {
+  const value = select && select.value;
+  if (!value) return;
+  select.value = '';
+  const [scope, format] = value.split(':');
+  if (scope === 'view') exportCurrentView(format);
+  else if (format === 'Excel') downloadExcel();
+  else if (format === 'PDF') downloadPDFReport();
+  else if (format === 'PPT') downloadPowerPoint();
 }
 
 function updateReportExportMenu(tab=activeTabName()) {
   const menu = document.getElementById('reportExportMenu');
-  const title = document.getElementById('reportExportTitle');
-  const label = document.getElementById('reportExportCurrentLabel');
   if (!menu) return;
   const excluded = new Set(['dataexport','admin','backup','upload','remarks','additionalremarks']);
   const report = currentReportTitle(tab);
@@ -2624,23 +2631,17 @@ function updateReportExportMenu(tab=activeTabName()) {
     if (page) report.title = page[1];
   }
   const canExportView = !excluded.has(tab) && !!document.getElementById('tab-' + tab);
+  menu.hidden = excluded.has(tab);
   menu.classList.toggle('no-current-view', !canExportView);
-  if (title) title.textContent = canExportView ? report.title : 'Full portal downloads';
-  if (label) label.textContent = canExportView ? report.title : 'Master exports';
-  menu.querySelectorAll('[data-current-export]').forEach(button => {
-    button.disabled = !canExportView;
-    button.setAttribute('aria-hidden', canExportView ? 'false' : 'true');
-  });
+  menu.title = canExportView ? `Export ${report.title}` : 'Full portal downloads';
+  const group = document.getElementById('currentViewExportOptions');
+  if (group) group.disabled = !canExportView;
+  const select = document.getElementById('reportExportSelect');
+  if (select) select.value = '';
 }
 
 function initReportExportMenu() {
   updateReportExportMenu();
-  if (document.body.dataset.reportExportBound === '1') return;
-  document.body.dataset.reportExportBound = '1';
-  document.addEventListener('click', event => {
-    const menu = document.getElementById('reportExportMenu');
-    if (menu && menu.open && !menu.contains(event.target)) menu.open = false;
-  });
 }
 
 function showFilterAlert(message) {
@@ -4054,6 +4055,7 @@ window.jumpReport = jumpReport;
 window.switchTab = switchTab;
 window.activeTabName = activeTabName;
 window.exportCurrentView = exportCurrentView;
+window.handleReportExportSelection = handleReportExportSelection;
 window.updateReportExportMenu = updateReportExportMenu;
 window.filterPUChecklist = filterPUChecklist;
 window.closePUDrawer = closePUDrawer;
@@ -4720,6 +4722,41 @@ function refreshDynamicAI(reason='data-refresh') {
   return _latestAIAnomalyDigest;
 }
 
+function initAISummaryExpanders() {
+  const wrap = document.getElementById('aiTrendSummary');
+  if (!wrap) return;
+  [...wrap.children].forEach((section, index) => {
+    if (section.querySelector(':scope > .ai-summary-toggle')) return;
+    const heading = section.querySelector('.ai-pu-title,.ai-digest-head strong')?.textContent || `Summary ${index + 1}`;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ai-summary-toggle';
+    button.setAttribute('aria-expanded', 'true');
+    button.innerHTML = `<span>${htmlSafe(heading)}</span><b>Collapse</b>`;
+    button.addEventListener('click', () => {
+      const collapsed = section.classList.toggle('ai-summary-collapsed');
+      button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      button.querySelector('b').textContent = collapsed ? 'Expand' : 'Collapse';
+    });
+    section.prepend(button);
+  });
+}
+
+function setAISummaryExpanded(expanded) {
+  const wrap = document.getElementById('aiTrendSummary');
+  if (!wrap) return;
+  wrap.querySelectorAll(':scope > *').forEach(section => {
+    section.classList.toggle('ai-summary-collapsed', !expanded);
+    const button = section.querySelector(':scope > .ai-summary-toggle');
+    if (button) {
+      button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      const state = button.querySelector('b');
+      if (state) state.textContent = expanded ? 'Collapse' : 'Expand';
+    }
+  });
+}
+window.setAISummaryExpanded = setAISummaryExpanded;
+
 function renderAITrendSummary() {
   const wrap = document.getElementById('aiTrendSummary');
   if (!wrap) return;
@@ -4740,6 +4777,7 @@ function renderAITrendSummary() {
   }
   if (!items.length) {
     wrap.innerHTML = '<div class="ai-pu-card risk-ok"><ul class="ai-bullets"><li>No high-risk or watch-list PU found for the selected scope.</li></ul></div>';
+    initAISummaryExpanders();
     refreshBIViewSoon();
     return;
   }
@@ -4841,6 +4879,7 @@ function renderAITrendSummary() {
       </ul></div>
     </div>`;
   }).join('');
+  initAISummaryExpanders();
 }
 
 function detailCr(value) {
