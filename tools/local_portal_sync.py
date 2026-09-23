@@ -1111,10 +1111,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
             "data/mb-budget-sync",
             "tools/local_portal_sync.py",
             "tools/mbrlr_sync_gui.py",
-            "tools/local_portal_server.py",
-            "START-LOCAL-PORTAL-SERVER.bat",
             "START-MBRLR-LOCAL-SYNC.bat",
-            "RUN-LOCAL-DATA-SYNC.bat",
             "README.md",
         ]:
             src = root / rel
