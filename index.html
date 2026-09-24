@@ -96,7 +96,7 @@
       <div class="report-menu-title">Report Menu</div>
       <div class="report-menu-sub">Direct jump to report pages</div>
     </div>
-    <span class="report-menu-badge">NEW OPTIONS</span>
+    <span class="report-menu-badge">Finance tools</span>
   </div>
   <div class="report-menu-actions">
     <button class="report-menu-btn" type="button" data-report-tab="summary" aria-pressed="false">
@@ -129,14 +129,14 @@
     <button class="report-menu-btn" type="button" data-report-tab="trend" aria-pressed="false">
       <span>Graphs</span><small>Trend analysis</small>
     </button>
-    <button class="report-menu-btn" type="button" data-report-tab="aitrend" aria-pressed="false">
-      <span>AI Summary</span><small>PU risk remarks</small><em>NEW</em>
+    <button class="report-menu-btn feature-ai" type="button" data-report-tab="aitrend" aria-pressed="false">
+      <span>AI Summary</span><small>Finance insights and PU risk remarks</small><em>AI</em>
     </button>
-    <button class="report-menu-btn" type="button" data-report-tab="dataexport" aria-pressed="false">
-      <span>Data Export</span><small>Editable reports and SMH PDFs</small>
+    <button class="report-menu-btn feature-export" type="button" data-report-tab="dataexport" aria-pressed="false">
+      <span>Data Export</span><small>Excel, PDF, PPT and SMH matrix reports</small><em>EXPORT</em>
     </button>
-    <button class="report-menu-btn" type="button" data-report-tab="historycompare" aria-pressed="false">
-      <span>History Compare</span><small>Sync-to-sync progress</small><em>NEW</em>
+    <button class="report-menu-btn feature-history" type="button" data-report-tab="historycompare" aria-pressed="false">
+      <span>History Compare</span><small>Sync-to-sync budget and actual movement</small><em>SYNC</em>
     </button>
     <button class="report-menu-btn" type="button" data-report-tab="additionalremarks" aria-pressed="false">
       <span>Additional Remarks</span><small>Sources and page notes</small><em>NEW</em>
@@ -957,8 +957,8 @@
 <div class="tab-content" id="tab-dataexport">
   <div style="padding:24px;background:white;color:#17365D">
     <h2>Data Export</h2>
-    <p>Download Excel, PDF or PowerPoint for every visible portal report. Page-wise files use that page's current filters, search results, sort order, visible columns and reporting basis.</p>
-    <p>Combined exports capture the currently rendered report pages. Use the separate full downloads when the complete master dataset or full report is required.</p>
+    <p>Download Excel, PDF or PowerPoint for every visible portal report. Page-wise files export one selected page at a time with clean table headers and respective report data.</p>
+    <p>Combined exports are available only under All visible portal pages. Use the highlighted Report / Export selector on any report page for Current Visible View or that page's Full Data Set.</p>
     <div class="data-export-tabs">
       <button type="button" class="active" data-export-panel="reports" onclick="showDataExportPanel('reports')">Report exports</button>
       <button type="button" data-export-panel="history" onclick="showDataExportPanel('history')">History Compare</button>
@@ -970,10 +970,8 @@
       <button onclick="DisplayExport.run('PPT','all',{tableOnly:true})">Combined PowerPoint</button>
       <h3>Page-wise reports</h3>
       <table style="width:100%;text-align:left"><thead><tr><th>Report page</th><th>Excel</th><th>PDF</th><th>PowerPoint</th></tr></thead><tbody id="displayExportPages"></tbody></table>
-      <h3>Full master downloads</h3>
-      <button onclick="downloadExcel()">Download Full Dataset - Excel</button>
-      <button onclick="downloadPDFReport()">Download Full Report - PDF</button>
-      <button onclick="downloadPowerPoint()">Download Full Report - PowerPoint</button>
+      <h3>Current page full data</h3>
+      <p>Open the required report page and use the highlighted Report / Export selector for that page's Full Data Set. Combined all-page exports are kept only above.</p>
       <h3>SMH matrix reports</h3>
       <button onclick="downloadSMHMatrixPDF('dual')">SMH Matrix PDF - Thousands + Crores</button>
     </div>

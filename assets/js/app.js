@@ -206,7 +206,12 @@ async function doExportLogin() {
   _pendingExportLabel = '';
   showSecurityNotice('EXPORT user unlocked for this browser session.');
   setTimeout(() => {
-    if (pending.startsWith('Display ')) { const parts=pending.split(' '); DisplayExport.run(parts[1],parts[2],{tableOnly:parts[3]==='TableOnly'}); }
+    if (pending.startsWith('Display ')) {
+      const saved = window.__pendingDisplayExport;
+      window.__pendingDisplayExport = null;
+      if (saved && saved.format && saved.which) DisplayExport.run(saved.format, saved.which, saved.options || {});
+      else { const parts=pending.split(' '); DisplayExport.run(parts[1],parts[2],{tableOnly:parts[3]==='TableOnly'}); }
+    }
     else if (pending.startsWith('SMH matrix')) downloadSMHMatrixPDF(pending.includes('dual')?'dual':pending.includes('crore')?'crore':'thousand');
     else if (pending.includes('Excel')) downloadExcel();
     else if (pending.includes('PDF')) downloadPDFReport();
@@ -2607,7 +2612,24 @@ function exportCurrentView(format) {
     showPortalNotice('Displayed export tools are still loading. Please try again.', 'warn');
     return;
   }
-  DisplayExport.run(format, tab);
+  DisplayExport.run(format, tab, {currentView:true});
+}
+
+function exportCurrentTabFull(format) {
+  const tab = activeTabName();
+  if (['admin','backup','upload','remarks','additionalremarks'].includes(tab)) {
+    showPortalNotice('Full page export is available on report pages. Use Data Export for combined portal exports.', 'warn');
+    return;
+  }
+  if (tab === 'dataexport') {
+    showPortalNotice('Use Page-wise reports or All visible portal pages from the Data Export tab.', 'warn');
+    return;
+  }
+  if (!window.DisplayExport || typeof DisplayExport.run !== 'function') {
+    showPortalNotice('Displayed export tools are still loading. Please try again.', 'warn');
+    return;
+  }
+  DisplayExport.run(format, tab, {tableOnly:true, fullPage:true});
 }
 
 function handleReportExportSelection(select) {
@@ -2616,9 +2638,7 @@ function handleReportExportSelection(select) {
   select.value = '';
   const [scope, format] = value.split(':');
   if (scope === 'view') exportCurrentView(format);
-  else if (format === 'Excel') downloadExcel();
-  else if (format === 'PDF') downloadPDFReport();
-  else if (format === 'PPT') downloadPowerPoint();
+  else if (scope === 'full') exportCurrentTabFull(format);
 }
 
 function updateReportExportMenu(tab=activeTabName()) {
@@ -4056,6 +4076,7 @@ window.switchTab = switchTab;
 window.activeTabName = activeTabName;
 window.exportCurrentView = exportCurrentView;
 window.handleReportExportSelection = handleReportExportSelection;
+window.exportCurrentTabFull = exportCurrentTabFull;
 window.updateReportExportMenu = updateReportExportMenu;
 window.filterPUChecklist = filterPUChecklist;
 window.closePUDrawer = closePUDrawer;
@@ -4790,19 +4811,41 @@ function renderAITrendSummary() {
   const overItems = allItems.filter(x => x.overSpent).sort((a,b)=>Math.abs(b.cv.balanceBudget)-Math.abs(a.cv.balanceBudget));
   const noExpenseItems = allItems.filter(x => x.budgetNoExpense).sort((a,b)=>b.budget-a.budget);
   const moveItems = allItems.slice().sort((a,b)=>Math.abs((b.cyCur-b.cyPrev)||0)-Math.abs((a.cyCur-a.cyPrev)||0));
+  const totalAsk = askRows.reduce((s,r)=>s+(r.askAmount||0),0);
+  const totalSurrender = surrenderRows.reduce((s,r)=>s+(r.surrenderAmount||0),0);
+  const totalOverspend = overItems.reduce((s,r)=>s+Math.abs(Number(r.cv && r.cv.balanceBudget) || 0),0);
+  const financePriority = highItems.length || overItems.length || totalAsk > 0
+    ? 'Immediate finance review'
+    : watchItems.length || totalSurrender > 0
+      ? 'Monitor and validate'
+      : 'Routine watch';
+  const financeFocus = overItems[0]
+    ? `PU-${htmlSafe(overItems[0].pu.code)} requires first attention because it is over budget by ${textCr(Math.abs(overItems[0].cv.balanceBudget))}.`
+    : askRows[0]
+      ? `PU-${htmlSafe(askRows[0].pu.code)} is the leading additional-fund signal at ${textCr(askRows[0].askAmount)}.`
+      : surrenderRows[0]
+        ? `PU-${htmlSafe(surrenderRows[0].pu.code)} is the leading saving/surrender signal at ${textCr(surrenderRows[0].surrenderAmount)}.`
+        : 'No immediate PU-level exception is dominating the current review.';
   const digest = `<div class="ai-officer-digest">
     <div class="ai-digest-head">
-      <strong>Officer AI Digest</strong>
+      <strong>Officer AI Digest - Finance Insights</strong>
       <span>Completed-month basis through ${htmlSafe(items[0].actualMonthLabel || 'JUN')} | Running month excluded</span>
     </div>
     <div class="ai-digest-grid">
       <div><span>High / Watch PUs</span><strong>${highItems.length + watchItems.length}</strong><small>High ${highItems.length}, Watch ${watchItems.length}</small></div>
       <div><span>Top Overspend</span><strong>${overItems[0] ? `PU-${htmlSafe(overItems[0].pu.code)}` : '-'}</strong><small>${overItems[0] ? `${textCr(Math.abs(overItems[0].cv.balanceBudget))} over` : 'No over budget PU'}</small></div>
       <div><span>Budget, No Expense</span><strong>${noExpenseItems.length}</strong><small>${noExpenseItems[0] ? `Largest PU-${htmlSafe(noExpenseItems[0].pu.code)} ${textCr(noExpenseItems[0].budget)}` : 'No such case'}</small></div>
-      <div><span>Amount to Ask</span><strong>${textCr(askRows.reduce((s,r)=>s+(r.askAmount||0),0))}</strong><small>${askRows[0] ? `Top PU-${htmlSafe(askRows[0].pu.code)} ${textCr(askRows[0].askAmount)}` : 'No ask signal'}</small></div>
-      <div><span>Possible Surrender</span><strong>${textCr(surrenderRows.reduce((s,r)=>s+(r.surrenderAmount||0),0))}</strong><small>${surrenderRows[0] ? `Top PU-${htmlSafe(surrenderRows[0].pu.code)} ${textCr(surrenderRows[0].surrenderAmount)}` : 'No surrender signal'}</small></div>
+      <div><span>Amount to Ask</span><strong>${textCr(totalAsk)}</strong><small>${askRows[0] ? `Top PU-${htmlSafe(askRows[0].pu.code)} ${textCr(askRows[0].askAmount)}` : 'No ask signal'}</small></div>
+      <div><span>Possible Surrender</span><strong>${textCr(totalSurrender)}</strong><small>${surrenderRows[0] ? `Top PU-${htmlSafe(surrenderRows[0].pu.code)} ${textCr(surrenderRows[0].surrenderAmount)}` : 'No surrender signal'}</small></div>
       <div><span>Largest Month Move</span><strong>${moveItems[0] ? `PU-${htmlSafe(moveItems[0].pu.code)}` : '-'}</strong><small>${moveItems[0] ? `${signedCr(moveItems[0].cyCur-moveItems[0].cyPrev)} from ${htmlSafe(moveItems[0].prevLabel)} to ${htmlSafe(moveItems[0].curLabel)}` : 'No movement'}</small></div>
       <div><span>Highest Risk Score</span><strong>${allItems[0] ? `${allItems[0].riskScore}/100` : '-'}</strong><small>${allItems[0] ? `PU-${htmlSafe(allItems[0].pu.code)} | ${htmlSafe(allItems[0].confidence)} confidence` : 'No scored PU'}</small></div>
+    </div>
+    <div class="ai-finance-insight">
+      <div><strong>Finance priority:</strong> ${htmlSafe(financePriority)}</div>
+      <div><strong>Control focus:</strong> ${financeFocus}</div>
+      <div><strong>Grant pressure:</strong> ${textCr(totalOverspend)} current overspend exposure and ${textCr(totalAsk)} indicative additional-fund requirement from Budget Control signals.</div>
+      <div><strong>Saving review:</strong> ${textCr(totalSurrender)} appears as possible surrender/saving signal, subject to pending bill and committed-liability confirmation.</div>
+      <div><strong>Data confidence:</strong> AI remarks are regenerated from current uploaded data every refresh/sync and use completed-month actuals to avoid partial running-month distortion.</div>
     </div>
     <ul>
       <li>Risk score is rule-based and auditable: overspend, utilisation, forecast excess, low balance, month spike, YoY pressure and budget-with-no-expense.</li>
