@@ -752,11 +752,15 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
         "Table-only page exports": "{tableOnly:true}",
         "Table-only combined exports": "DisplayExport.run('Excel','all',{tableOnly:true})",
         "No card notes in table exports": "const notes=tableOnly?[]:",
-        "Editable PowerPoint table slides": "tableOnly?'Formatted report table'",
-        "Table-data filenames": "'_table_data_'",
+        "Editable PowerPoint table slides": "tableOnly||cleanHeader?'Formatted report table'",
+        "Page-data filenames": "'_page_data_'",
+        "Current-view clean header": "const cleanHeader=!!options.cleanHeader||currentView",
+        "Current-view filenames": "'_current_view_'",
+        "Current-view option": "const currentView=!!options.currentView",
+        "Full page exports stay single-page": "exportCurrentTabFull",
         "Summary excluded from table matrix": "const tablePages=pages.filter(([id])=>id!=='summary')",
     }
-    missing_data_export = [label for label, token in data_export_contract.items() if token not in (html + display_export)]
+    missing_data_export = [label for label, token in data_export_contract.items() if token not in (html + app + display_export)]
     if missing_data_export:
         raise RuntimeError("Data Export contract failed: " + ", ".join(missing_data_export))
     export_text = app[app.index("async function downloadExcel"):app.index("window.downloadHostedUpdatePack")]
