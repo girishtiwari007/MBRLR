@@ -448,15 +448,17 @@ body.professional-preview .history-table-scroll .history-table{margin:0;min-widt
   }
   body.professional-preview .report-menu-sub{display:block}
   body.professional-preview .report-menu-actions{
-    display:grid!important;
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    display:flex!important;
+    flex-wrap:wrap;
+    align-items:stretch;
     gap:1px;
     overflow:visible!important;
     padding:5px;
     background:#e5eaf0;
   }
   body.professional-preview .report-menu-btn{
-    width:100%!important;
+    flex:1 1 auto!important;
+    width:auto!important;
     min-width:0!important;
     min-height:44px;
     padding:7px 8px;
