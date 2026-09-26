@@ -508,7 +508,7 @@
 
     <div id="trendKPIStrip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px"></div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="trend-chart-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       <div class="tchart-wrap" style="grid-column:1/-1">
         <div class="tchart-title" id="mainChartTitle">Monthly Actuals Trend</div>
         <canvas id="trendMainChart" height="80"></canvas>
@@ -1010,7 +1010,7 @@
       <div><h3>Top actual increases</h3><ol id="historyTopActualUp"></ol></div>
       <div><h3>Top actual decreases</h3><ol id="historyTopActualDown"></ol></div>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap history-table-scroll">
       <table class="report-table history-table sortable-report" id="historyCompareTable">
         <thead><tr>
           <th>PU</th><th>Description</th><th>From Budget</th><th>To Budget</th><th>Budget Change</th>
