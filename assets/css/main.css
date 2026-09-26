@@ -2048,6 +2048,32 @@ body.professional-preview .ai-month-table td{
   overflow-wrap:anywhere!important;
 }
 @media(max-width:768px){
+  body.professional-preview .smart-tools{
+    flex-wrap:wrap!important;
+    max-width:calc(100vw - 16px);
+    overflow:hidden;
+  }
+  body.professional-preview .quick-search{
+    flex:1 1 100%!important;
+    min-width:0!important;
+    width:100%;
+  }
+  body.professional-preview .smart-actions{
+    flex:1 1 100%!important;
+    width:100%!important;
+    max-width:100%!important;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    flex-wrap:wrap!important;
+    overflow:hidden!important;
+  }
+  body.professional-preview .smart-actions>*{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+  body.professional-preview .report-export-select{
+    grid-column:1/-1;
+    width:100%;
+  }
   body.professional-preview .report-menu{
     max-width:calc(100vw - 16px);
     overflow:hidden;

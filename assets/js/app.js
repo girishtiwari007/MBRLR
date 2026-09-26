@@ -9,7 +9,7 @@ const PORTAL_THEMES = Object.freeze({
   'control-room': 'assets/css/theme-control-room.css',
   'executive-light': 'assets/css/theme-executive-light.css'
 });
-const ASSET_VERSION = '20260925-history-compare19-autoexports-b5442eaa0504';
+const ASSET_VERSION = '20260926-mobile-overflow-b5442eaa0504';
 
 // Browser-side deterrence only. Sensitive code/data delivered to a browser can
 // still be inspected by a determined user; real confidentiality needs server-side access control.
