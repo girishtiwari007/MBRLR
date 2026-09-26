@@ -28,18 +28,18 @@ body.professional-preview{
 
 /* Compact identity bar */
 body.professional-preview .hdr{
-  height:72px;
+  height:58px;
   padding:0 var(--content-pad);
   gap:16px;
   background:var(--navy);
   border-bottom:3px solid var(--gold);
   box-shadow:0 3px 12px rgba(11,31,51,.18);
 }
-body.professional-preview .emblem{width:44px;height:44px}
+body.professional-preview .emblem{width:36px;height:36px}
 body.professional-preview .ht{text-align:left}
 body.professional-preview .ht h1{
   color:#fff;
-  font-size:21px;
+  font-size:18px;
   line-height:1.1;
   letter-spacing:.1px;
   font-weight:700;
@@ -67,7 +67,7 @@ body.professional-preview .report-menu{
   grid-template-columns:minmax(0,1fr);
   align-items:stretch;
   gap:0;
-  margin:14px var(--content-pad) 10px;
+  margin:8px var(--content-pad) 6px;
   padding:0;
   overflow:visible;
   background:var(--panel);
@@ -98,11 +98,11 @@ body.professional-preview .report-menu-actions{
   display:flex;
   flex-wrap:wrap;
   align-items:stretch;
-  gap:1px;
+  gap:4px;
   min-width:0;
   overflow:visible;
-  padding:5px;
-  background:#e5eaf0;
+  padding:4px;
+  background:#edf1f5;
 }
 body.professional-preview .report-menu-btn{
   position:relative;
@@ -111,11 +111,11 @@ body.professional-preview .report-menu-btn{
   justify-content:center;
   flex:1 1 108px;
   min-width:0;
-  min-height:56px;
-  padding:8px 12px;
-  border:0;
+  min-height:40px;
+  padding:6px 10px;
+  border:1px solid transparent;
   border-bottom:3px solid transparent;
-  border-radius:0;
+  border-radius:7px;
   background:#fff;
   box-shadow:none;
   color:#526778;
@@ -129,7 +129,7 @@ body.professional-preview .report-menu-btn:focus-visible{
   transform:translateY(-1px);
   background:#f3f7fb;
   border-color:#9bb4cc;
-  box-shadow:none;
+  box-shadow:0 3px 8px rgba(11,31,51,.09);
 }
 body.professional-preview .report-menu-btn.active,
 body.professional-preview .report-menu-btn.feature-ai.active,
@@ -171,12 +171,15 @@ body.professional-preview .report-menu-btn[data-report-tab="dataexport"]{border-
 /* Filters read as one aligned control row */
 body.professional-preview .fbar{
   margin:0 var(--content-pad) 8px;
-  padding:9px 10px;
+  padding:6px 8px;
   gap:8px;
   border:1px solid var(--line);
   border-radius:var(--radius);
   background:var(--panel);
   box-shadow:var(--shadow);
+  position:sticky;
+  top:0;
+  z-index:30;
 }
 body.professional-preview .fbar-group{
   gap:7px;
@@ -188,7 +191,7 @@ body.professional-preview .fbar-group{
 body.professional-preview .fbar-lbl{color:var(--navy);font-size:10px;letter-spacing:.5px}
 body.professional-preview .fsel,
 body.professional-preview .util-input{
-  min-height:34px;
+  min-height:30px;
   border:1px solid #bcc9d5;
   border-radius:7px;
   background:#fff;
@@ -214,10 +217,10 @@ body.professional-preview .clear-filter-btn{
 
 /* Search, view and direct file exports share one command bar */
 body.professional-preview .smart-tools{
-  margin:0 var(--content-pad) 14px;
-  min-height:52px;
-  padding:8px 10px;
-  gap:12px;
+  margin:0 var(--content-pad) 8px;
+  min-height:44px;
+  padding:6px 8px;
+  gap:8px;
   border:1px solid var(--line);
   border-radius:var(--radius);
   background:var(--panel);
@@ -317,12 +320,21 @@ body.professional-preview .bc-head,
 body.professional-preview .smh-head,
 body.professional-preview .demand-smh-head,
 body.professional-preview .ai-dash-head,
-body.professional-preview .xs-head{
-  margin-bottom:14px;
-  padding:16px 18px;
+body.professional-preview .xs-head,
+body.professional-preview .thead-bar,
+body.professional-preview .trend-ctrl-bar,
+body.professional-preview .pu-master-head,
+body.professional-preview .remarks-head,
+body.professional-preview .additional-remarks-head,
+body.professional-preview .ai-summary-head,
+body.professional-preview .history-head,
+body.professional-preview .backup-head,
+body.professional-preview .admin-head{
+  margin-bottom:8px;
+  padding:9px 12px;
   border-radius:var(--radius);
   border-top:0;
-  background:var(--navy);
+  background:linear-gradient(100deg,var(--navy),var(--navy-2));
   box-shadow:var(--shadow);
 }
 body.professional-preview .summary-title,
@@ -330,7 +342,7 @@ body.professional-preview .bp-title,
 body.professional-preview .bc-title,
 body.professional-preview .smh-title,
 body.professional-preview .demand-smh-title,
-body.professional-preview .ai-dash-title{color:#fff;font-size:17px;letter-spacing:0}
+body.professional-preview .ai-dash-title{color:#fff;font-size:15px;letter-spacing:0}
 body.professional-preview .summary-sub,
 body.professional-preview .bp-sub,
 body.professional-preview .bc-sub,
