@@ -267,7 +267,7 @@ class SyncApp(tk.Tk):
             url = f"http://127.0.0.1:{PORT}/index.html?fresh={manifest.get('assetVersion', 'latest')}"
             self._validate_live_portal(url, manifest)
             save_settings(ROOT, self._run_settings)
-            self.events.put(("log", "PASS: every portal tab, chart dataset, and Excel/PDF/PPT export function is available in the fresh live build"))
+            self.events.put(("log", "PASS: every portal tab, Data Export Centre route, refreshed data payload, and Excel/PDF/PPT master export is available in the fresh live build"))
             webbrowser.open(url)
             self.events.put(("done", f"Sync complete - {manifest.get('sourceRevision')} - {url}"))
         except Exception as exc:
@@ -379,6 +379,9 @@ class SyncApp(tk.Tk):
                 app_url = f"http://127.0.0.1:{PORT}/assets/js/app.js?v={asset_version}"
                 with urllib.request.urlopen(app_url, timeout=3) as response:
                     app_js = response.read().decode("utf-8", errors="replace")
+                display_export_url = f"http://127.0.0.1:{PORT}/assets/js/display-export.js?v={asset_version}"
+                with urllib.request.urlopen(display_export_url, timeout=3) as response:
+                    display_export_js = response.read().decode("utf-8", errors="replace")
                 required_views = (
                     "tab-summary", "tab-monthwise", "tab-pumaster", "tab-excessshortfall", "tab-trend",
                     "tab-aitrend", "tab-bpanalysis", "tab-budgetcontrol",
@@ -400,6 +403,26 @@ class SyncApp(tk.Tk):
                     "PowerPoint freshness guard": "prepareFreshExport('PowerPoint')",
                 }
                 missing_export_rules = [label for label, token in required_export_rules.items() if token not in app_js]
+                data_export_rules = {
+                    "Combined Excel route": "DisplayExport.run('Excel','all',{tableOnly:true})",
+                    "Combined PDF route": "DisplayExport.run('PDF','all',{tableOnly:true})",
+                    "Combined PowerPoint route": "DisplayExport.run('PPT','all',{tableOnly:true})",
+                    "Page-wise table-only matrix": "{tableOnly:true}",
+                    "Fresh table capture": "prepareFreshExport(format)",
+                    "Refreshed table filenames": "'_page_data_'",
+                }
+                missing_data_export_rules = [
+                    label for label, token in data_export_rules.items()
+                    if token not in (html + display_export_js)
+                ]
+                master_refresh_rules = {
+                    "Master Excel fresh-data guard": "prepareFreshExport('Excel')",
+                    "Master PDF fresh-data guard": "prepareFreshExport('PDF')",
+                    "Master PowerPoint fresh-data guard": "prepareFreshExport('PowerPoint')",
+                    "Master data fingerprint": "exportDataFingerprint()",
+                    "Master calculation validation": "portalValidationChecks()",
+                }
+                missing_master_refresh_rules = [label for label, token in master_refresh_rules.items() if token not in app_js]
                 if asset_version and asset_version not in app_js:
                     raise RuntimeError("Live portal is serving a stale application asset")
                 expected_month_idx = month_status.get("reportingMonthIndex")
@@ -411,6 +434,25 @@ class SyncApp(tk.Tk):
                     raise RuntimeError("Missing export functions: " + ", ".join(missing_exports))
                 if missing_export_rules:
                     raise RuntimeError("Missing fixed export rules: " + ", ".join(missing_export_rules))
+                if missing_data_export_rules:
+                    raise RuntimeError("Data Export Centre refresh contract failed: " + ", ".join(missing_data_export_rules))
+                if missing_master_refresh_rules:
+                    raise RuntimeError("Master download refresh contract failed: " + ", ".join(missing_master_refresh_rules))
+                sync_manifest_url = f"http://127.0.0.1:{PORT}/data/mb-budget-sync/sync-manifest.json?v={asset_version}"
+                with urllib.request.urlopen(sync_manifest_url, timeout=3) as response:
+                    served_manifest = json.loads(response.read().decode("utf-8", errors="replace"))
+                if served_manifest.get("sourceRevision") != manifest.get("sourceRevision"):
+                    raise RuntimeError("Served sync manifest does not match the refreshed source revision")
+                reports_url = f"http://127.0.0.1:{PORT}/data/mb-budget-sync/processed/reports-data.json?v={asset_version}"
+                with urllib.request.urlopen(reports_url, timeout=3) as response:
+                    served_reports = json.loads(response.read().decode("utf-8", errors="replace"))
+                if served_reports.get("summary", {}).get("generatedAt") != manifest.get("generatedAt"):
+                    raise RuntimeError("Data Export Centre report payload is stale")
+                payload_url = f"http://127.0.0.1:{PORT}/data/mb-budget-sync/processed/current_payload.js?v={asset_version}"
+                with urllib.request.urlopen(payload_url, timeout=3) as response:
+                    served_payload = response.read().decode("utf-8", errors="replace")
+                if manifest.get("generatedAt", "") not in served_payload:
+                    raise RuntimeError("Master download current payload is stale")
                 history_url = f"http://127.0.0.1:{PORT}/data/mb-budget-sync/history/history-index.json?v={asset_version}"
                 with urllib.request.urlopen(history_url, timeout=3) as response:
                     history_index = json.loads(response.read().decode("utf-8", errors="replace"))

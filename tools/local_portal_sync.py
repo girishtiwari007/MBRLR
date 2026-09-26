@@ -725,6 +725,8 @@ def validate_portal_export_contract(root: Path, version: str, reporting_month_id
         "Excel freshness": "prepareFreshExport('Excel')",
         "PDF freshness": "prepareFreshExport('PDF')",
         "PowerPoint freshness": "prepareFreshExport('PowerPoint')",
+        "Master data fingerprint": "exportDataFingerprint()",
+        "Master calculation validation": "portalValidationChecks()",
         "Excel landscape": "orientation:'landscape'",
         "Excel one-page width": "fitToWidth:1",
         "Excel crore two decimals": "#,##0.00;[Red]-#,##0.00;0.00",
