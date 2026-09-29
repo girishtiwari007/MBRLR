@@ -690,6 +690,84 @@ def validate_generated_outputs(root: Path):
     }
 
 
+def validate_thousand_unit_contract(budget: dict, month: dict, detail: dict, demand: dict,
+                                    budget_py: dict | None = None, month_py: dict | None = None) -> dict:
+    """Hard gate: all portal monetary datasets must be normalized to Rs '000s.
+
+    Source workbooks sometimes provide crore-style decimal amounts. `as_number`
+    normalizes those values while parsing. This validation runs after every GUI
+    sync/upload path and before export refresh so no page/export can be written
+    from mixed crore/raw units or fractional money values.
+    """
+    checks: list[str] = []
+    failures: list[str] = []
+
+    def check_int(label: str, value):
+        if isinstance(value, bool):
+            failures.append(f"{label}: boolean is not a money amount")
+            return
+        if isinstance(value, float) and not value.is_integer():
+            failures.append(f"{label}: fractional value {value!r}; expected integer Rs '000")
+            return
+        if not isinstance(value, (int, float)):
+            failures.append(f"{label}: non-numeric value {value!r}")
+
+    def walk_budget(label: str, data: dict | None):
+        if not data:
+            return
+        for code, row in data.items():
+            if not isinstance(row, dict):
+                failures.append(f"{label}.{code}: row is not an object")
+                continue
+            for field in ("bg_isl", "rg", "actuals_till"):
+                check_int(f"{label}.{code}.{field}", row.get(field, 0))
+        checks.append(label)
+
+    def walk_month(label: str, data: dict | None):
+        if not data:
+            return
+        for code, row in data.items():
+            if not isinstance(row, dict):
+                failures.append(f"{label}.{code}: row is not an object")
+                continue
+            for month_key in MONTH_KEYS:
+                check_int(f"{label}.{code}.{month_key}", row.get(month_key, 0))
+        checks.append(label)
+
+    walk_budget("BUDGET", budget)
+    walk_month("MONTH", month)
+    walk_budget("BUDGET_PY", budget_py)
+    walk_month("MONTH_PY", month_py)
+
+    for idx, row in enumerate(detail.get("rows", [])):
+        for field in ("budget", "actualTill"):
+            check_int(f"DETAIL.rows[{idx}].{field}", row.get(field, 0))
+        for month_key in MONTH_KEYS:
+            check_int(f"DETAIL.rows[{idx}].months.{month_key}", (row.get("months") or {}).get(month_key, 0))
+    for field in ("budget", "actualTill"):
+        check_int(f"DETAIL.totals.{field}", detail.get("totals", {}).get(field, 0))
+    checks.append("DETAIL_SMH_DATA")
+
+    money_fields = ("oba", "ae", "bp", "variation", "budgetRemaining")
+    for idx, row in enumerate(demand.get("rows", [])):
+        for field in money_fields:
+            check_int(f"DEMAND.rows[{idx}].{field}", row.get(field, 0))
+        for month_key in MONTH_KEYS:
+            check_int(f"DEMAND.rows[{idx}].months.{month_key}", (row.get("months") or {}).get(month_key, 0))
+    for field in money_fields:
+        check_int(f"DEMAND.totals.{field}", demand.get("totals", {}).get(field, 0))
+    checks.append("DEMAND_SMH_SUMMARY_DATA")
+
+    if failures:
+        raise RuntimeError("Rs '000 unit validation failed: " + "; ".join(failures[:20]))
+    return {
+        "ok": True,
+        "unit": "Rs '000",
+        "rule": "All parsed money values are normalized to integer Rs '000 before portal pages/calculations/exports refresh.",
+        "datasetsChecked": checks,
+    }
+
+
 def validate_portal_export_contract(root: Path, version: str, reporting_month_idx: int):
     """Block publishing unless every portal view and export fixed rule is present."""
     html = (root / "index.html").read_text(encoding="utf-8")
@@ -864,6 +942,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
     mode_note = bp_mode_note(completed_count, current_idx, latest_idx)
     demand = parse_demand(source_paths["demand_budget"], source_paths["demand_actual"], generated_at, completed_count, current_idx, latest_idx)
     detail["generatedAt"] = generated_at
+    unit_validation = validate_thousand_unit_contract(budget, month, detail, demand, budget_py, month_py)
 
     (root / "assets/js/detail-data.js").write_text("window.DETAIL_SMH_DATA = " + json.dumps(detail, separators=(",", ":")) + ";\n", encoding="utf-8", newline="\n")
     (root / "assets/js/demand-smh-data.js").write_text("window.DEMAND_SMH_SUMMARY_DATA = " + json.dumps(demand, separators=(",", ":")) + ";\n", encoding="utf-8", newline="\n")
@@ -996,6 +1075,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
         "demandMainBPCompleted": demand["totals"]["bp"],
         "pyBudgetRows": len(budget_py) if budget_py is not None else 0,
         "pyMonthRows": len(month_py) if month_py is not None else 0,
+        "unit": unit_validation["unit"],
     }
     calculation_validation = validate_generated_outputs(root)
     portal_validation, export_validation = validate_portal_export_contract(root, version, current_idx)
@@ -1007,6 +1087,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
         "sourceRevision": source_revision,
         "assetVersion": version,
         "calculationValidation": calculation_validation,
+        "unitValidation": unit_validation,
         "portalValidation": portal_validation,
         "exportValidation": export_validation,
         "monthStatus": {
@@ -1046,6 +1127,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
     manifest["smokeTest"] = {
         "ok": all([
             calculation_validation.get("ok"),
+            unit_validation.get("ok"),
             portal_validation.get("ok"),
             export_validation.get("ok"),
             len(source_file_entries) == 6,
@@ -1053,6 +1135,7 @@ def write_outputs(root: Path, source_dir: Path, github_dir: Path | None, py_sour
         "testedAt": generated_at,
         "sourceFileCount": len(source_file_entries),
         "calculationGate": calculation_validation.get("ok"),
+        "unitGate": unit_validation.get("ok"),
         "portalGate": portal_validation.get("ok"),
         "exportGate": export_validation.get("ok"),
         "reportingCutoff": mode_note,

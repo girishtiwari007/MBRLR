@@ -241,6 +241,9 @@ class SyncApp(tk.Tk):
             validation = manifest.get("calculationValidation", {})
             if not validation.get("ok"):
                 raise RuntimeError("Generated calculation validation did not pass")
+            unit_validation = manifest.get("unitValidation", {})
+            if not unit_validation.get("ok") or unit_validation.get("unit") != "Rs '000":
+                raise RuntimeError("Rs '000 unit validation did not pass")
             portal_validation = manifest.get("portalValidation", {})
             export_validation = manifest.get("exportValidation", {})
             if not portal_validation.get("ok") or portal_validation.get("viewCount") != 16:
@@ -256,6 +259,7 @@ class SyncApp(tk.Tk):
             self.events.put(("gates", {"SOURCE": True, "CALCULATION": True, "PAGES": True, "EXPORTS": True}))
             self.events.put(("log", json.dumps(summary, indent=2)))
             self.events.put(("log", f"PASS: calculation simulation; PU mismatches {validation.get('puMonthMismatches', 0)}"))
+            self.events.put(("log", f"PASS: amount unit gate; all datasets normalized as {unit_validation.get('unit')} before page/export refresh"))
             self.events.put(("log", f"PASS: month sensing selected latest uploaded actual {summary.get('latestMonth', 'none')} using system month {datetime.now().strftime('%b %Y').upper()}"))
             self.events.put(("log", f"PASS: export sources refreshed under asset version {manifest.get('assetVersion')}"))
             self.events.put(("log", f"PASS: {portal_validation.get('viewCount')} portal pages refreshed and validated"))

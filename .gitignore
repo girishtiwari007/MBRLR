@@ -1,3 +1,7 @@
 __pycache__/
 *.py[cod]
 backup/
+.chrome-layout-test/
+.export-validation/OWE_MBD_FY2026-27_*.pptx
+.export-validation/OWE_MBD_FY2026-27_*.xlsx
+.export-validation/OWE_MBD_Report_FY2026-27_*.pdf
