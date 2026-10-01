@@ -3,15 +3,15 @@
   "mode": "local-portal-sync",
   "sourceRepo": "D:\\PORTAL DATA\\current year",
   "targetRepo": "D:\\github\\MBRLR",
-  "sourceRevision": "b879aa88a254",
-  "assetVersion": "20261001-history-compare19-autoexports-b879aa88a254",
+  "sourceRevision": "7de5b620c85b",
+  "assetVersion": "20261001-history-compare19-autoexports-7de5b620c85b",
   "calculationValidation": {
     "ok": true,
     "puMonthMismatches": 0,
     "detailRows": 918,
     "detailActual": 19073692,
     "demandRows": 12,
-    "demandMainAE": 18328032
+    "demandMainAE": 16528995
   },
   "unitValidation": {
     "ok": true,
@@ -45,8 +45,8 @@
       "tab-backup",
       "tab-admin"
     ],
-    "freshAsset": "20261001-history-compare19-autoexports-b879aa88a254",
-    "reportingMonthIndex": 6,
+    "freshAsset": "20261001-history-compare19-autoexports-7de5b620c85b",
+    "reportingMonthIndex": 5,
     "uploadControls": 0
   },
   "exportValidation": {
@@ -67,20 +67,20 @@
   },
   "monthStatus": {
     "systemMonth": "OCT 2026",
-    "reportingCurrentMonth": "OCT 2026",
+    "reportingCurrentMonth": "SEP 2026",
     "latestUploadedMonth": "SEP 2026",
-    "completedThrough": "SEP 2026",
-    "reportingMonthIndex": 6,
-    "completedMonthCount": 6,
+    "completedThrough": "AUG 2026",
+    "reportingMonthIndex": 5,
+    "completedMonthCount": 5,
     "selectionMode": "manual"
   },
   "financialYear": "2026-2027",
-  "generatedAt": "2026-10-01T11:05:25+05:30",
-  "syncedAt": "2026-10-01T11:05:25+05:30",
-  "confirmedAt": "2026-10-01T11:05:25+05:30",
+  "generatedAt": "2026-10-01T11:03:30+05:30",
+  "syncedAt": "2026-10-01T11:03:30+05:30",
+  "confirmedAt": "2026-10-01T11:03:30+05:30",
   "counts": {
     "sourceFiles": 6,
-    "processedFiles": 4,
+    "processedFiles": 3,
     "frFiles": 0,
     "totalFiles": 11
   },
@@ -208,10 +208,6 @@
     {
       "name": "year-sources.json",
       "targetPath": "data/mb-budget-sync/processed/year-sources.json"
-    },
-    {
-      "name": "history-index.json",
-      "targetPath": "data/mb-budget-sync/history/history-index.json"
     }
   ],
   "selectedTargets": [
@@ -224,7 +220,7 @@
   ],
   "actionLog": [
     {
-      "at": "2026-10-01T11:05:25+05:30",
+      "at": "2026-10-01T11:03:30+05:30",
       "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
       "status": "confirmed",
       "files": [
@@ -243,29 +239,23 @@
         "detailActual": 19073692,
         "demandRows": 12,
         "latestMonth": "SEP 2026",
-        "demandMainAECompleted": 18328032,
-        "demandMainBPCompleted": 16297937,
+        "demandMainAECompleted": 16528995,
+        "demandMainBPCompleted": 13581613,
         "pyBudgetRows": 0,
         "pyMonthRows": 0,
         "unit": "Rs '000"
       }
     }
   ],
-  "bpMode": "Completed through SEP 2026; OCT 2026 is current running month; latest uploaded actual month detected as SEP 2026",
+  "bpMode": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026",
   "smokeTest": {
     "ok": true,
-    "testedAt": "2026-10-01T11:05:25+05:30",
+    "testedAt": "2026-10-01T11:03:30+05:30",
     "sourceFileCount": 6,
     "calculationGate": true,
     "unitGate": true,
     "portalGate": true,
     "exportGate": true,
-    "reportingCutoff": "Completed through SEP 2026; OCT 2026 is current running month; latest uploaded actual month detected as SEP 2026"
-  },
-  "history": {
-    "latestSnapshotId": "2026-10-01_110525_b879aa88a254",
-    "snapshotCount": 8,
-    "indexPath": "data/mb-budget-sync/history/history-index.json",
-    "snapshotPath": "data/mb-budget-sync/history/2026-10-01_110525_b879aa88a254/snapshot-data.json"
+    "reportingCutoff": "Completed through AUG 2026; SEP 2026 is current running month; latest uploaded actual month detected as SEP 2026"
   }
 }
