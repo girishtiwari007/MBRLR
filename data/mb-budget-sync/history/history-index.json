@@ -1,7 +1,7 @@
 {
   "ok": true,
-  "generatedAt": "2026-10-01T11:05:25+05:30",
-  "latestSnapshotId": "2026-10-01_110525_b879aa88a254",
+  "generatedAt": "2026-10-05T14:46:27+05:30",
+  "latestSnapshotId": "2026-10-05_144627_1eb8564c8214",
   "snapshots": [
     {
       "id": "2026-09-17_110343_5932b9e68b04",
@@ -146,6 +146,24 @@
         "actual": 19919662,
         "balance": 12663166,
         "utilPct": 61.1355
+      }
+    },
+    {
+      "id": "2026-10-05_144627_1eb8564c8214",
+      "label": "2026-10-05 14:46 | OCT 2026 | 1eb8564c8214",
+      "generatedAt": "2026-10-05T14:46:27+05:30",
+      "sourceRevision": "1eb8564c8214",
+      "assetVersion": "20261005-history-compare19-autoexports-1eb8564c8214",
+      "financialYear": "2026-2027",
+      "latestUploadedMonth": "OCT 2026",
+      "completedThrough": "SEP 2026",
+      "sourceFolder": "D:\\PORTAL DATA\\current year",
+      "snapshotPath": "data/mb-budget-sync/history/2026-10-05_144627_1eb8564c8214/snapshot-data.json",
+      "totals": {
+        "budget": 32582828,
+        "actual": 21528501,
+        "balance": 11054327,
+        "utilPct": 66.0732
       }
     }
   ]
