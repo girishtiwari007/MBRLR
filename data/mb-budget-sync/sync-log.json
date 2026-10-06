@@ -1,6 +1,6 @@
 [
   {
-    "at": "2026-10-05T14:46:27+05:30",
+    "at": "2026-10-06T10:23:36+05:30",
     "action": "Local source files detected by sheet contents, parsed, verified and written into static portal data",
     "status": "confirmed",
     "files": [
@@ -21,8 +21,8 @@
       "latestMonth": "OCT 2026",
       "demandMainAECompleted": 19918321,
       "demandMainBPCompleted": 16297937,
-      "pyBudgetRows": 0,
-      "pyMonthRows": 0,
+      "pyBudgetRows": 47,
+      "pyMonthRows": 39,
       "unit": "Rs '000"
     }
   }
