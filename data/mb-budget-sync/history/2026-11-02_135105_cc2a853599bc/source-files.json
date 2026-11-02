@@ -1,0 +1,88 @@
+[
+  {
+    "name": "pu-budget.xls",
+    "originalName": "PU-BUDGET.xls",
+    "role": "pu_budget",
+    "roleLabel": "PU-wise Budget Available",
+    "relativePath": "data/source-files/2026-2027/pu-budget.xls",
+    "size": 22016,
+    "modifiedAt": "2026-11-02T12:36:17",
+    "sha256": "426ea5c57ee9be86f1eb4997dbd2bed21c4c492fb97e78ac5ebdb4c0be6ec4ec",
+    "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-budget.xls"
+  },
+  {
+    "name": "pu-month-actual.xls",
+    "originalName": "PU-MONTH-ACTUAL.xls",
+    "role": "pu_month",
+    "roleLabel": "PU-wise Month-wise Actual",
+    "relativePath": "data/source-files/2026-2027/pu-month-actual.xls",
+    "size": 16896,
+    "modifiedAt": "2026-11-02T12:36:28",
+    "sha256": "514332aa7ae63d9da40c7d57bbf67fc2d51d61b1fd00c8fe21adff6982a0ec68",
+    "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-month-actual.xls"
+  },
+  {
+    "name": "pu-dept-demand-smh-budget.xls",
+    "originalName": "PU-DEPT-DEMAND-SMH-BUDGET.xls",
+    "role": "detail_budget",
+    "roleLabel": "Department / SMH PU-wise Budget",
+    "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-budget.xls",
+    "size": 1544192,
+    "modifiedAt": "2026-11-02T12:37:07",
+    "sha256": "962d34e130bf56a7e4ff1c8f0ca331beed7c6e0acdcf952f4fcddd9e81586616",
+    "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-budget.xls"
+  },
+  {
+    "name": "pu-dept-demand-smh-actual.xls",
+    "originalName": "PU-DEPT-DEMAND-SMH-ACTUAL.xls",
+    "role": "detail_actual",
+    "roleLabel": "Department / SMH PU-wise Month-wise Actual",
+    "relativePath": "data/source-files/2026-2027/pu-dept-demand-smh-actual.xls",
+    "size": 577536,
+    "modifiedAt": "2026-11-02T12:37:18",
+    "sha256": "be52073d9bb5576d03a09281cb7dfacf1df0e4fdad7552e3190b0ba815382f67",
+    "targetPath": "data/mb-budget-sync/source-files/2026-2027/pu-dept-demand-smh-actual.xls"
+  },
+  {
+    "name": "demand-smh-budget.xls",
+    "originalName": "DEMAND-SMH-BUGDET.xls",
+    "role": "demand_budget",
+    "roleLabel": "Demand/SMH Budget Summary",
+    "relativePath": "data/source-files/2026-2027/demand-smh-budget.xls",
+    "size": 9216,
+    "modifiedAt": "2026-11-02T12:36:39",
+    "sha256": "a35a5d6125effbeeeb681abe853d3311e1c9f90252257636c5a704a2af3b5d0a",
+    "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-budget.xls"
+  },
+  {
+    "name": "demand-smh-actual.xls",
+    "originalName": "DEMAND-SMH-ACTUAL.xls",
+    "role": "demand_actual",
+    "roleLabel": "Demand/SMH Month-wise Actual Summary",
+    "relativePath": "data/source-files/2026-2027/demand-smh-actual.xls",
+    "size": 8192,
+    "modifiedAt": "2026-11-02T12:36:48",
+    "sha256": "b7e46f2fe9b0a2a7865902e498b3eb19078549d8dfaebb33441457357a81ed05",
+    "targetPath": "data/mb-budget-sync/source-files/2026-2027/demand-smh-actual.xls"
+  },
+  {
+    "name": "pu-budget.xls",
+    "originalName": "pu-budget.xls",
+    "role": "py_pu_budget",
+    "roleLabel": "Previous Year PU-wise Budget Available",
+    "size": 21504,
+    "modifiedAt": "2026-07-10T23:07:38",
+    "sha256": "6a261eeb093411f2cdf1429622d39311ee122d648c66cfbbdd46f3d8ca615978",
+    "targetPath": "data/mb-budget-sync/source-files/2025-2026/pu-budget.xls"
+  },
+  {
+    "name": "pu-month-actual.xls",
+    "originalName": "pu-month-actual.xls",
+    "role": "py_pu_month",
+    "roleLabel": "Previous Year PU-wise Month-wise Actual",
+    "size": 16384,
+    "modifiedAt": "2026-07-10T23:10:50",
+    "sha256": "78807ffc19ed3726b84836827011dc4ab470bda48c5ca419a311616551e60e47",
+    "targetPath": "data/mb-budget-sync/source-files/2025-2026/pu-month-actual.xls"
+  }
+]
